@@ -303,6 +303,66 @@ export const Canvas: React.FC<CanvasProps> = ({
         return 'cursor-crosshair';
     };
 
+    // Native Event Listeners for accurate Zoom control (prevent browser pinch-zoom)
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const onWheel = (e: WheelEvent) => {
+            // If Ctrl is pressed (trackpad pinch usually), prevent default browser zoom
+            if (e.ctrlKey) {
+                e.preventDefault();
+                // We don't stop propagation because we might want other handlers to know
+                // But generally for pinch-zoom, we want to hijack it for our own zoom.
+            }
+
+            // We can also route this directly to our handler logic if needed, 
+            // but React's onWheel handles the logic fine. 
+            // The KEY is e.preventDefault() which React's synthetic event might be too late for
+            // or passive by default.
+            
+            // To ensure our app zooms, we manually call the logic if it's a Ctrl+Wheel
+            // OR we just rely on the React handler if we ONLY want to prevent default.
+            // HOWEVER, duplicate handling is bad. 
+            // Let's rely on this native handler for ALL zooming if possible, 
+            // or just use it to prevent default and let React handle the rest?
+            // Actually, React's onWheel is passive: false by default in recent versions? 
+            // No, often 'wheel' is passive.
+            // Safe bet: handle zoom here and prevent default.
+            
+            if (stampMode) return; // Let React handler or custom logic handle stamps? 
+            // Actually, let's just use this for the PREVENT DEFAULT part.
+        };
+
+        // For Safari/Mac Gesture events (Pinch)
+        const onGestureStart = (e: any) => {
+            e.preventDefault();
+        };
+
+        const onGestureChange = (e: any) => {
+           e.preventDefault();
+           // Safari "pinch" gives e.scale
+           // We map e.scale to zoom, but commonly Wheel with Ctrl is enough for trackpads in Chrome/Firefox.
+           // For Safari proper native gestures we just prevent default for now to stop the browser zoom.
+        };
+
+        const onGestureEnd = (e: any) => e.preventDefault();
+
+        // We MUST use { passive: false } to be able to call preventDefault
+        canvas.addEventListener('wheel', onWheel, { passive: false });
+        // Typescript might complain about gesture events, cast to any or augment types
+        canvas.addEventListener('gesturestart', onGestureStart as any, { passive: false });
+        canvas.addEventListener('gesturechange', onGestureChange as any, { passive: false });
+        canvas.addEventListener('gestureend', onGestureEnd as any, { passive: false });
+
+        return () => {
+            canvas.removeEventListener('wheel', onWheel);
+            canvas.removeEventListener('gesturestart', onGestureStart as any);
+            canvas.removeEventListener('gesturechange', onGestureChange as any);
+            canvas.removeEventListener('gestureend', onGestureEnd as any);
+        };
+    }, [stampMode]);
+
     return (
         <div
             ref={containerRef}
@@ -337,3 +397,4 @@ export const Canvas: React.FC<CanvasProps> = ({
         </div>
     );
 };
+
