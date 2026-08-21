@@ -1,8 +1,32 @@
 export const PIXEL_SIZE = 20;
-export const GRID_W = 513;
-export const GRID_H = 513;
+export const GRID_W = 1024;
+export const GRID_H = 1024;
+export const LAMP_POWER_WATTS = 5_000;
+export const DECIDER_COMBINATOR_POWER_WATTS = 1_000;
+export const ARITHMETIC_COMBINATOR_POWER_WATTS = 1_000;
+export const PROGRAMMABLE_SPEAKER_POWER_WATTS = 2_000;
+export const ROBOPORT_DRAIN_WATTS = 50_000;
+export const ROBOPORT_SIZE = 4;
+export const ROBOPORT_CONSTRUCTION_RADIUS = 55;
+export const ROBOPORT_LOGISTICS_RADIUS = 25;
+export const AUTO_CONSTRUCTION_POLE_RADIUS = 30;
 
-export const MIN_ZOOM = 0.1;
+export const DEFAULT_MAX_DEFINITION = 512;
+export const MAX_DEFINITION_LIMIT = 1024;
+export const DEFAULT_MAX_FRAME_COUNT = 256;
+
+export const BACKGROUND_TILES = [
+    { value: '', label: 'None' },
+    { value: 'stone-path', label: 'Stone brick' },
+    { value: 'concrete', label: 'Concrete' },
+    { value: 'hazard-concrete-left', label: 'Hazard concrete' },
+    { value: 'refined-concrete', label: 'Refined concrete' },
+    { value: 'refined-hazard-concrete-left', label: 'Refined hazard concrete' },
+] as const;
+
+export type BackgroundTileName = typeof BACKGROUND_TILES[number]['value'];
+
+export const MIN_ZOOM = 0.02;
 export const MAX_ZOOM = 3.0;
 
 export const TEXT_SCALE_MIN = 1;

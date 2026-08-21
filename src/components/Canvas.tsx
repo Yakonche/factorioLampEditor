@@ -1,13 +1,44 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import type { CameraState } from '../utils/geometry';
 import { getWorldCoords } from '../utils/geometry';
-import type { GridData } from '../utils/grid';
-import { PIXEL_SIZE, GRID_W, GRID_H, POLE_DATA, MIN_ZOOM, MAX_ZOOM } from '../constants';
+import { uint32ToCss, type GridData } from '../utils/grid';
+import {
+    PIXEL_SIZE,
+    GRID_W,
+    GRID_H,
+    POLE_DATA,
+    MIN_ZOOM,
+    MAX_ZOOM,
+    ROBOPORT_CONSTRUCTION_RADIUS,
+    ROBOPORT_SIZE,
+} from '../constants';
 import type { StampBuffer } from '../utils/stamp';
-import type { ActivePole } from '../utils/blueprint';
+import type { ActivePole, ActiveRoboport, BlueprintPreviewEntity, BlueprintPreviewKind } from '../utils/blueprint';
+
+const PREVIEW_ENTITY_STYLE: Record<BlueprintPreviewKind, { fill: string; stroke: string; text: string }> = {
+    'decider-combinator': { fill: 'rgba(6, 182, 212, 0.48)', stroke: '#67e8f9', text: 'D' },
+    'arithmetic-combinator': { fill: 'rgba(236, 72, 153, 0.48)', stroke: '#f9a8d4', text: 'A' },
+    'constant-combinator': { fill: 'rgba(249, 115, 22, 0.5)', stroke: '#fdba74', text: 'C' },
+    'display-panel': { fill: 'rgba(168, 85, 247, 0.5)', stroke: '#d8b4fe', text: 'i' },
+    'controller-substation': { fill: 'rgba(99, 102, 241, 0.35)', stroke: '#a5b4fc', text: 'S' },
+    'controller-roboport': { fill: 'rgba(16, 185, 129, 0.3)', stroke: '#6ee7b7', text: 'R' },
+    'relay-pole': { fill: 'rgba(20, 184, 166, 0.44)', stroke: '#5eead4', text: 'P' },
+    'programmable-speaker': { fill: 'rgba(34, 211, 238, 0.42)', stroke: '#a5f3fc', text: '♪' },
+};
+
+type HoverTooltip = {
+    title: string;
+    description: string;
+    color: string;
+    tileX: number;
+    tileY: number;
+    screenX: number;
+    screenY: number;
+};
 
 interface CanvasProps {
     gridData: GridData;
+    gridVersion: number;
     camera: CameraState;
     setCamera: (c: CameraState) => void;
 
@@ -20,12 +51,23 @@ interface CanvasProps {
     stampMode: 'text' | 'image' | null;
     stampBuffer: StampBuffer | null;
     stampScale: number;
-    onStampScale: (delta: number) => void;
+
+    // Viewport controls
+    fitView?: {
+        centerX: number;
+        centerY: number;
+        width: number;
+        height: number;
+    };
 
     autoPole: boolean;
     activePoles?: ActivePole[];
     poleType: string;
     qualityIdx: number;
+    autoRoboport: boolean;
+    activeRoboports?: ActiveRoboport[];
+    previewEntities?: BlueprintPreviewEntity[];
+    hasAlternateFrameLamp?: (x: number, y: number) => boolean;
 
     // Coordinates display
     onHover: (x: number, y: number) => void;
@@ -34,17 +76,51 @@ interface CanvasProps {
 }
 
 export const Canvas: React.FC<CanvasProps> = ({
-    gridData, camera, setCamera,
+    gridData, gridVersion, camera, setCamera,
     onInteractStart, onInteractMove, onInteractEnd,
-    stampMode, stampBuffer, stampScale, onStampScale,
-    autoPole, activePoles, poleType, qualityIdx,
+    stampMode, stampBuffer, stampScale, fitView,
+    autoPole, activePoles, poleType, qualityIdx, autoRoboport, activeRoboports,
+    previewEntities = [], hasAlternateFrameLamp,
     onHover, tool
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    // const requestRef = useRef<number>();
+    const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const frameRef = useRef<number | null>(null);
+    const renderCallbackRef = useRef<() => void>(() => undefined);
+    const lastMousePos = useRef<{ x: number, y: number } | null>(null);
+    const [hoverTooltip, setHoverTooltip] = useState<HoverTooltip | null>(null);
+    const previewEntityByTile = useMemo(() => {
+        const result = new Map<string, BlueprintPreviewEntity>();
+        for (const entity of previewEntities) {
+            for (let y = entity.y; y < entity.y + entity.height; y++) {
+                for (let x = entity.x; x < entity.x + entity.width; x++) {
+                    result.set(`${x},${y}`, entity);
+                }
+            }
+        }
+        return result;
+    }, [previewEntities]);
 
-
+    const rebuildGridCache = useCallback(() => {
+        let cache = gridCanvasRef.current;
+        if (!cache) {
+            cache = document.createElement('canvas');
+            gridCanvasRef.current = cache;
+        }
+        if (cache.width !== gridData.width || cache.height !== gridData.height) {
+            cache.width = gridData.width;
+            cache.height = gridData.height;
+        }
+        const context = cache.getContext('2d');
+        if (!context) return;
+        const bytes = new Uint8ClampedArray(
+            gridData.cells.buffer as ArrayBuffer,
+            gridData.cells.byteOffset,
+            gridData.cells.byteLength,
+        );
+        context.putImageData(new ImageData(bytes, gridData.width, gridData.height), 0, 0);
+    }, [gridData]);
 
     // Render Logic
     const render = useCallback(() => {
@@ -87,7 +163,26 @@ export const Canvas: React.FC<CanvasProps> = ({
         const minTileY = Math.max(0, Math.floor(worldT / PIXEL_SIZE));
         const maxTileY = Math.min(GRID_H - 1, Math.floor(worldB / PIXEL_SIZE) + 1);
 
-        // 4. Grid Lines
+        // 4. Cached pixels. One bitmap pixel represents one Factorio lamp.
+        const cachedGrid = gridCanvasRef.current;
+        if (cachedGrid && maxTileX >= minTileX && maxTileY >= minTileY) {
+            const sourceWidth = maxTileX - minTileX + 1;
+            const sourceHeight = maxTileY - minTileY + 1;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(
+                cachedGrid,
+                minTileX,
+                minTileY,
+                sourceWidth,
+                sourceHeight,
+                minTileX * PIXEL_SIZE,
+                minTileY * PIXEL_SIZE,
+                sourceWidth * PIXEL_SIZE,
+                sourceHeight * PIXEL_SIZE,
+            );
+        }
+
+        // 5. Grid Lines
         ctx.lineWidth = 1;
 
         // Chunk Lines (32)
@@ -124,22 +219,6 @@ export const Canvas: React.FC<CanvasProps> = ({
             ctx.stroke();
         }
 
-        // 5. Active Pixels
-        for (let y = minTileY; y <= maxTileY; y++) {
-            for (let x = minTileX; x <= maxTileX; x++) {
-                const color = gridData[y][x];
-                if (color) {
-                    ctx.fillStyle = color;
-                    ctx.fillRect(
-                        x * PIXEL_SIZE + 0.5,
-                        y * PIXEL_SIZE + 0.5,
-                        PIXEL_SIZE - 1,
-                        PIXEL_SIZE - 1
-                    );
-                }
-            }
-        }
-
         // 6. Stamp Preview
         if (stampMode && stampBuffer && lastMousePos.current) {
             const worldPos = getWorldCoords(lastMousePos.current.x, lastMousePos.current.y, canvas.getBoundingClientRect(), camera, w, h);
@@ -168,7 +247,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                     const srcY = Math.floor(dy / renderScale);
 
                     if (srcX >= 0 && srcX < stampBuffer.w && srcY >= 0 && srcY < stampBuffer.h) {
-                        const col = stampBuffer.data[srcY][srcX];
+                        const col = stampBuffer.data[srcY * stampBuffer.w + srcX];
                         if (col) {
                             const gx = startX + dx;
                             const gy = startY + dy;
@@ -176,7 +255,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                             // Culling check for render perf
                             if (gx > maxTileX || gx < minTileX || gy > maxTileY || gy < minTileY) continue;
 
-                            ctx.fillStyle = col;
+                            ctx.fillStyle = uint32ToCss(col);
                             // Draw 1x1 grid cell
                             ctx.fillRect(gx * PIXEL_SIZE, gy * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
                         }
@@ -220,34 +299,141 @@ export const Canvas: React.FC<CanvasProps> = ({
             });
         }
 
+        // 8. Auto Roboports
+        if (autoRoboport && activeRoboports) {
+            activeRoboports.forEach((roboport) => {
+                const centerX = roboport.x + ROBOPORT_SIZE / 2;
+                const centerY = roboport.y + ROBOPORT_SIZE / 2;
+                const constructionX = centerX - ROBOPORT_CONSTRUCTION_RADIUS;
+                const constructionY = centerY - ROBOPORT_CONSTRUCTION_RADIUS;
+
+                if (
+                    roboport.x + ROBOPORT_SIZE < minTileX
+                    || roboport.x > maxTileX
+                    || roboport.y + ROBOPORT_SIZE < minTileY
+                    || roboport.y > maxTileY
+                ) return;
+
+                if (camera.zoom > 0.08) {
+                    ctx.strokeStyle = '#10b981';
+                    ctx.lineWidth = 1 / camera.zoom;
+                    ctx.setLineDash([6 / camera.zoom, 5 / camera.zoom]);
+                    ctx.strokeRect(
+                        constructionX * PIXEL_SIZE,
+                        constructionY * PIXEL_SIZE,
+                        ROBOPORT_CONSTRUCTION_RADIUS * 2 * PIXEL_SIZE,
+                        ROBOPORT_CONSTRUCTION_RADIUS * 2 * PIXEL_SIZE,
+                    );
+                    ctx.setLineDash([]);
+                }
+
+                ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
+                ctx.fillRect(
+                    roboport.x * PIXEL_SIZE + 1,
+                    roboport.y * PIXEL_SIZE + 1,
+                    ROBOPORT_SIZE * PIXEL_SIZE - 2,
+                    ROBOPORT_SIZE * PIXEL_SIZE - 2,
+                );
+                ctx.strokeStyle = '#34d399';
+                ctx.lineWidth = 2 / camera.zoom;
+                ctx.strokeRect(
+                    roboport.x * PIXEL_SIZE + 1,
+                    roboport.y * PIXEL_SIZE + 1,
+                    ROBOPORT_SIZE * PIXEL_SIZE - 2,
+                    ROBOPORT_SIZE * PIXEL_SIZE - 2,
+                );
+            });
+        }
+
+        // 9. Blueprint-only animation infrastructure. Coordinates and
+        // footprints come from the same layout maths as the exported blueprint.
+        previewEntities.forEach((entity) => {
+            const left = entity.x * PIXEL_SIZE;
+            const top = entity.y * PIXEL_SIZE;
+            const width = entity.width * PIXEL_SIZE;
+            const height = entity.height * PIXEL_SIZE;
+            if (left + width < worldL || left > worldR || top + height < worldT || top > worldB) return;
+
+            const style = PREVIEW_ENTITY_STYLE[entity.kind];
+            ctx.fillStyle = style.fill;
+            ctx.fillRect(left + 1, top + 1, width - 2, height - 2);
+            ctx.strokeStyle = style.stroke;
+            ctx.lineWidth = 2 / camera.zoom;
+            ctx.strokeRect(left + 1, top + 1, width - 2, height - 2);
+
+            if (camera.zoom >= 0.45) {
+                ctx.fillStyle = style.stroke;
+                ctx.font = `bold ${Math.max(9, Math.min(15, 11 / camera.zoom)) / camera.zoom}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(style.text, left + width / 2, top + height / 2);
+            }
+        });
+
         ctx.restore();
 
-    }, [gridData, camera, stampMode, stampBuffer, stampScale, autoPole, activePoles, poleType, qualityIdx]);
-
-    // Animation Loop
+    }, [camera, stampMode, stampBuffer, stampScale, autoPole, activePoles, poleType, qualityIdx, autoRoboport, activeRoboports, previewEntities]);
     useEffect(() => {
-        let handle: number;
-        const loop = () => {
-            render();
-            handle = requestAnimationFrame(loop);
-        }
-        handle = requestAnimationFrame(loop);
-        return () => cancelAnimationFrame(handle);
+        renderCallbackRef.current = render;
     }, [render]);
+
+    const requestRender = useCallback(() => {
+        if (frameRef.current !== null) return;
+        frameRef.current = requestAnimationFrame(() => {
+            frameRef.current = null;
+            renderCallbackRef.current();
+        });
+    }, []);
+
+    useEffect(() => {
+        rebuildGridCache();
+        requestRender();
+    }, [gridVersion, rebuildGridCache, requestRender]);
+
+    useEffect(() => {
+        requestRender();
+    }, [render, requestRender]);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        const observer = new ResizeObserver(requestRender);
+        observer.observe(container);
+        return () => observer.disconnect();
+    }, [requestRender]);
+
+    useEffect(() => () => {
+        if (frameRef.current !== null) {
+            cancelAnimationFrame(frameRef.current);
+            frameRef.current = null;
+        }
+    }, []);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!fitView || !container) return;
+
+        const horizontalPadding = 64;
+        const verticalPadding = 64;
+        const availableWidth = Math.max(1, container.clientWidth - horizontalPadding);
+        const availableHeight = Math.max(1, container.clientHeight - verticalPadding);
+        const zoom = Math.min(
+            availableWidth / fitView.width,
+            availableHeight / fitView.height,
+        );
+
+        setCamera({
+            x: fitView.centerX,
+            y: fitView.centerY,
+            zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom)),
+        });
+    }, [fitView, setCamera]);
 
 
     // Interactivity
-    const lastMousePos = useRef<{ x: number, y: number } | null>(null);
 
     const handleWheel = (e: React.WheelEvent) => {
-        if (stampMode) {
-            e.preventDefault();
-            e.stopPropagation();
-            const delta = e.deltaY < 0 ? 1 : -1;
-            onStampScale(delta);
-            return;
-        }
-
+        e.preventDefault();
         e.stopPropagation();
         // Zoom logic
         const delta = e.deltaY < 0 ? 1 : -1;
@@ -285,7 +471,74 @@ export const Canvas: React.FC<CanvasProps> = ({
             const gy = Math.floor(world.y / PIXEL_SIZE);
             onHover(gx, gy);
 
+            const previewEntity = previewEntityByTile.get(`${gx},${gy}`);
+            const roboport = !previewEntity && autoRoboport
+                ? activeRoboports?.find(candidate => (
+                    gx >= candidate.x && gx < candidate.x + ROBOPORT_SIZE
+                    && gy >= candidate.y && gy < candidate.y + ROBOPORT_SIZE
+                ))
+                : undefined;
+            const poleSize = POLE_DATA[poleType]?.size ?? 1;
+            const pole = !previewEntity && !roboport && autoPole
+                ? activePoles?.find(candidate => (
+                    gx >= candidate.x && gx < candidate.x + poleSize
+                    && gy >= candidate.y && gy < candidate.y + poleSize
+                ))
+                : undefined;
+            const gridIndex = gy * gridData.width + gx;
+            const isGridTile = gx >= 0 && gx < gridData.width && gy >= 0 && gy < gridData.height;
+            const lamp = !previewEntity && !roboport && !pole && isGridTile && Boolean(
+                gridData.cells[gridIndex] || hasAlternateFrameLamp?.(gx, gy),
+            );
+
+            if (previewEntity) {
+                const style = PREVIEW_ENTITY_STYLE[previewEntity.kind];
+                setHoverTooltip({
+                    title: previewEntity.name,
+                    description: previewEntity.description,
+                    color: style.stroke,
+                    tileX: gx,
+                    tileY: gy,
+                    screenX: Math.min(e.clientX - rect.left + 14, Math.max(8, rect.width - 264)),
+                    screenY: e.clientY - rect.top,
+                });
+            } else if (roboport) {
+                setHoverTooltip({
+                    title: 'Roboport',
+                    description: '4×4 support structure; replaces any image lamps below it.',
+                    color: '#34d399',
+                    tileX: gx,
+                    tileY: gy,
+                    screenX: Math.min(e.clientX - rect.left + 14, Math.max(8, rect.width - 264)),
+                    screenY: e.clientY - rect.top,
+                });
+            } else if (pole) {
+                setHoverTooltip({
+                    title: poleType.split('-').map(part => part[0]?.toUpperCase() + part.slice(1)).join(' '),
+                    description: `${poleSize}×${poleSize} electric pole; replaces any image lamps below it.`,
+                    color: '#60a5fa',
+                    tileX: gx,
+                    tileY: gy,
+                    screenX: Math.min(e.clientX - rect.left + 14, Math.max(8, rect.width - 264)),
+                    screenY: e.clientY - rect.top,
+                });
+            } else if (lamp) {
+                setHoverTooltip({
+                    title: 'Small lamp',
+                    description: 'Image pixel rendered as a Factorio lamp.',
+                    color: '#facc15',
+                    tileX: gx,
+                    tileY: gy,
+                    screenX: Math.min(e.clientX - rect.left + 14, Math.max(8, rect.width - 264)),
+                    screenY: e.clientY - rect.top,
+                });
+            } else {
+                setHoverTooltip(null);
+            }
+
             onInteractMove(e, gx, gy);
+            if (e.buttons === 1 && (tool === 'brush' || tool === 'erase')) rebuildGridCache();
+            requestRender();
         }
     };
 
@@ -293,6 +546,14 @@ export const Canvas: React.FC<CanvasProps> = ({
         const rect = canvasRef.current!.getBoundingClientRect();
         const world = getWorldCoords(e.clientX, e.clientY, rect, camera, canvasRef.current!.width, canvasRef.current!.height);
         onInteractStart(e, Math.floor(world.x / PIXEL_SIZE), Math.floor(world.y / PIXEL_SIZE));
+        if (tool === 'brush' || tool === 'erase' || tool === 'fill') rebuildGridCache();
+        requestRender();
+    };
+
+    const handleInteractEnd = (e: React.MouseEvent | React.TouchEvent) => {
+        onInteractEnd(e);
+        rebuildGridCache();
+        requestRender();
     };
 
     const getCursor = () => {
@@ -330,38 +591,25 @@ export const Canvas: React.FC<CanvasProps> = ({
             // No, often 'wheel' is passive.
             // Safe bet: handle zoom here and prevent default.
             
-            if (stampMode) return; // Let React handler or custom logic handle stamps? 
-            // Actually, let's just use this for the PREVENT DEFAULT part.
         };
 
-        // For Safari/Mac Gesture events (Pinch)
-        const onGestureStart = (e: any) => {
-            e.preventDefault();
-        };
-
-        const onGestureChange = (e: any) => {
-           e.preventDefault();
-           // Safari "pinch" gives e.scale
-           // We map e.scale to zoom, but commonly Wheel with Ctrl is enough for trackpads in Chrome/Firefox.
-           // For Safari proper native gestures we just prevent default for now to stop the browser zoom.
-        };
-
-        const onGestureEnd = (e: any) => e.preventDefault();
+        // Safari gesture events are not part of lib.dom's named event map,
+        // but they still use the ordinary Event contract for preventDefault.
+        const preventGestureZoom: EventListener = event => event.preventDefault();
 
         // We MUST use { passive: false } to be able to call preventDefault
         canvas.addEventListener('wheel', onWheel, { passive: false });
-        // Typescript might complain about gesture events, cast to any or augment types
-        canvas.addEventListener('gesturestart', onGestureStart as any, { passive: false });
-        canvas.addEventListener('gesturechange', onGestureChange as any, { passive: false });
-        canvas.addEventListener('gestureend', onGestureEnd as any, { passive: false });
+        canvas.addEventListener('gesturestart', preventGestureZoom, { passive: false });
+        canvas.addEventListener('gesturechange', preventGestureZoom, { passive: false });
+        canvas.addEventListener('gestureend', preventGestureZoom, { passive: false });
 
         return () => {
             canvas.removeEventListener('wheel', onWheel);
-            canvas.removeEventListener('gesturestart', onGestureStart as any);
-            canvas.removeEventListener('gesturechange', onGestureChange as any);
-            canvas.removeEventListener('gestureend', onGestureEnd as any);
+            canvas.removeEventListener('gesturestart', preventGestureZoom);
+            canvas.removeEventListener('gesturechange', preventGestureZoom);
+            canvas.removeEventListener('gestureend', preventGestureZoom);
         };
-    }, [stampMode]);
+    }, []);
 
     return (
         <div
@@ -374,8 +622,11 @@ export const Canvas: React.FC<CanvasProps> = ({
                 onContextMenu={(e) => e.preventDefault()}
                 onMouseDown={onMouseDown}
                 onMouseMove={onMouseMove}
-                onMouseUp={onInteractEnd}
-                onMouseLeave={onInteractEnd}
+                onMouseUp={handleInteractEnd}
+                onMouseLeave={(event) => {
+                    setHoverTooltip(null);
+                    handleInteractEnd(event);
+                }}
                 onWheel={handleWheel}
                 // Touch
                 onTouchStart={(e) => {
@@ -383,6 +634,8 @@ export const Canvas: React.FC<CanvasProps> = ({
                     const rect = canvasRef.current!.getBoundingClientRect();
                     const world = getWorldCoords(t.clientX, t.clientY, rect, camera, canvasRef.current!.width, canvasRef.current!.height);
                     onInteractStart(e, Math.floor(world.x / PIXEL_SIZE), Math.floor(world.y / PIXEL_SIZE));
+                    rebuildGridCache();
+                    requestRender();
                 }}
                 onTouchMove={(e) => {
                     const t = e.touches[0];
@@ -391,9 +644,28 @@ export const Canvas: React.FC<CanvasProps> = ({
                     const world = getWorldCoords(t.clientX, t.clientY, rect, camera, canvasRef.current!.width, canvasRef.current!.height);
                     onHover(Math.floor(world.x / PIXEL_SIZE), Math.floor(world.y / PIXEL_SIZE));
                     onInteractMove(e, Math.floor(world.x / PIXEL_SIZE), Math.floor(world.y / PIXEL_SIZE));
+                    rebuildGridCache();
+                    requestRender();
                 }}
-                onTouchEnd={onInteractEnd}
+                onTouchEnd={handleInteractEnd}
             />
+            {hoverTooltip && (
+                <div
+                    className="pointer-events-none absolute z-20 max-w-64 rounded-md border border-gray-600 bg-gray-950/95 px-3 py-2 text-left shadow-xl backdrop-blur-sm"
+                    style={{
+                        left: hoverTooltip.screenX,
+                        top: Math.max(8, hoverTooltip.screenY - 76),
+                    }}
+                >
+                    <div className="text-xs font-bold" style={{ color: hoverTooltip.color }}>
+                        {hoverTooltip.title}
+                    </div>
+                    <div className="mt-0.5 text-[10px] leading-4 text-gray-300">{hoverTooltip.description}</div>
+                    <div className="mt-1 font-mono text-[9px] text-gray-500">
+                        Tile X: {hoverTooltip.tileX} · Y: {hoverTooltip.tileY}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

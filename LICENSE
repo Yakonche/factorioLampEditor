@@ -1,0 +1,28 @@
+No License — copyright and attribution notice
+==============================================
+
+This repository is derived from the Factorio Lamp Editor project published at:
+
+    https://github.com/jojkos/factorioLampEditor
+    https://factorio-lamp-editor.vercel.app/
+
+At the time this notice was prepared, the upstream repository did not include a
+software license. This fork therefore intentionally adopts no open-source
+license. Copyright remains with the respective copyright holders. The public
+availability of source code, including on GitHub, does not by itself grant
+permission to use, copy, modify, sublicense, or distribute it.
+
+NO LICENSE IS GRANTED FOR UPSTREAM-DERIVED CODE IN THIS REPOSITORY, EXCEPT TO
+THE EXTENT REQUIRED BY APPLICABLE LAW OR EXPRESSLY AUTHORIZED IN WRITING BY THE
+RELEVANT COPYRIGHT HOLDER.
+
+Contributors retain copyright in their original additions unless they agree to
+different terms in writing. No separate license is granted for those additions
+by their inclusion in this repository.
+
+Third-party dependencies, fonts, icons, codecs, media files, and other assets
+remain governed by their own licenses. See THIRD_PARTY_NOTICES.md. Those
+third-party licenses do not grant rights to the upstream-derived application
+code.
+
+This notice is provided for clarity and is not legal advice.

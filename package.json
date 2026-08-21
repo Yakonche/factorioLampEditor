@@ -1,31 +1,108 @@
 {
-  "name": "temp_v",
+  "name": "factorio-lamp-editor",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.0",
+  "description": "Create Factorio lamp blueprints from images, slideshows, GIFs, and videos.",
+  "license": "UNLICENSED",
+  "author": "Factorio Lamp Editor contributors",
+  "keywords": [
+    "factorio",
+    "blueprint",
+    "lamp",
+    "pixel-art",
+    "gif",
+    "electron"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test:blueprint": "esbuild scripts/validate-blueprint-preview.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-preview-test.mjs && node node_modules/.cache/factorio-lamp-preview-test.mjs",
+    "test:media": "esbuild scripts/validate-media-animation.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-media-test.mjs && node node_modules/.cache/factorio-lamp-media-test.mjs",
+    "test:media-decoder": "node scripts/validate-media-decoder.cjs",
+    "test:audio": "node scripts/validate-audio-decoder.cjs",
+    "test:morning": "esbuild scripts/validate-morning-blueprint.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-morning-test.mjs && node --max-old-space-size=6144 node_modules/.cache/factorio-lamp-morning-test.mjs",
+    "test:ci": "npm run test:blueprint && npm run test:media && npm run test:audio",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "desktop:dev": "npm run build && electron .",
+    "desktop:pack": "npm run build && electron-builder --win portable",
+    "desktop:portable": "npm run build && electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.jojkos.factoriolampeditor",
+    "productName": "Factorio Lamp Editor",
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "public/favicon/android-chrome-512x512.png",
+        "to": "app-icon.png"
+      },
+      {
+        "from": "node_modules/ffmpeg-static/ffmpeg.exe",
+        "to": "ffmpeg/ffmpeg.exe"
+      },
+      {
+        "from": "node_modules/ffmpeg-static/ffmpeg.exe.LICENSE",
+        "to": "ffmpeg/COPYING.GPLv3.txt"
+      },
+      {
+        "from": "node_modules/ffmpeg-static/ffmpeg.exe.README",
+        "to": "ffmpeg/BUILD-AND-SOURCE.txt"
+      }
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "icon": "public/favicon/android-chrome-512x512.png"
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-win-${arch}-setup.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Factorio Lamp Editor"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-win-${arch}-portable.${ext}"
+    }
   },
   "dependencies": {
-    "@vercel/analytics": "^1.6.1",
+    "@fontsource/noto-sans-jp": "^5.3.0",
     "pako": "^2.1.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@fortawesome/fontawesome-free": "^7.3.1",
     "@types/node": "^24.10.1",
     "@types/pako": "^2.0.4",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.22",
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "ffmpeg-static": "^5.3.0",
     "globals": "^16.5.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",

@@ -1,15 +1,24 @@
 import React from 'react';
 
 interface HeaderProps {
-    onToggleHelp: () => void;
+    onReset: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onToggleHelp }) => {
+export const Header: React.FC<HeaderProps> = ({ onReset }) => {
     return (
         <header className="bg-gray-900 border-b border-gray-700 shadow-xl z-20 shrink-0">
             <div className="flex items-center justify-between px-4 py-3 h-16">
                 {/* Logo Section */}
                 <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onReset}
+                        className="flex h-10 items-center gap-2 rounded-lg border border-red-500/40 bg-red-950/50 px-3 text-xs font-bold text-red-200 transition-colors hover:bg-red-900/70 hover:text-white"
+                        title="Clear the entire grid and every imported frame"
+                    >
+                        <i className="fa-solid fa-trash-arrow-up" aria-hidden="true" />
+                        <span className="hidden sm:inline">Reset</span>
+                    </button>
                     <div className="bg-yellow-500/10 p-2 rounded-xl border border-yellow-500/20 shrink-0">
                         <img src="bulb.png" alt="Logo" className="w-6 h-6 object-contain" />
                     </div>
@@ -23,24 +32,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHelp }) => {
                     </div>
                 </div>
 
-                <button
-                    onClick={onToggleHelp}
-                    className="coffee-link bg-indigo-600 hover:bg-indigo-500 text-white border-transparent flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
-                >
-                    <span className="font-bold">?</span>
-                    <span className="hidden sm:inline font-bold">Help</span>
-                </button>
-
-                {/* Buy Me a Coffee */}
-                <a
-                    href="https://buymeacoffee.com/jojkos"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="coffee-link flex items-center gap-2 bg-[#FFDD00] text-black px-4 py-2 rounded-lg font-bold hover:translate-y-[-2px] transition-all shadow-md"
-                >
-                    <span className="text-xl">☕</span>
-                    <span className="hidden sm:inline">Buy Me a Coffee</span>
-                </a>
             </div>
         </header>
     );
