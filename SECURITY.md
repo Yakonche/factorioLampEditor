@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Security fixes are applied to the latest source revision and current 1.2.x desktop build. Older portable builds may not receive updates.
+Security fixes are applied to the latest source revision and current 1.0.x desktop build. Older portable builds may not receive updates.
 
 ## Reporting a vulnerability
 
