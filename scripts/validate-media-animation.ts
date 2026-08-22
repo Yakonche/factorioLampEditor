@@ -6,17 +6,22 @@ import {
     calculateActiveRoboports,
     calculateMediaAnimationPreviewLayout,
     generateMediaAnimationBlueprintData,
+    MAX_BLUEPRINT_PREVIEW_ENTITIES,
     type BlueprintEntity,
     type BlueprintJson,
+    type BlueprintPreviewEntity,
 } from '../src/utils/blueprint';
 import {
+    animationFrameAtTick,
     animationDurationTicks,
+    createAnimationTimeline,
     createAnimationUnionGrid,
     createGridAnimationFromFrames,
     evenlySpacedFrameIndices,
     selectAnimationFrames,
     type GridAnimationData,
 } from '../src/utils/mediaAnimation';
+import { buildPreviewSpatialIndex, previewEntitiesInBounds } from '../src/utils/previewSpatialIndex';
 import type { GridData } from '../src/utils/grid';
 import { POLE_DATA } from '../src/constants';
 import { PIXEL_SIGNALS } from '../src/utils/factorioSignals';
@@ -73,6 +78,33 @@ const animation: GridAnimationData = {
         };
     }),
 };
+
+const timeline = createAnimationTimeline(animation);
+assert.deepEqual(timeline.frameStartTicks, [0, 2, 5, 7]);
+assert.equal(timeline.durationTicks, 11);
+assert.deepEqual(
+    Array.from({ length: 15 }, (_, tick) => animationFrameAtTick(timeline, tick)),
+    [0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 3, 0, 0, 1, 1],
+    'Preview playback must match Factorio frame durations and loop ticks exactly.',
+);
+
+assert.equal(MAX_BLUEPRINT_PREVIEW_ENTITIES, 100_000);
+const spatialEntities: BlueprintPreviewEntity[] = Array.from({ length: 50_000 }, (_, index) => ({
+    kind: 'decider-combinator',
+    name: `ROM ${index}`,
+    description: 'Spatial-index validation entity.',
+    x: index,
+    y: index % 3,
+    width: 1,
+    height: 1,
+}));
+const spatialIndex = buildPreviewSpatialIndex(spatialEntities);
+assert.equal(spatialIndex.byTile.size, spatialEntities.length);
+const spatialCandidates = previewEntitiesInBounds(spatialIndex, 100, 0, 110, 2);
+assert.ok(spatialCandidates.length <= 64, 'A narrow viewport must not scan the complete entity list.');
+for (let x = 100; x <= 110; x++) {
+    assert.ok(spatialCandidates.some(entity => entity.x === x));
+}
 
 const union = createAnimationUnionGrid(animation);
 let minX = width;
@@ -493,7 +525,7 @@ const sampledDeltaRoms = samplingPreview.entities.filter(entity => (
     entity.kind === 'decider-combinator'
     && entity.description.startsWith('Media frame ')
 ));
-assert.ok(sampledDeltaRoms.length <= 5_000);
+assert.ok(sampledDeltaRoms.length <= MAX_BLUEPRINT_PREVIEW_ENTITIES);
 assert.ok(sampledDeltaRoms.some(entity => entity.description.endsWith('column 20')));
 assert.ok(sampledDeltaRoms.some(entity => {
     const frame = Number(entity.description.match(/^Media frame (\d+)/)?.[1] ?? 0);

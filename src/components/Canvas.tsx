@@ -14,6 +14,7 @@ import {
 } from '../constants';
 import type { StampBuffer } from '../utils/stamp';
 import type { ActivePole, ActiveRoboport, BlueprintPreviewEntity, BlueprintPreviewKind } from '../utils/blueprint';
+import { buildPreviewSpatialIndex, previewEntitiesInBounds } from '../utils/previewSpatialIndex';
 
 const PREVIEW_ENTITY_STYLE: Record<BlueprintPreviewKind, { fill: string; stroke: string; text: string }> = {
     'decider-combinator': { fill: 'rgba(6, 182, 212, 0.48)', stroke: '#67e8f9', text: 'D' },
@@ -90,24 +91,10 @@ export const Canvas: React.FC<CanvasProps> = ({
     const renderCallbackRef = useRef<() => void>(() => undefined);
     const lastMousePos = useRef<{ x: number, y: number } | null>(null);
     const [hoverTooltip, setHoverTooltip] = useState<HoverTooltip | null>(null);
-    const previewEntityByTile = useMemo(() => {
-        const result = new Map<string, BlueprintPreviewEntity>();
-        for (const entity of previewEntities) {
-            // Blueprint entities may be centred on half-cell coordinates. Map
-            // every integer editor tile touched by their real footprint so a
-            // 1×1 speaker at x.5/y.5 can still be hovered with the grid cursor.
-            const startX = Math.floor(entity.x);
-            const startY = Math.floor(entity.y);
-            const endX = Math.ceil(entity.x + entity.width);
-            const endY = Math.ceil(entity.y + entity.height);
-            for (let y = startY; y < endY; y++) {
-                for (let x = startX; x < endX; x++) {
-                    result.set(`${x},${y}`, entity);
-                }
-            }
-        }
-        return result;
-    }, [previewEntities]);
+    const previewSpatialIndex = useMemo(
+        () => buildPreviewSpatialIndex(previewEntities),
+        [previewEntities],
+    );
 
     const rebuildGridCache = useCallback(() => {
         let cache = gridCanvasRef.current;
@@ -354,7 +341,14 @@ export const Canvas: React.FC<CanvasProps> = ({
 
         // 9. Blueprint-only animation infrastructure. Coordinates and
         // footprints come from the same layout maths as the exported blueprint.
-        previewEntities.forEach((entity) => {
+        const visiblePreviewEntities = previewEntitiesInBounds(
+            previewSpatialIndex,
+            Math.floor(worldL / PIXEL_SIZE) - 1,
+            Math.floor(worldT / PIXEL_SIZE) - 1,
+            Math.ceil(worldR / PIXEL_SIZE) + 1,
+            Math.ceil(worldB / PIXEL_SIZE) + 1,
+        );
+        visiblePreviewEntities.forEach((entity) => {
             const left = entity.x * PIXEL_SIZE;
             const top = entity.y * PIXEL_SIZE;
             const width = entity.width * PIXEL_SIZE;
@@ -379,7 +373,7 @@ export const Canvas: React.FC<CanvasProps> = ({
 
         ctx.restore();
 
-    }, [camera, stampMode, stampBuffer, stampScale, autoPole, activePoles, poleType, qualityIdx, autoRoboport, activeRoboports, previewEntities]);
+    }, [camera, stampMode, stampBuffer, stampScale, autoPole, activePoles, poleType, qualityIdx, autoRoboport, activeRoboports, previewSpatialIndex]);
     useEffect(() => {
         renderCallbackRef.current = render;
     }, [render]);
@@ -478,7 +472,7 @@ export const Canvas: React.FC<CanvasProps> = ({
             const gy = Math.floor(world.y / PIXEL_SIZE);
             onHover(gx, gy);
 
-            const previewEntity = previewEntityByTile.get(`${gx},${gy}`);
+            const previewEntity = previewSpatialIndex.byTile.get(`${gx},${gy}`);
             const roboport = !previewEntity && autoRoboport
                 ? activeRoboports?.find(candidate => (
                     gx >= candidate.x && gx < candidate.x + ROBOPORT_SIZE

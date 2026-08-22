@@ -38,6 +38,7 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 - Régler les FPS, la limite de frames, les dimensions, le mode couleur, le monochrome et le filtrage des faibles variations de couleur.
 - Examiner et retirer manuellement des frames lorsque la limite est dépassée, ou appliquer une sélection automatique uniforme.
 - Lier une piste audio à un GIF ou une vidéo afin qu’ils utilisent le même compteur à 60 ticks par seconde et démarrent ensemble.
+- Lire directement sur le canevas les textes défilants, emoji animés, diaporamas, GIF et vidéos avec leurs durées exactes par frame dans Factorio. L’aperçu peut être mis en pause et parcouru image par image.
 - Suivre la génération d’une blueprint longue avec un pourcentage réel d’avancement.
 - Copier directement les blueprints ordinaires. Pour les exports exceptionnellement grands comme Bad Apple en fidélité complète, l’application évite une relecture coûteuse du presse-papiers et propose **Enregistrer la blueprint** comme solution de secours, sans nouvelle génération.
 
@@ -51,7 +52,7 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 
 Une animation longue conservant sa définition et ses FPS peut malgré tout produire une blueprint gigantesque. La génération est exécutée hors du thread de l’interface, qui reste donc utilisable et indique la progression réelle pendant la création des entités, la sérialisation JSON, la compression et l’encodage Base64.
 
-Les empreintes cyan affichées autour d’une animation constituent l’aperçu de son infrastructure de blueprint. Elles représentent les combinators, substations du contrôleur, relais du circuit, speakers et l’écran facultatif qui seront inclus dans la nouvelle blueprint. Si Windows refuse un transfert très volumineux vers le presse-papiers, l’ancien contenu est effacé et la même chaîne générée peut immédiatement être enregistrée dans un fichier texte.
+Les empreintes cyan affichées autour d’une animation constituent l’aperçu de son infrastructure de blueprint. Elles représentent les combinators, substations du contrôleur, relais du circuit, speakers et l’écran facultatif qui seront inclus dans la nouvelle blueprint. Jusqu’à 100 000 empreintes de contrôleur/audio peuvent être échantillonnées ; un index spatial ne dessine que celles présentes dans la zone visible. Si Windows refuse un transfert très volumineux vers le presse-papiers, l’ancien contenu est effacé et la même chaîne générée peut immédiatement être enregistrée dans un fichier texte.
 
 ## Capacités navigateur et application de bureau
 

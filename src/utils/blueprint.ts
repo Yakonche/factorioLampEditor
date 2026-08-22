@@ -31,6 +31,9 @@ import {
     type DecodedAudioTrack,
 } from './audio';
 
+/** Maximum sampled controller/audio footprints drawn in the editor preview. */
+export const MAX_BLUEPRINT_PREVIEW_ENTITIES = 100_000;
+
 export interface BlueprintEntity {
     entity_number: number;
     name: string;
@@ -1773,7 +1776,7 @@ export function calculateMediaAnimationPreviewLayout(
     }
 
     let relayPoleCount = 0;
-    const maximumPreviewRoms = 5_000;
+    const maximumPreviewRoms = MAX_BLUEPRINT_PREVIEW_ENTITIES;
     let previewRomCount = 0;
     let encounteredRomCount = 0;
     const previewRomStride = Math.max(1, Math.ceil(sparseRomCount / maximumPreviewRoms));

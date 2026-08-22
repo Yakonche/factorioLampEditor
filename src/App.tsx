@@ -47,23 +47,25 @@ import {
 import { generateImageBufferInWorker } from './utils/imageWorkerClient';
 import {
   animationDurationTicks,
+  animationFrameAtTick,
+  createAnimationTimeline,
   createAnimationUnionGrid,
   createGridAnimationFromFrames,
   evenlySpacedFrameIndices,
   placeDecodedAnimation,
-  renderAnimationFrame,
   selectDecodedMediaFrames,
   type DecodedMediaAnimation,
   type GridAnimationData,
   type MediaFrameThumbnail,
 } from './utils/mediaAnimation';
-import type {
-  ActivePole,
-  ActiveRoboport,
-  AnimationEntityStats,
-  AnimationControllerSide,
-  BlueprintPreviewBounds,
-  BlueprintPreviewEntity,
+import {
+  MAX_BLUEPRINT_PREVIEW_ENTITIES,
+  type ActivePole,
+  type ActiveRoboport,
+  type AnimationEntityStats,
+  type AnimationControllerSide,
+  type BlueprintPreviewBounds,
+  type BlueprintPreviewEntity,
 } from './utils/blueprint';
 import type {
   AudioInstrumentSelection,
@@ -169,6 +171,7 @@ function App() {
   const decodedMediaRef = useRef<DecodedMediaAnimation | null>(null);
   const mediaUnionGridRef = useRef<GridData>(createEmptyGrid(GRID_W, GRID_H));
   const mediaPreviewGridRef = useRef<GridData>(createEmptyGrid(GRID_W, GRID_H));
+  const mediaPreviewFrameRef = useRef(0);
   const mediaSourceFileRef = useRef<File | null>(null);
   const mediaDecodeRequestRef = useRef(0);
   const audioTrackRef = useRef<DecodedAudioTrack | null>(null);
@@ -251,7 +254,6 @@ function App() {
   const [sequenceGlobalDelaySeconds, setSequenceGlobalDelaySeconds] = useState(15);
   const [includeAnimationHelp, setIncludeAnimationHelp] = useState(false);
   const [animationControllerSide, setAnimationControllerSide] = useState<AnimationControllerSide>('top');
-  const [previewFrame, setPreviewFrame] = useState(0);
   const [mediaFpsLimit, setMediaFpsLimit] = useState(30);
   const [mediaColorMode, setMediaColorMode] = useState<MediaColorMode>('full');
   const [mediaMonochromeThreshold, setMediaMonochromeThreshold] = useState(128);
@@ -260,6 +262,8 @@ function App() {
   const [mediaAnimationInfo, setMediaAnimationInfo] = useState<MediaAnimationInfo | null>(null);
   const [mediaImporting, setMediaImporting] = useState(false);
   const [mediaPreviewFrame, setMediaPreviewFrame] = useState(0);
+  const [previewPlaying, setPreviewPlaying] = useState(true);
+  const [previewSeekVersion, setPreviewSeekVersion] = useState(0);
   const [audioNotesPerSecond, setAudioNotesPerSecond] = useState(4);
   const [audioTrackInfo, setAudioTrackInfo] = useState<DecodedAudioTrack | null>(null);
   const [audioImporting, setAudioImporting] = useState(false);
@@ -277,6 +281,21 @@ function App() {
     width: number;
     height: number;
   } | undefined>();
+
+  const resetPreviewPlayback = useCallback((autoplay = true) => {
+    mediaPreviewFrameRef.current = 0;
+    setMediaPreviewFrame(0);
+    setPreviewPlaying(autoplay);
+    setPreviewSeekVersion(value => value + 1);
+  }, []);
+
+  const seekPreviewFrame = useCallback((frame: number) => {
+    const normalizedFrame = Math.max(0, Math.round(frame));
+    mediaPreviewFrameRef.current = normalizedFrame;
+    setMediaPreviewFrame(normalizedFrame);
+    setPreviewPlaying(false);
+    setPreviewSeekVersion(value => value + 1);
+  }, []);
 
   const imageDimensions = placedImage
     ? {
@@ -315,14 +334,14 @@ function App() {
     setPendingMediaSelection(null);
     setMediaAnimationInfo(null);
     setMediaImporting(false);
-    setMediaPreviewFrame(0);
+    resetPreviewPlayback(false);
     setMediaFrameTick(value => value + 1);
     if (!keepFirstFrame) {
       gridRef.current = createEmptyGrid(GRID_W, GRID_H);
       committedGridRef.current = cloneGrid(gridRef.current);
       setTick(value => value + 1);
     }
-  }, []);
+  }, [resetPreviewPlayback]);
 
   const clearAudioTrack = useCallback(() => {
     audioDecodeRequestRef.current++;
@@ -387,8 +406,7 @@ function App() {
     });
     setSequenceVersion(value => value + 1);
     setAnimationEnabled(false);
-    setPreviewFrame(0);
-    setMediaPreviewFrame(0);
+    resetPreviewPlayback(true);
     setPendingMediaSelection(null);
     setBlueprintImageInfo({
       sourceName: decoded.sourceName,
@@ -424,7 +442,7 @@ function App() {
     });
     setStatusMsg(`${decoded.frameCount.toLocaleString()} frames loaded at ${decoded.factorioFps.toFixed(2)} FPS`);
     setTimeout(() => setStatusMsg(''), 3500);
-  }, []);
+  }, [resetPreviewPlayback]);
 
   const importMedia = useCallback(async (
     file: File,
@@ -613,16 +631,6 @@ function App() {
   }, [placedImage]);
 
   useEffect(() => {
-    const animation = mediaAnimationRef.current;
-    if (!animation || !mediaAnimationInfo) return;
-    const frame = Math.max(0, Math.min(mediaAnimationInfo.frameCount - 1, mediaPreviewFrame));
-    mediaPreviewGridRef.current = frame === 0
-      ? animation.firstFrame
-      : renderAnimationFrame(animation, frame);
-    setMediaFrameTick(value => value + 1);
-  }, [mediaAnimationInfo, mediaPreviewFrame]);
-
-  useEffect(() => {
     const source = mediaSourceFileRef.current;
     if (!source || lastDecodedFpsLimitRef.current === null || lastDecodedMaxDefinitionRef.current === null) return;
     if (
@@ -745,7 +753,7 @@ function App() {
       }
       setSequenceVersion(value => value + 1);
       setAnimationEnabled(true);
-      setPreviewFrame(sequenceFrames.length);
+      resetPreviewPlayback(true);
       setStatusMsg(`${mergedFrames.length.toLocaleString()} slideshow frames loaded.`);
       setTimeout(() => setStatusMsg(''), 3000);
     } catch (error) {
@@ -753,7 +761,7 @@ function App() {
       setStatusMsg('');
       alert(`Unable to import one of the slideshow images.\n${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [clearMediaAnimation, convertSequenceImage, maxDefinition, primaryContentCenter, sequenceFrames, sequenceGlobalDelaySeconds]);
+  }, [clearMediaAnimation, convertSequenceImage, maxDefinition, primaryContentCenter, resetPreviewPlayback, sequenceFrames, sequenceGlobalDelaySeconds]);
 
   useEffect(() => {
     if (!placedImage) return;
@@ -865,8 +873,8 @@ function App() {
       return next;
     });
     setSequenceVersion(version => version + 1);
-    setPreviewFrame(0);
-  }, []);
+    resetPreviewPlayback(true);
+  }, [resetPreviewPlayback]);
 
   useEffect(() => {
     setPlacedImage(previous => {
@@ -1088,10 +1096,64 @@ function App() {
     );
   }, [animationEnabled, sequenceFrames, sequenceVersion]);
 
+  const activePreviewAnimation = mediaAnimationInfo ? mediaAnimationRef.current : manualAnimation;
+  const activePreviewFrameCount = activePreviewAnimation
+    ? activePreviewAnimation.transitions.length + 1
+    : 0;
+
+  useEffect(() => {
+    const animation = activePreviewAnimation;
+    if (!animation) return;
+
+    const timeline = createAnimationTimeline(animation);
+    const cells = animation.firstFrame.cells.slice();
+    const previewGrid: GridData = {
+      width: animation.firstFrame.width,
+      height: animation.firstFrame.height,
+      cells,
+    };
+    let renderedFrame = 0;
+
+    const renderFrame = (requestedFrame: number) => {
+      const targetFrame = Math.max(0, Math.min(timeline.frameStartTicks.length - 1, requestedFrame));
+      if (targetFrame < renderedFrame) {
+        cells.set(animation.firstFrame.cells);
+        renderedFrame = 0;
+      }
+      for (let frame = renderedFrame; frame < targetFrame; frame++) {
+        const transition = animation.transitions[frame];
+        for (let index = 0; index < transition.indices.length; index++) {
+          cells[transition.indices[index]] = transition.colors[index];
+        }
+      }
+      renderedFrame = targetFrame;
+      mediaPreviewGridRef.current = previewGrid;
+      mediaPreviewFrameRef.current = targetFrame;
+      setMediaPreviewFrame(previous => previous === targetFrame ? previous : targetFrame);
+      setMediaFrameTick(value => value + 1);
+    };
+
+    const initialFrame = Math.min(mediaPreviewFrameRef.current, timeline.frameStartTicks.length - 1);
+    renderFrame(initialFrame);
+    if (!previewPlaying) return;
+
+    let animationFrameRequest = 0;
+    const startedAt = performance.now();
+    const startingTick = timeline.frameStartTicks[initialFrame];
+    const advance = (now: number) => {
+      const elapsedTicks = Math.floor((now - startedAt) * 60 / 1000);
+      const targetFrame = animationFrameAtTick(timeline, startingTick + elapsedTicks);
+      if (targetFrame !== renderedFrame) renderFrame(targetFrame);
+      animationFrameRequest = requestAnimationFrame(advance);
+    };
+    animationFrameRequest = requestAnimationFrame(advance);
+    return () => cancelAnimationFrame(animationFrameRequest);
+  }, [activePreviewAnimation, previewPlaying, previewSeekVersion]);
+
   const manualUnionGrid = useMemo(() => (
     manualAnimation ? createAnimationUnionGrid(manualAnimation) : gridRef.current
   ), [manualAnimation]);
-  const hasActiveAnimation = Boolean(mediaAnimationInfo || manualAnimation);
+  const hasActiveAnimation = Boolean(activePreviewAnimation);
   const audioIncludedInCurrentComposition = Boolean(audioTrackInfo)
     && (!hasActiveAnimation || audioLinkedToAnimation);
 
@@ -1386,11 +1448,7 @@ function App() {
   const viewingMediaFrame = Boolean(mediaAnimationInfo);
   const viewingSequenceFrame = !viewingMediaFrame
     && animationEnabled
-    && previewFrame >= 0
-    && previewFrame < sequenceFrames.length;
-  const sequencePreviewGrid = viewingSequenceFrame
-    ? sequenceFrames[previewFrame].grid
-    : gridRef.current;
+    && activePreviewFrameCount > 0;
   const hasAlternateFrameLamp = useCallback((x: number, y: number) => {
     if (mediaAnimationInfo) {
       if (x < 0 || x >= GRID_W || y < 0 || y >= GRID_H) return false;
@@ -1580,8 +1638,7 @@ function App() {
         return [];
       });
       setAnimationEnabled(false);
-      setPreviewFrame(0);
-      setMediaPreviewFrame(0);
+      resetPreviewPlayback(true);
       setPlacedImage(null);
       const animationSourceName = pendingStamp.sourceName ?? 'Animated text';
       setBlueprintImageInfo({ sourceName: animationSourceName, width: destW, height: destH });
@@ -1808,9 +1865,9 @@ function App() {
       return next;
     });
     setManualFrameRemovals(new Set());
-    setPreviewFrame(0);
+    resetPreviewPlayback(true);
     setSequenceVersion(version => version + 1);
-  }, [manualFrameRemovals, maxDefinition, mediaFpsLimit, pendingMediaSelection, placeDecodedMedia]);
+  }, [manualFrameRemovals, maxDefinition, mediaFpsLimit, pendingMediaSelection, placeDecodedMedia, resetPreviewPlayback]);
 
   const cancelFrameSelection = useCallback(() => {
     if (pendingMediaSelection) {
@@ -1837,7 +1894,7 @@ function App() {
     setPendingImage(null);
     setBlueprintImageInfo(null);
     setAnimationEnabled(false);
-    setPreviewFrame(0);
+    resetPreviewPlayback(false);
     setManualFrameRemovals(new Set());
     setStampMode(null);
     setStampBuffer(null);
@@ -1853,7 +1910,7 @@ function App() {
     setTick(value => value + 1);
     setStatusMsg('Canvas reset.');
     setTimeout(() => setStatusMsg(''), 2000);
-  }, [clearAudioTrack, clearMediaAnimation]);
+  }, [clearAudioTrack, clearMediaAnimation, resetPreviewPlayback]);
 
   return (
     <div
@@ -1893,6 +1950,9 @@ function App() {
               <div className="pointer-events-none absolute right-4 top-16 z-10 max-w-72 rounded border border-cyan-400/30 bg-gray-950/85 px-3 py-2 text-[9px] leading-4 text-cyan-100 shadow-lg backdrop-blur-sm">
                 <strong className="block uppercase tracking-wider text-cyan-300">Blueprint controller preview</strong>
                 These footprints are the combinators, controller substations, relays, speakers, and optional display that will be exported with the current animation.
+                <span className="mt-1 block text-cyan-300/80">
+                  {animationPreviewEntities.length.toLocaleString()} shown · spatially culled · up to {MAX_BLUEPRINT_PREVIEW_ENTITIES.toLocaleString()} sampled ROM/audio footprints
+                </span>
               </div>
             )}
 
@@ -1902,9 +1962,32 @@ function App() {
               </div>
             )}
 
+            {hasActiveAnimation && (
+              <div className={`absolute left-4 z-20 flex items-center gap-2 rounded-lg border border-cyan-400/30 bg-gray-950/90 px-2 py-1.5 text-[10px] text-cyan-100 shadow-lg backdrop-blur-sm ${stampMode ? 'top-14' : 'top-4'}`}>
+                <button
+                  type="button"
+                  onClick={() => setPreviewPlaying(playing => !playing)}
+                  className="flex h-7 w-7 items-center justify-center rounded border border-cyan-400/30 bg-cyan-950 text-cyan-200 transition-colors hover:bg-cyan-900"
+                  title={previewPlaying ? 'Pause real-time preview' : 'Play real-time preview'}
+                  aria-label={previewPlaying ? 'Pause real-time preview' : 'Play real-time preview'}
+                  aria-pressed={previewPlaying}
+                >
+                  <i className={`fa-solid ${previewPlaying ? 'fa-pause' : 'fa-play'}`} aria-hidden="true"></i>
+                </button>
+                <span>
+                  <strong className="block uppercase tracking-wider text-cyan-300">
+                    {previewPlaying ? 'Real-time preview' : 'Preview paused'}
+                  </strong>
+                  <span className="font-mono text-cyan-100/75">
+                    Frame {Math.min(mediaPreviewFrame + 1, activePreviewFrameCount)} / {activePreviewFrameCount} · 60 ticks/s
+                  </span>
+                </span>
+              </div>
+            )}
+
             <Canvas
-              gridData={viewingMediaFrame ? mediaPreviewGridRef.current : sequencePreviewGrid}
-              gridVersion={viewingMediaFrame ? mediaFrameTick : viewingSequenceFrame ? sequenceVersion : tick}
+              gridData={viewingMediaFrame || viewingSequenceFrame ? mediaPreviewGridRef.current : gridRef.current}
+              gridVersion={viewingMediaFrame || viewingSequenceFrame ? mediaFrameTick : tick}
               camera={camera}
               setCamera={setCamera}
               onInteractStart={onInteractStart}
@@ -1929,9 +2012,9 @@ function App() {
             {animationEnabled && !viewingMediaFrame && (
               <SequenceFrameTray
                 frames={sequenceFrameInfos}
-                activeFrame={previewFrame}
+                activeFrame={mediaPreviewFrame}
                 maxDefinition={maxDefinition}
-                onSelect={setPreviewFrame}
+                onSelect={seekPreviewFrame}
                 onRemove={removeSequenceFrame}
                 onDimensionChange={handleSequenceFrameDimensionChange}
                 onDelayChange={handleSequenceFrameDelayChange}
@@ -1979,9 +2062,9 @@ function App() {
             backgroundTile={backgroundTile}
             setBackgroundTile={setBackgroundTile}
             animationEnabled={animationEnabled}
-            setAnimationEnabled={(enabled) => {
-              setAnimationEnabled(enabled);
-              if (!enabled) setPreviewFrame(0);
+              setAnimationEnabled={(enabled) => {
+                setAnimationEnabled(enabled);
+                resetPreviewPlayback(enabled);
             }}
             onSequenceImagesUpload={handleSequenceImageUpload}
             sequenceFrameCount={sequenceFrames.length}
@@ -2004,7 +2087,7 @@ function App() {
             mediaAnimationInfo={mediaAnimationInfo ?? undefined}
             mediaImporting={mediaImporting}
             mediaPreviewFrame={mediaPreviewFrame}
-            setMediaPreviewFrame={setMediaPreviewFrame}
+            setMediaPreviewFrame={seekPreviewFrame}
             onRemoveMediaAnimation={() => clearMediaAnimation(true)}
             onAudioUpload={handleAudioUpload}
             audioNotesPerSecond={audioNotesPerSecond}

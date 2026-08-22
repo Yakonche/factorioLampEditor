@@ -38,6 +38,7 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 - Set FPS, frame limit, media dimensions, full-color/grayscale/monochrome conversion, and insignificant-color-delta filtering.
 - Inspect and remove decoded frames manually when the configured frame limit is exceeded, or use even automatic selection.
 - Link an audio track to a GIF or video so both use the same 60-tick-per-second counter and start together.
+- Play scrolling text, animated emoji, slideshows, GIFs, and videos directly on the editor canvas with their exact per-frame Factorio timing. The preview can be paused and scrubbed frame by frame.
 - Watch real blueprint-generation progress, including the current percentage, during long exports.
 - Copy ordinary blueprints directly. For exceptionally large exports such as full-fidelity Bad Apple, the desktop app avoids a costly clipboard read-back and offers a **Save Blueprint** file fallback without regenerating.
 
@@ -51,7 +52,7 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 
 Long, full-definition, full-FPS animation blueprints can still be enormous. Generation runs outside the UI thread, so the interface remains responsive and reports real progress through entity creation, JSON serialization, compression, and Base64 encoding.
 
-The cyan controller footprints shown around an animation are a blueprint infrastructure preview. They represent the combinators, controller substations, circuit relays, speakers, and optional display that will be included in the newly generated blueprint. If Windows rejects a very large clipboard transfer, the old clipboard is cleared and the same generated string can immediately be saved to a text file.
+The cyan controller footprints shown around an animation are a blueprint infrastructure preview. They represent the combinators, controller substations, circuit relays, speakers, and optional display that will be included in the newly generated blueprint. Up to 100,000 controller/audio footprints can be sampled; a spatial index draws only those inside the visible viewport. If Windows rejects a very large clipboard transfer, the old clipboard is cleared and the same generated string can immediately be saved to a text file.
 
 ## Desktop and browser capabilities
 

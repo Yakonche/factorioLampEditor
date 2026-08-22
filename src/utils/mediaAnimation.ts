@@ -42,6 +42,11 @@ export interface GridAnimationData {
     transitions: MediaFrameTransition[];
 }
 
+export interface AnimationTimeline {
+    frameStartTicks: number[];
+    durationTicks: number;
+}
+
 const normalizeDurationTicks = (value: number) => Math.max(2, Math.round(value));
 
 /** Builds the sparse animation format shared by slideshows and decoded media. */
@@ -286,6 +291,38 @@ export function renderAnimationFrame(
         height: animation.firstFrame.height,
         cells,
     };
+}
+
+/**
+ * Builds the exact Factorio timeline for a sparse animation. Frame zero lasts
+ * `firstDurationTicks`; every following transition stores the duration of the
+ * frame it reveals. Factorio advances this clock at 60 ticks per second.
+ */
+export function createAnimationTimeline(animation: GridAnimationData): AnimationTimeline {
+    const frameStartTicks = [0];
+    let elapsedTicks = normalizeDurationTicks(animation.firstDurationTicks);
+    for (const transition of animation.transitions) {
+        frameStartTicks.push(elapsedTicks);
+        elapsedTicks += normalizeDurationTicks(transition.durationTicks);
+    }
+    return {
+        frameStartTicks,
+        durationTicks: Math.max(1, elapsedTicks),
+    };
+}
+
+/** Returns the frame visible at a loop-relative Factorio tick. */
+export function animationFrameAtTick(timeline: AnimationTimeline, tick: number): number {
+    const normalizedTick = ((Math.floor(tick) % timeline.durationTicks) + timeline.durationTicks)
+        % timeline.durationTicks;
+    let low = 0;
+    let high = timeline.frameStartTicks.length - 1;
+    while (low <= high) {
+        const middle = (low + high) >> 1;
+        if (timeline.frameStartTicks[middle] <= normalizedTick) low = middle + 1;
+        else high = middle - 1;
+    }
+    return Math.max(0, high);
 }
 
 export function createAnimationUnionGrid(
