@@ -1,0 +1,93 @@
+name: Publish Windows release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to publish
+        required: true
+        default: v1.0.0
+      title:
+        description: Public release title
+        required: true
+        default: Factorio Lamp Editor 1.0.0 - First Public Release
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Check out release automation
+        uses: actions/checkout@v4
+        with:
+          path: automation
+
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          path: source
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: source
+
+      - name: Validate source
+        run: |
+          npm run lint
+          npm run test:ci
+        working-directory: source
+
+      - name: Build portable application
+        run: npm run desktop:portable
+        working-directory: source
+
+      - name: Prepare release metadata
+        id: metadata
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $version = $env:RELEASE_TAG.TrimStart("v")
+          $asset = "source/release/Factorio Lamp Editor-$version-win-x64-portable.exe"
+          $notesTemplate = "automation/docs/releases/$($env:RELEASE_TAG).md"
+
+          if (-not (Test-Path -LiteralPath $asset)) {
+            throw "Portable asset was not generated: $asset"
+          }
+          if (-not (Test-Path -LiteralPath $notesTemplate)) {
+            throw "Release notes were not found: $notesTemplate"
+          }
+
+          $sha256 = (Get-FileHash -LiteralPath $asset -Algorithm SHA256).Hash.ToLowerInvariant()
+          $notes = (Get-Content -LiteralPath $notesTemplate -Raw).Replace("{{SHA256}}", $sha256)
+          $notesPath = Join-Path $env:RUNNER_TEMP "release-notes.md"
+          Set-Content -LiteralPath $notesPath -Value $notes -NoNewline
+
+          "asset=$asset" >> $env:GITHUB_OUTPUT
+          "notes=$notesPath" >> $env:GITHUB_OUTPUT
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ASSET: ${{ steps.metadata.outputs.asset }}
+          RELEASE_NOTES: ${{ steps.metadata.outputs.notes }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_TITLE: ${{ inputs.title }}
+        run: |
+          gh release create $env:RELEASE_TAG $env:RELEASE_ASSET `
+            --repo $env:GITHUB_REPOSITORY `
+            --title $env:RELEASE_TITLE `
+            --notes-file $env:RELEASE_NOTES `
+            --verify-tag `
+            --latest
