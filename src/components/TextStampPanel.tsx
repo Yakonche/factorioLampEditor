@@ -3,6 +3,7 @@ import {
     DEFAULT_TEXT_VIEWPORT_HEIGHT,
     DEFAULT_TEXT_VIEWPORT_WIDTH,
     splitTextGraphemes,
+    type TextCharacterAnimation,
     type TextCharacterStyle,
     type TextScrollDirection,
     type TextStampOptions,
@@ -272,6 +273,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
     const { t } = useI18n();
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const contextMenuRef = React.useRef<HTMLDivElement>(null);
+    const textRef = React.useRef('');
     const [text, setText] = React.useState('');
     const [globalStyle, setGlobalStyle] = React.useState<TextCharacterStyle>({
         fontSize: 18,
@@ -279,7 +281,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
         color: initialColor,
     });
     const [characterStyles, setCharacterStyles] = React.useState<Record<number, Partial<TextCharacterStyle>>>({});
-    const [animatedCharacters, setAnimatedCharacters] = React.useState<Record<number, string[]>>({});
+    const [animatedCharacters, setAnimatedCharacters] = React.useState<Record<number, TextCharacterAnimation>>({});
     const [importedFonts, setImportedFonts] = React.useState<FontOption[]>([]);
     const [systemFonts, setSystemFonts] = React.useState<FontOption[]>([]);
     const [fontInventory, setFontInventory] = React.useState<{ state: 'loading' | 'detected' | 'fallback'; count: number }>({
@@ -392,14 +394,22 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
         };
     }, []);
 
-    const appendEmoji = (emoji: string) => {
-        setText(previous => previous + emoji);
+    const updateText = (nextText: string) => {
+        textRef.current = nextText;
+        setText(nextText);
     };
 
-    const appendAnimatedEmoji = (frames: readonly string[]) => {
-        const nextIndex = splitTextGraphemes(text).length;
-        setText(previous => previous + frames[0]);
-        setAnimatedCharacters(previous => ({ ...previous, [nextIndex]: [...frames] }));
+    const appendEmoji = (emoji: string) => {
+        updateText(textRef.current + emoji);
+    };
+
+    const appendAnimatedEmoji = (animation: TextCharacterAnimation) => {
+        const nextIndex = splitTextGraphemes(textRef.current).length;
+        updateText(textRef.current + animation.frames[0]);
+        setAnimatedCharacters(previous => ({
+            ...previous,
+            [nextIndex]: { ...animation, frames: [...animation.frames] },
+        }));
     };
 
     const importFont = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -483,7 +493,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
         const end = textarea.selectionEnd;
         const nextText = `${text.slice(0, start)}${replacement}${text.slice(end)}`;
         const caret = start + replacement.length;
-        setText(nextText);
+        updateText(nextText);
         setAnimatedCharacters({});
         setCharacterStyles({});
         setSelection({ start: caret, end: caret });
@@ -586,7 +596,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                         ref={textareaRef}
                         value={text}
                         onChange={(event) => {
-                            setText(event.target.value);
+                            updateText(event.target.value);
                             setAnimatedCharacters({});
                             setCharacterStyles({});
                             requestAnimationFrame(() => readTextareaSelection(event.target));
@@ -784,7 +794,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                         <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">Curated animated presets</p>
                         <div className="mt-2 grid grid-cols-2 gap-1">
                             {ANIMATED_EMOJIS.map(animation => (
-                                <button key={animation.label} type="button" onClick={() => appendAnimatedEmoji(animation.frames)} className="flex min-w-0 items-center gap-2 overflow-hidden rounded border border-gray-700 bg-gray-800 px-2 py-1 text-left text-[9px] text-gray-300 hover:border-fuchsia-500 hover:bg-gray-700">
+                                <button key={animation.label} type="button" onClick={() => appendAnimatedEmoji({ frames: [...animation.frames], effect: 'sequence' })} className="flex min-w-0 items-center gap-2 overflow-hidden rounded border border-gray-700 bg-gray-800 px-2 py-1 text-left text-[9px] text-gray-300 hover:border-fuchsia-500 hover:bg-gray-700">
                                     <span className="shrink-0 text-xl leading-none" style={{ fontFamily: selectedEmojiFontFamily }}>{animation.frames[0]}</span>
                                     <span className="truncate">{animation.label}</span>
                                 </button>

@@ -21,6 +21,46 @@
   background-color: #1f2937;
 }
 
+@keyframes emoji-preview-blink {
+  0%, 100% { transform: scaleY(1); opacity: 1; }
+  25%, 75% { transform: scaleY(.35); opacity: 1; }
+  50% { transform: scaleY(0); opacity: 0; }
+}
+
+@keyframes emoji-preview-pulse {
+  0%, 100% { transform: scale(.86); }
+  25%, 75% { transform: scale(1); }
+  50% { transform: scale(1.14); }
+}
+
+@keyframes emoji-preview-twinkle {
+  0%, 100% { transform: scale(.9); opacity: .72; }
+  25% { transform: scale(1.08); opacity: 1; }
+  50% { transform: scale(1); opacity: .82; }
+  75% { transform: scale(1.14); opacity: 1; }
+}
+
+.emoji-preview-blink,
+.emoji-preview-pulse,
+.emoji-preview-twinkle {
+  animation-duration: .8s;
+  animation-iteration-count: infinite;
+  animation-timing-function: steps(1, end);
+  transform-origin: center;
+}
+
+.emoji-preview-blink { animation-name: emoji-preview-blink; }
+.emoji-preview-pulse { animation-name: emoji-preview-pulse; }
+.emoji-preview-twinkle { animation-name: emoji-preview-twinkle; }
+
+@media (prefers-reduced-motion: reduce) {
+  .emoji-preview-blink,
+  .emoji-preview-pulse,
+  .emoji-preview-twinkle {
+    animation: none;
+  }
+}
+
 .toolbar-shell {
   width: 100%;
   max-height: 40vh;

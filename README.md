@@ -18,7 +18,7 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 - Draw on the grid, erase cells, import a static image, or reset the complete canvas.
 - Create text stamps with global size, color, font, imported TTF/OTF fonts, emoji, and animated emoji. Selected text can be bold, italic, or underlined, and the text field includes a complete context menu.
 - Choose consistently rendered bundled fonts, the complete system-font inventory exposed by the desktop OS, or imported TTF/OTF files. Every source remains split into monospaced and proportional groups, every menu entry previews its own typeface, and a runtime raster-legibility estimate indicates the recommended minimum size.
-- Search and filter the complete Unicode RGI emoji catalog, including supported skin-tone variants. Select the OS-native Apple or Segoe style when available, or use the bundled Noto Color Emoji style on every platform. The same style is used by static and animated emoji; animated emoji run on an independent 5 FPS clock.
+- Search and filter the complete Unicode RGI emoji catalog, including supported skin-tone variants. Select the OS-native Apple or Segoe style when available, or use the bundled Noto Color Emoji style on every platform. The same style is used by static and animated emoji; generic effects animate the original glyph around 5 FPS and close cleanly with scrolling loops.
 - Limit a text display horizontally or vertically and scroll it right-to-left, left-to-right, top-to-bottom, or bottom-to-top while keeping a one-cell empty border.
 - Switch the complete interface between English and French with the flag buttons; Factorio item names remain in English.
 - Give a text stamp a bounded display area. Oversized text becomes a scrolling animation and keeps a one-cell empty margin.
@@ -132,7 +132,7 @@ npm ci
 npm run desktop:portable
 ```
 
-The output for this version is `release/Factorio Lamp Editor-1.4.5-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
+The output for this version is `release/Factorio Lamp Editor-1.4.6-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
 
 ## Building the Linux portable application
 

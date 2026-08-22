@@ -1,6 +1,7 @@
 import React from 'react';
 import emojiDataJson from 'unicode-emoji-json/data-by-emoji.json';
 import { useI18n } from '../i18n';
+import type { TextCharacterAnimation } from '../utils/stamp';
 
 interface EmojiMetadata {
     name: string;
@@ -19,7 +20,7 @@ interface EmojiCatalogProps {
     animated?: boolean;
     fontFamily: string;
     onSelect: (emoji: string) => void;
-    onSelectAnimated?: (frames: readonly string[]) => void;
+    onSelectAnimated?: (animation: TextCharacterAnimation) => void;
 }
 
 const PAGE_SIZE = 240;
@@ -56,11 +57,13 @@ const applySkinTone = (emoji: string, tone: string, supported: boolean) => {
     return codePoints.join('');
 };
 
-const createEmojiAnimationFrames = (emoji: string, effect: EmojiAnimationEffect) => {
-    if (effect === 'twinkle') return [emoji, '✨', emoji, '💫'];
-    if (effect === 'pulse') return [emoji, '▫️', emoji, '▪️'];
-    return [emoji, '\u00a0', emoji, '\u00a0'];
-};
+const createEmojiAnimation = (
+    emoji: string,
+    effect: EmojiAnimationEffect,
+): TextCharacterAnimation => ({
+    frames: [emoji, emoji, emoji, emoji],
+    effect,
+});
 
 export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
     animated = false,
@@ -92,7 +95,7 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
     const visibleEntries = filteredEntries.slice(0, visibleCount);
     const selectEntry = (entry: EmojiEntry) => {
         const emoji = applySkinTone(entry.emoji, skinTone, entry.skin_tone_support);
-        if (animated && onSelectAnimated) onSelectAnimated(createEmojiAnimationFrames(emoji, effect));
+        if (animated && onSelectAnimated) onSelectAnimated(createEmojiAnimation(emoji, effect));
         else onSelect(emoji);
     };
 
@@ -155,7 +158,12 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
                                 aria-label={t(`Insert ${entry.name}`)}
                                 title={`${entry.name} · ${entry.group}`}
                             >
-                                <span className="block text-[22px] leading-none" style={{ fontFamily }}>{emoji}</span>
+                                <span
+                                    className={`block text-[22px] leading-none ${animated ? `emoji-preview-${effect}` : ''}`}
+                                    style={{ fontFamily }}
+                                >
+                                    {emoji}
+                                </span>
                             </button>
                         );
                     })}

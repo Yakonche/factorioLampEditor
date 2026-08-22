@@ -34,11 +34,20 @@ export interface TextCharacterStyle {
     underline?: boolean;
 }
 
+export type TextCharacterAnimationEffect = 'sequence' | 'blink' | 'twinkle' | 'pulse';
+
+export interface TextCharacterAnimation {
+    frames: string[];
+    effect?: TextCharacterAnimationEffect;
+}
+
+export type TextCharacterAnimationInput = string[] | TextCharacterAnimation;
+
 export interface TextStampOptions {
     text: string;
     defaultStyle: TextCharacterStyle;
     characterStyles?: Record<number, Partial<TextCharacterStyle>>;
-    animatedCharacters?: Record<number, string[]>;
+    animatedCharacters?: Record<number, TextCharacterAnimationInput>;
     emojiFontFamily?: string;
     /** Total display width, including the mandatory one-cell border. */
     viewportWidth?: number;
@@ -53,6 +62,75 @@ export type RenderedText = {
     width: number;
     height: number;
     cells: Uint32Array;
+};
+
+type CharacterAnimationTransform = {
+    opacity: number;
+    scaleX: number;
+    scaleY: number;
+};
+
+const IDENTITY_ANIMATION_TRANSFORM: CharacterAnimationTransform = {
+    opacity: 1,
+    scaleX: 1,
+    scaleY: 1,
+};
+
+const normalizeCharacterAnimation = (
+    animation: TextCharacterAnimationInput | undefined,
+    fallback: string,
+): Required<TextCharacterAnimation> => {
+    if (Array.isArray(animation)) {
+        return {
+            frames: animation.length ? animation : [fallback],
+            effect: 'sequence',
+        };
+    }
+    return {
+        frames: animation?.frames.length ? animation.frames : [fallback],
+        effect: animation?.effect ?? 'sequence',
+    };
+};
+
+const animationTransform = (
+    effect: TextCharacterAnimationEffect,
+    frameIndex: number,
+): CharacterAnimationTransform => {
+    if (effect === 'blink') {
+        const scaleY = [1, 0.35, 0, 0.35][frameIndex % 4];
+        return { opacity: scaleY ? 1 : 0, scaleX: 1, scaleY };
+    }
+    if (effect === 'pulse') {
+        const scale = [0.86, 1, 1.14, 1][frameIndex % 4];
+        return { opacity: 1, scaleX: scale, scaleY: scale };
+    }
+    if (effect === 'twinkle') {
+        const scale = [0.9, 1.08, 1, 1.14][frameIndex % 4];
+        const opacity = [0.72, 1, 0.82, 1][frameIndex % 4];
+        return { opacity, scaleX: scale, scaleY: scale };
+    }
+    return IDENTITY_ANIMATION_TRANSFORM;
+};
+
+const maximumAnimationScale = (effect: TextCharacterAnimationEffect) => (
+    effect === 'pulse' || effect === 'twinkle' ? 1.14 : 1
+);
+
+export const animationFrameIndexForTimelineStep = (
+    frameIndex: number,
+    frameCount: number,
+    animationLength: number,
+    durationTicks: number,
+    animationFrameDurationTicks: number,
+) => {
+    if (animationLength <= 1 || frameCount <= 1) return 0;
+    const normalizedFrameCount = Math.max(1, Math.round(frameCount));
+    const totalDurationTicks = normalizedFrameCount * Math.max(2, Math.round(durationTicks));
+    const animationCycleTicks = animationLength * Math.max(2, Math.round(animationFrameDurationTicks));
+    const completeCycles = Math.max(1, Math.round(totalDurationTicks / animationCycleTicks));
+    return Math.floor(
+        Math.max(0, Math.round(frameIndex)) * animationLength * completeCycles / normalizedFrameCount,
+    ) % animationLength;
 };
 
 const quoteFontFamily = (family: string) => `"${family.replace(/["\\]/g, '')}"`;
@@ -105,17 +183,23 @@ const renderStyledText = (
         leftBearing: number;
         ascent: number;
         descent: number;
+        glyphAscent: number;
+        glyphDescent: number;
+        transform: CharacterAnimationTransform;
     }[][] = [[]];
     graphemes.forEach((originalGrapheme, graphemeIndex) => {
         if (originalGrapheme === '\n') {
             lines.push([]);
             return;
         }
-        const animation = options.animatedCharacters?.[graphemeIndex];
-        const variants = animation?.length ? animation : [originalGrapheme];
-        const grapheme = animation?.length
-            ? variants[animationIndex % variants.length]
-            : originalGrapheme;
+        const animation = normalizeCharacterAnimation(
+            options.animatedCharacters?.[graphemeIndex],
+            originalGrapheme,
+        );
+        const variants = animation.frames;
+        const grapheme = variants[animationIndex % variants.length];
+        const transform = animationTransform(animation.effect, animationIndex);
+        const maximumScale = maximumAnimationScale(animation.effect);
         const style = resolveStyle(options, graphemeIndex);
         const variantMetrics = variants.map(variant => {
             measurementContext.font = fontDeclaration(style, variant, options.emojiFontFamily);
@@ -131,15 +215,15 @@ const renderStyledText = (
             };
         });
         const selectedMetrics = variantMetrics.find(metrics => metrics.variant === grapheme) ?? variantMetrics[0];
-        const width = Math.max(...variantMetrics.map(metrics => metrics.width));
+        const width = Math.ceil(Math.max(...variantMetrics.map(metrics => metrics.width)) * maximumScale);
         const ascent = Math.max(
             1,
-            ...variantMetrics.map(metrics => metrics.ascent),
+            ...variantMetrics.map(metrics => Math.ceil(metrics.ascent * maximumScale)),
             Math.ceil(style.fontSize * 0.9),
         );
         const descent = Math.max(
             1,
-            ...variantMetrics.map(metrics => metrics.descent),
+            ...variantMetrics.map(metrics => Math.ceil(metrics.descent * maximumScale)),
             Math.ceil(style.fontSize * 0.25),
         );
         lines[lines.length - 1].push({
@@ -150,6 +234,9 @@ const renderStyledText = (
             leftBearing: selectedMetrics.leftBearing,
             ascent,
             descent,
+            glyphAscent: selectedMetrics.ascent,
+            glyphDescent: selectedMetrics.descent,
+            transform,
         });
     });
 
@@ -178,7 +265,17 @@ const renderStyledText = (
             context.fillStyle = item.style.color;
             const centeredOffset = Math.max(0, (item.width - item.glyphWidth) / 2);
             const glyphX = x + centeredOffset + item.leftBearing;
-            context.fillText(item.grapheme, glyphX, baseline);
+            if (item.transform.opacity > 0 && item.transform.scaleX > 0 && item.transform.scaleY > 0) {
+                const glyphCenterX = glyphX + item.glyphWidth / 2;
+                const glyphCenterY = baseline - (item.glyphAscent - item.glyphDescent) / 2;
+                context.save();
+                context.globalAlpha = item.transform.opacity;
+                context.translate(glyphCenterX, glyphCenterY);
+                context.scale(item.transform.scaleX, item.transform.scaleY);
+                context.translate(-glyphCenterX, -glyphCenterY);
+                context.fillText(item.grapheme, glyphX, baseline);
+                context.restore();
+            }
             if (item.style.underline) {
                 const underlineY = Math.min(
                     height - 1,
@@ -304,7 +401,13 @@ export async function createSparseViewportAnimation(
     let previousOffset = firstOffset;
 
     for (let frameIndex = 1; frameIndex < frameCount; frameIndex++) {
-        const animationIndex = Math.floor(frameIndex * normalizedDuration / normalizedAnimationDuration);
+        const animationIndex = animationFrameIndexForTimelineStep(
+            frameIndex,
+            frameCount,
+            renderedFrames.length,
+            normalizedDuration,
+            normalizedAnimationDuration,
+        );
         const rendered = renderedFrames[animationIndex % renderedFrames.length];
         const offset = scrollOffsets(direction, frameIndex, scrollFrameCount);
         const indices: number[] = [];
@@ -452,8 +555,8 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
     graphemes.forEach((grapheme, graphemeIndex) => {
         if (grapheme === '\n') return;
         const style = resolveStyle(options, graphemeIndex);
-        const variants = options.animatedCharacters?.[graphemeIndex] ?? [grapheme];
-        variants.forEach(variant => {
+        const animation = normalizeCharacterAnimation(options.animatedCharacters?.[graphemeIndex], grapheme);
+        animation.frames.forEach(variant => {
             const descriptor = fontDeclaration(style, variant, options.emojiFontFamily);
             const loadKey = `${descriptor}\n${variant}`;
             if (!fontLoads.has(loadKey)) {
@@ -465,7 +568,9 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
 
     const animationLength = Math.max(
         1,
-        ...Object.values(options.animatedCharacters ?? {}).map(frames => Math.max(1, frames.length)),
+        ...Object.values(options.animatedCharacters ?? {}).map(animation => (
+            Math.max(1, Array.isArray(animation) ? animation.length : animation.frames.length)
+        )),
     );
     const renderedFrames = Array.from({ length: animationLength }, (_, animationIndex) => (
         renderStyledText(options, animationIndex)

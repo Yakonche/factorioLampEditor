@@ -3,6 +3,7 @@ import { createEmptyGrid } from '../src/utils/grid';
 import {
     DEFAULT_TEXT_VIEWPORT_WIDTH,
     EMOJI_ANIMATION_FRAME_TICKS,
+    animationFrameIndexForTimelineStep,
     createSparseViewportAnimation,
     placeSparseStampAnimation,
     type RenderedText,
@@ -134,16 +135,53 @@ const independentlyTimedEmoji = await createSparseViewportAnimation(
     3,
     3,
     1,
-    8,
+    32,
     3,
     'right-to-left',
     EMOJI_ANIMATION_FRAME_TICKS,
 );
 assert.ok(independentlyTimedEmoji.animation);
 assert.equal(independentlyTimedEmoji.animation.firstDurationTicks, EMOJI_ANIMATION_FRAME_TICKS);
-assert.equal(independentlyTimedEmoji.animation.transitions.length, 1);
+assert.equal(independentlyTimedEmoji.animation.transitions.length, 7);
 assert.equal(independentlyTimedEmoji.animation.transitions[0].colors[0], 2);
 assert.equal(independentlyTimedEmoji.animation.transitions[0].durationTicks, EMOJI_ANIMATION_FRAME_TICKS);
+assert.deepEqual(
+    independentlyTimedEmoji.animation.transitions.map(transition => transition.colors[0]),
+    [2, 3, 4, 1, 2, 3, 4],
+);
+assert.equal(
+    animationFrameIndexForTimelineStep(
+        32,
+        32,
+        animatedFrames.length,
+        3,
+        EMOJI_ANIMATION_FRAME_TICKS,
+    ),
+    0,
+    'The emoji clock must return to frame zero at the scrolling loop boundary.',
+);
+
+const shortScrollFrames: RenderedText[] = [1, 2, 3, 4].map(color => ({
+    width: 4,
+    height: 1,
+    cells: Uint32Array.from({ length: 4 }, () => color),
+}));
+const shortScrollEmoji = await createSparseViewportAnimation(
+    shortScrollFrames,
+    3,
+    3,
+    4,
+    4,
+    2,
+    'right-to-left',
+    EMOJI_ANIMATION_FRAME_TICKS,
+);
+assert.ok(shortScrollEmoji.animation);
+assert.deepEqual(
+    shortScrollEmoji.animation.transitions.map(transition => transition.colors[0]),
+    [2, 3, 4],
+    'Even a short overflow must animate every generic emoji frame instead of staying static.',
+);
 
 console.log(JSON.stringify({
     defaultViewportWidth: DEFAULT_TEXT_VIEWPORT_WIDTH,

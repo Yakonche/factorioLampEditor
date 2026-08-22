@@ -18,7 +18,7 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 - Dessiner sur la grille, effacer des cellules, importer une image fixe ou réinitialiser complètement le canevas.
 - Créer des tampons de texte avec une taille, une couleur et une police globales, des polices TTF/OTF importées, des emoji et des emoji animés. Une sélection peut être mise en gras, en italique ou soulignée, et le champ texte dispose d’un menu contextuel complet.
 - Choisir entre des polices intégrées au rendu identique partout, l’inventaire complet des polices exposé par l’OS dans l’application de bureau et des fichiers TTF/OTF importés. Chaque source reste divisée entre polices à chasse fixe et proportionnelles, chaque entrée prévisualise sa propre police et une estimation de lisibilité indique la taille minimale conseillée.
-- Rechercher et filtrer le catalogue Unicode RGI complet, avec les variantes de couleur de peau prises en charge. Utiliser le style Apple ou Segoe natif lorsqu’il est disponible, ou le style Noto Color Emoji intégré sur toutes les plateformes. Le même style s’applique aux emojis statiques et animés ; les emojis animés utilisent une horloge indépendante à 5 FPS.
+- Rechercher et filtrer le catalogue Unicode RGI complet, avec les variantes de couleur de peau prises en charge. Utiliser le style Apple ou Segoe natif lorsqu’il est disponible, ou le style Noto Color Emoji intégré sur toutes les plateformes. Le même style s’applique aux emojis statiques et animés ; les effets génériques animent le glyphe d’origine autour de 5 FPS et bouclent proprement avec le défilement.
 - Limiter une zone de texte horizontalement ou verticalement et la faire défiler de droite à gauche, de gauche à droite, de haut en bas ou de bas en haut, avec une bordure vide d’une case.
 - Basculer toute l’interface entre le français et l’anglais grâce aux boutons drapeaux ; les noms des items Factorio restent en anglais.
 - Définir une zone d’affichage pour un texte. Un texte trop large défile automatiquement et conserve une marge vide d’une cellule.
@@ -132,7 +132,7 @@ npm ci
 npm run desktop:portable
 ```
 
-Le résultat pour cette version est `release/Factorio Lamp Editor-1.4.5-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
+Le résultat pour cette version est `release/Factorio Lamp Editor-1.4.6-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
 
 ## Compiler l’application Linux portable
 
