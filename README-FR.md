@@ -131,7 +131,7 @@ npm ci
 npm run desktop:portable
 ```
 
-Le résultat pour cette version est `release/Factorio Lamp Editor-1.4.0-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
+Le résultat pour cette version est `release/Factorio Lamp Editor-1.4.1-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
 
 ## Compiler l’application Linux portable
 
@@ -142,7 +142,7 @@ npm ci
 npm run desktop:linux
 ```
 
-Cette commande produit une AppImage et une archive portable `tar.gz`. Depuis Windows avec WSL2 Debian disponible, `wsl.exe -- bash scripts/build-linux-wsl.sh` effectue une compilation Linux isolée sans remplacer le dossier `node_modules` Windows. L’AppImage cible les installations x64 actuelles d’Arch Linux, Kubuntu et Debian ; l’archive reste disponible lorsqu’AppImage/FUSE n’est pas utilisable.
+Cette commande produit une AppImage et une archive portable `tar.gz`. Depuis Windows avec WSL2 Debian disponible, `wsl.exe -- bash scripts/build-linux-wsl.sh` effectue une compilation Linux isolée sans remplacer le dossier `node_modules` Windows. L’AppImage utilise le toolset statique épinglé `1.0.3` d’Electron Builder (runtime AppImage `20251108`) : les systèmes FUSE 3 actuels n’ont donc plus besoin de l’ancien paquet `libfuse.so.2`/`libfuse2`. Le montage demande toujours un périphérique `/dev/fuse` fonctionnel et `fusermount3` ; l’archive `tar.gz` reste l’alternative indépendante de FUSE.
 
 ## Organisation du projet
 

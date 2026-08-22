@@ -131,7 +131,7 @@ npm ci
 npm run desktop:portable
 ```
 
-The output for this version is `release/Factorio Lamp Editor-1.4.0-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
+The output for this version is `release/Factorio Lamp Editor-1.4.1-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
 
 ## Building the Linux portable application
 
@@ -142,7 +142,7 @@ npm ci
 npm run desktop:linux
 ```
 
-This produces an AppImage and a `tar.gz` portable directory archive. From Windows with WSL2 Debian available, `wsl.exe -- bash scripts/build-linux-wsl.sh` performs an isolated Linux build without replacing the Windows `node_modules` tree. The AppImage targets current x64 Arch Linux, Kubuntu, and Debian installations; the archive remains available when AppImage/FUSE support is unavailable.
+This produces an AppImage and a `tar.gz` portable directory archive. From Windows with WSL2 Debian available, `wsl.exe -- bash scripts/build-linux-wsl.sh` performs an isolated Linux build without replacing the Windows `node_modules` tree. The AppImage uses Electron Builder's pinned static runtime toolset `1.0.3` (AppImage runtime `20251108`), so current FUSE 3 systems no longer need the legacy `libfuse.so.2`/`libfuse2` package. A working `/dev/fuse` device and `fusermount3` are still required for mounting; the `tar.gz` archive remains the FUSE-independent fallback.
 
 ## Project structure
 

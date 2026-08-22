@@ -6,11 +6,11 @@ on:
       tag:
         description: Existing version tag to publish
         required: true
-        default: v1.4.0
+        default: v1.4.1
       title:
         description: Public release title
         required: true
-        default: Factorio Lamp Editor 1.4.0 - Complete Font Discovery & Linux Portables
+        default: Factorio Lamp Editor 1.4.1 - FUSE 3 AppImage Compatibility
 
 permissions:
   contents: write

@@ -31,6 +31,7 @@ npm ci
 npm run build
 node scripts/prepare-linux-ffmpeg.cjs
 npm exec electron-builder -- --linux --x64 --publish never
+node scripts/validate-appimage-runtime.cjs
 
 app_version=$(node -p "require('./package.json').version")
 artifact_name="Factorio Lamp Editor-$app_version-linux-x86_64.AppImage"

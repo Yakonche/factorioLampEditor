@@ -1,7 +1,7 @@
 {
   "name": "factorio-lamp-editor",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Create Factorio lamp blueprints from images, slideshows, GIFs, and videos.",
   "license": "UNLICENSED",
   "author": "Factorio Lamp Editor contributors",
@@ -35,11 +35,14 @@
     "desktop:dev": "npm run build && electron .",
     "desktop:pack": "npm run build && electron-builder --win portable --publish never",
     "desktop:portable": "npm run build && electron-builder --win portable --publish never",
-    "desktop:linux": "npm run build && node scripts/prepare-linux-ffmpeg.cjs && electron-builder --linux --x64 --publish never"
+    "desktop:linux": "npm run build && node scripts/prepare-linux-ffmpeg.cjs && electron-builder --linux --x64 --publish never && node scripts/validate-appimage-runtime.cjs"
   },
   "build": {
     "appId": "com.jojkos.factoriolampeditor",
     "productName": "Factorio Lamp Editor",
+    "toolsets": {
+      "appimage": "1.0.3"
+    },
     "directories": {
       "output": "release"
     },
