@@ -1775,6 +1775,8 @@ export function calculateMediaAnimationPreviewLayout(
     let relayPoleCount = 0;
     const maximumPreviewRoms = 5_000;
     let previewRomCount = 0;
+    let encounteredRomCount = 0;
+    const previewRomStride = Math.max(1, Math.ceil(sparseRomCount / maximumPreviewRoms));
     for (const line of dynamicLines) {
         const lineLabel = verticalLines ? 'column' : 'row';
         addCombinatorPreview(
@@ -1792,7 +1794,8 @@ export function calculateMediaAnimationPreviewLayout(
             line.localLine + 0.5,
         );
         (lineTransitionIndices.get(line.localLine) ?? []).forEach((frameIndex, packedIndex) => {
-            if (previewRomCount >= maximumPreviewRoms) return;
+            const romIndex = encounteredRomCount++;
+            if (romIndex % previewRomStride !== 0 || previewRomCount >= maximumPreviewRoms) return;
             previewRomCount++;
             addCombinatorPreview(
                 'decider-combinator',
@@ -2845,13 +2848,11 @@ export function generateMediaAnimationBlueprintData(
             addWire(first, 1, second, 1);
         }
         if (pathIndex === 0) continue;
-        for (let lineIndex = 0; lineIndex < controllerSupports[pathIndex].length; lineIndex++) {
-            const first = controllerSupports[pathIndex - 1][lineIndex].entity;
-            const second = controllerSupports[pathIndex][lineIndex].entity;
-            addNeighbour(first, second.entity_number);
-            addNeighbour(second, first.entity_number);
-            addWire(first, 1, second, 1);
-        }
+        const first = controllerSupports[pathIndex - 1][0].entity;
+        const second = controllerSupports[pathIndex][0].entity;
+        addNeighbour(first, second.entity_number);
+        addNeighbour(second, first.entity_number);
+        addWire(first, 1, second, 1);
     }
     const flatControllerSupports = controllerSupports.flat();
     const nearestControllerSupport = (pathCoordinate: number, lineCoordinate: number) => (

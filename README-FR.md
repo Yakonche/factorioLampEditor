@@ -131,7 +131,7 @@ npm ci
 npm run desktop:portable
 ```
 
-Le résultat pour cette version est `release/Factorio Lamp Editor-1.1.0-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
+Le résultat pour cette version est `release/Factorio Lamp Editor-1.2.0-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
 
 ## Organisation du projet
 

@@ -3,11 +3,15 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import {
+    calculateActivePoles,
     calculateMediaAnimationPreviewLayout,
     generateMediaAnimationBlueprintData,
 } from '../src/utils/blueprint';
 import type { DecodedAudioTrack } from '../src/utils/audio';
-import type { GridAnimationData } from '../src/utils/mediaAnimation';
+import {
+    createAnimationUnionGrid,
+    type GridAnimationData,
+} from '../src/utils/mediaAnimation';
 
 const require = createRequire(import.meta.url);
 const { decodeMedia } = require(resolve('electron/media.cjs')) as {
@@ -49,15 +53,50 @@ const animation: GridAnimationData = {
     firstDurationTicks: decoded.firstDurationTicks,
     transitions: decoded.transitions,
 };
+const unionGrid = createAnimationUnionGrid(animation);
+let minX = decoded.width;
+let minY = decoded.height;
+let maxX = -1;
+let maxY = -1;
+for (let index = 0; index < unionGrid.cells.length; index++) {
+    if (!unionGrid.cells[index]) continue;
+    const x = index % decoded.width;
+    const y = Math.floor(index / decoded.width);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+}
+const activePoles = calculateActivePoles(
+    'medium-electric-pole',
+    0,
+    minX,
+    minY,
+    maxX,
+    maxY,
+    unionGrid,
+    decoded.width,
+    decoded.height,
+);
 const preview = calculateMediaAnimationPreviewLayout(
     animation,
     decoded.width,
     decoded.height,
-    [],
+    activePoles,
     [],
     'medium-electric-pole',
     false,
     'top',
+);
+const leftPreview = calculateMediaAnimationPreviewLayout(
+    animation,
+    decoded.width,
+    decoded.height,
+    activePoles,
+    [],
+    'medium-electric-pole',
+    false,
+    'left',
 );
 const dynamicLineCount = preview.stats.arithmeticCombinatorCount;
 const oldDenseDeciders = 1 + dynamicLineCount * (decoded.frameCount + 1);
@@ -71,6 +110,16 @@ console.log(JSON.stringify({
     dynamicLineCount,
     oldDenseDeciders,
     newSparseDeciders,
+    screenPoleCount: activePoles.length,
+    controllerSubstationCount: preview.stats.controllerPoleCount,
+    circuitRelayPoleCount: preview.stats.relayPoleCount,
+    sampledPreviewEntities: preview.entities.length,
+    leftController: {
+        dynamicLineCount: leftPreview.stats.arithmeticCombinatorCount,
+        deciders: leftPreview.stats.deciderCombinatorCount,
+        substations: leftPreview.stats.controllerPoleCount,
+        sampledPreviewEntities: leftPreview.entities.length,
+    },
     removedEmptyDeciders: oldDenseDeciders - newSparseDeciders,
     reductionPercent: Number(((oldDenseDeciders - newSparseDeciders) / oldDenseDeciders * 100).toFixed(2)),
     elapsedSeconds: Number(((performance.now() - startedAt) / 1000).toFixed(2)),
