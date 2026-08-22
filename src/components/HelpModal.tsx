@@ -30,8 +30,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                         <ul className="list-inside list-disc space-y-2 pl-1 text-xs text-gray-400">
                             <li>Brush, fill, erase, and pan use the B, F, E, and H shortcuts.</li>
                             <li>Imported images are centered automatically. Width and height can be edited while the link button controls proportions.</li>
-                            <li>Text stamps support grapheme-by-grapheme size, font, and color overrides, plus imported TTF/OTF fonts.</li>
-                            <li>The complete Unicode RGI emoji catalog is built in, including categories, search, skin tones, and an animation mode for every emoji. Limited display zones keep a one-cell border and become scrolling Factorio animations when needed.</li>
+                            <li>Text stamps support global size, font, and color settings, imported TTF/OTF fonts, and bold/italic/underline formatting for selected text.</li>
+                            <li>The complete Unicode RGI emoji catalog is built in, including categories, search, skin tones, and an animation mode for every emoji. Emoji animation keeps a stable 5 FPS cadence independently of scrolling.</li>
+                            <li>Limited display zones keep a one-cell border and scroll in any of four horizontal or vertical directions when needed.</li>
                             <li>Press <strong>Ctrl+Enter</strong> to create a text stamp, then click the grid to place it.</li>
                             <li>The mouse wheel zooms the canvas; <strong>+/-</strong> resize text stamps.</li>
                         </ul>

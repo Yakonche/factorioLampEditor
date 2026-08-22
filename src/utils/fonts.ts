@@ -6,6 +6,8 @@ export interface FontOption {
     label: string;
     category: FontCategory;
     source: FontSource;
+    /** Runtime raster-legibility estimate; vector fonts do not expose a true minimum size. */
+    recommendedMinSize?: number;
 }
 
 export const BUNDLED_FONT_OPTIONS: readonly FontOption[] = [

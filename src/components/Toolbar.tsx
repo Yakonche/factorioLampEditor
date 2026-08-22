@@ -21,6 +21,7 @@ import {
     type DecodedAudioTrack,
 } from '../utils/audio';
 import { TextStampPanel } from './TextStampPanel';
+import { useI18n } from '../i18n';
 
 export type ToolType = 'brush' | 'fill' | 'erase' | 'pan';
 
@@ -36,6 +37,7 @@ export interface MediaAnimationInfo {
     factorioFps: number;
     durationTicks: number;
     gifTimingRepaired?: boolean;
+    gifEmbeddedFrameCount?: number;
     resizable?: boolean;
 }
 
@@ -207,6 +209,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     leftAudioInstrument, setLeftAudioInstrument,
     rightAudioInstrument, setRightAudioInstrument,
 }) => {
+    const { t } = useI18n();
     const [showQualityDropdown, setShowQualityDropdown] = React.useState(false);
     const [sidebarWidth, setSidebarWidth] = React.useState(() => {
         if (typeof window === 'undefined') return SIDEBAR_DEFAULT_WIDTH;
@@ -294,7 +297,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2 md:gap-3">
+                <div className="flex flex-wrap gap-2">
                     {[
                         { id: 'pan', icon: 'fa-hand', label: 'Pan (H)' },
                         { id: 'brush', icon: 'fa-pencil', label: 'Brush (B)' },
@@ -304,7 +307,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         <button
                             key={tool.id}
                             onClick={() => setTool(tool.id as ToolType)}
-                            className={`aspect-square flex items-center justify-center text-xl rounded border transition-all ${currentTool === tool.id
+                            className={`flex h-9 w-9 items-center justify-center rounded border text-sm transition-all ${currentTool === tool.id
                                 ? 'bg-yellow-600 text-white border-yellow-500 transform -translate-y-[2px] shadow-sm'
                                 : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
                                 }`}
@@ -569,7 +572,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             </div>
                             {mediaAnimationInfo.gifTimingRepaired && (
                                 <p className="mt-2 rounded border border-amber-500/30 bg-amber-950/30 px-2 py-1 font-sans text-[9px] leading-4 text-amber-200">
-                                    Legacy GIF repaired: missing per-frame timing blocks were reconstructed automatically.
+                                    {t('Legacy GIF repaired: all embedded image frames were recovered and missing timing was reconstructed at 10 FPS.')}
+                                    {mediaAnimationInfo.gifEmbeddedFrameCount
+                                        ? ` ${mediaAnimationInfo.gifEmbeddedFrameCount.toLocaleString()} ${t('embedded frames found')}.`
+                                        : ''}
                                 </p>
                             )}
                             {mediaAnimationInfo.resizable && <div className="mt-2 grid grid-cols-2 gap-2 border-t border-gray-700 pt-2">

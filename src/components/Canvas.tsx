@@ -93,8 +93,15 @@ export const Canvas: React.FC<CanvasProps> = ({
     const previewEntityByTile = useMemo(() => {
         const result = new Map<string, BlueprintPreviewEntity>();
         for (const entity of previewEntities) {
-            for (let y = entity.y; y < entity.y + entity.height; y++) {
-                for (let x = entity.x; x < entity.x + entity.width; x++) {
+            // Blueprint entities may be centred on half-cell coordinates. Map
+            // every integer editor tile touched by their real footprint so a
+            // 1×1 speaker at x.5/y.5 can still be hovered with the grid cursor.
+            const startX = Math.floor(entity.x);
+            const startY = Math.floor(entity.y);
+            const endX = Math.ceil(entity.x + entity.width);
+            const endY = Math.ceil(entity.y + entity.height);
+            for (let y = startY; y < endY; y++) {
+                for (let x = startX; x < endX; x++) {
                     result.set(`${x},${y}`, entity);
                 }
             }

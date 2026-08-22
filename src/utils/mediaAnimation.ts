@@ -30,6 +30,7 @@ export interface DecodedMediaAnimation {
     transitions: MediaFrameTransition[];
     frameThumbnails: MediaFrameThumbnail[];
     gifTimingRepaired?: boolean;
+    gifEmbeddedFrameCount?: number;
     colorMode?: 'full' | 'grayscale' | 'monochrome';
     monochromeThreshold?: number;
     differenceThreshold?: number;

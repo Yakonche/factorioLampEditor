@@ -40,6 +40,7 @@ import {
   createTextStamp,
   generateImageBuffer,
   loadImage,
+  placeSparseStampAnimation,
   type StampBuffer,
   type TextStampOptions,
 } from './utils/stamp';
@@ -402,6 +403,7 @@ function App() {
       factorioFps: decoded.factorioFps,
       durationTicks: decoded.durationTicks,
       gifTimingRepaired: decoded.gifTimingRepaired,
+      gifEmbeddedFrameCount: decoded.gifEmbeddedFrameCount,
       resizable: true,
     });
     lastDecodedFpsLimitRef.current = fpsLimit;
@@ -476,11 +478,19 @@ function App() {
   }, [mediaColorMode, mediaDifferenceThreshold, mediaMonochromeThreshold, placeDecodedMedia]);
 
   const handleTextStamp = async (options: TextStampOptions) => {
-    const buffer = await createTextStamp(options);
-    if (buffer) {
-      setStampBuffer(buffer);
-      setStampMode('text');
-      setStampScale(1);
+    setStatusMsg('Preparing text stamp…');
+    try {
+      const buffer = await createTextStamp(options);
+      if (buffer) {
+        setStampBuffer(buffer);
+        setStampMode('text');
+        setStampScale(1);
+      }
+    } catch (error) {
+      console.error('Unable to create text stamp.', error);
+      alert(`Unable to create this text stamp.\n${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setStatusMsg('');
     }
   };
 
@@ -1429,7 +1439,7 @@ function App() {
     }
 
     if (stampMode && stampBuffer && lastGridPos.current) {
-      commitStamp(lastGridPos.current.x, lastGridPos.current.y);
+      void commitStamp(lastGridPos.current.x, lastGridPos.current.y);
       lastGridPos.current = null;
       return;
     }
@@ -1440,15 +1450,16 @@ function App() {
     }
   };
 
-  const commitStamp = (cx: number, cy: number) => {
-    if (!stampBuffer) return;
+  const commitStamp = async (cx: number, cy: number) => {
+    const pendingStamp = stampBuffer;
+    if (!pendingStamp) return;
 
     // Check mode
     const isText = stampMode === 'text';
 
     // Image buffer is already scaled (resampled). Text buffer is 1x and needs scaling.
-    const destW = isText ? Math.floor(stampBuffer.w * stampScale) : stampBuffer.w;
-    const destH = isText ? Math.floor(stampBuffer.h * stampScale) : stampBuffer.h;
+    const destW = isText ? Math.floor(pendingStamp.w * stampScale) : pendingStamp.w;
+    const destH = isText ? Math.floor(pendingStamp.h * stampScale) : pendingStamp.h;
 
     // Center
     const startX = cx - Math.floor(destW / 2);
@@ -1471,8 +1482,8 @@ function App() {
           }
           const srcX = isText ? Math.floor(dx / stampScale) : dx;
           const srcY = isText ? Math.floor(dy / stampScale) : dy;
-          if (srcX < 0 || srcX >= stampBuffer.w || srcY < 0 || srcY >= stampBuffer.h) continue;
-          const col = source[srcY * stampBuffer.w + srcX];
+          if (srcX < 0 || srcX >= pendingStamp.w || srcY < 0 || srcY >= pendingStamp.h) continue;
+          const col = source[srcY * pendingStamp.w + srcX];
           if (col && frame.cells[index] !== col) {
             frame.cells[index] = col;
             changed = true;
@@ -1482,17 +1493,30 @@ function App() {
       return { frame, changed };
     };
 
-    const animationFrames = isText ? stampBuffer.animationFrames : undefined;
-    if (animationFrames && animationFrames.length > 1) {
+    const stampAnimation = isText ? pendingStamp.animation : undefined;
+    if (stampAnimation) {
+      setStampMode(null);
+      setStampBuffer(null);
+      setStatusMsg('Placing animated text…');
       const baseGrid = cloneGrid(gridRef.current);
-      const grids = animationFrames.map(frame => renderStampFrame(baseGrid, frame.data).frame);
-      const animation = createGridAnimationFromFrames(
-        grids,
-        animationFrames.map(frame => frame.durationTicks),
-      );
+      const firstFrame = renderStampFrame(baseGrid, pendingStamp.data).frame;
+      const placed = await placeSparseStampAnimation(
+        pendingStamp,
+        firstFrame,
+        startX,
+        startY,
+        stampScale,
+      ).catch((error) => {
+        console.error('Unable to place animated text.', error);
+        setStatusMsg('');
+        alert(`Unable to place this animated text.\n${error instanceof Error ? error.message : String(error)}`);
+        return null;
+      });
+      if (!placed) return;
+      const animation = placed.animation;
       clearMediaAnimation(true);
       mediaAnimationRef.current = animation;
-      mediaUnionGridRef.current = createAnimationUnionGrid(animation);
+      mediaUnionGridRef.current = placed.unionGrid;
       mediaPreviewGridRef.current = animation.firstFrame;
       gridRef.current = animation.firstFrame;
       committedGridRef.current = cloneGrid(gridRef.current);
@@ -1514,10 +1538,10 @@ function App() {
         sourceHeight: destH,
         width: destW,
         height: destH,
-        sampledFrameCount: animationFrames.length,
+        sampledFrameCount: stampAnimation.sourceFrameCount,
         frameCount: animation.transitions.length + 1,
-        sampledFps: animationFrames.length * 60 / durationTicks,
-        factorioFps: animationFrames.length * 60 / durationTicks,
+        sampledFps: stampAnimation.sourceFrameCount * 60 / durationTicks,
+        factorioFps: (animation.transitions.length + 1) * 60 / durationTicks,
         durationTicks,
       });
       setTick(value => value + 1);
@@ -1530,12 +1554,10 @@ function App() {
       });
       setStatusMsg(`${animation.transitions.length + 1} animated text frames created.`);
       setTimeout(() => setStatusMsg(''), 3000);
-      setStampMode(null);
-      setStampBuffer(null);
       return;
     }
 
-    const { frame, changed } = renderStampFrame(gridRef.current, stampBuffer.data);
+    const { frame, changed } = renderStampFrame(gridRef.current, pendingStamp.data);
     gridRef.current = frame;
 
     if (changed) {

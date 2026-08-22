@@ -82,6 +82,14 @@ ipcMain.handle('clipboard:write-text', (_event, text) => {
   return { length: text.length, verified: text.length <= MAX_VERIFIED_CLIPBOARD_CHARACTERS };
 });
 
+ipcMain.handle('clipboard:read-text', () => {
+  const text = clipboard.readText();
+  if (text.length > MAX_VERIFIED_CLIPBOARD_CHARACTERS) {
+    throw new RangeError('Clipboard text is too large to paste into a stamp.');
+  }
+  return text;
+});
+
 ipcMain.handle('blueprint:save-text', async (_event, request) => {
   const text = request?.text;
   if (typeof text !== 'string' || text.length > MAX_BLUEPRINT_CHARACTERS) {

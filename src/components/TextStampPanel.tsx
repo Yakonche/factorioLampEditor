@@ -1,7 +1,10 @@
 import React from 'react';
 import {
+    DEFAULT_TEXT_VIEWPORT_HEIGHT,
+    DEFAULT_TEXT_VIEWPORT_WIDTH,
     splitTextGraphemes,
     type TextCharacterStyle,
+    type TextScrollDirection,
     type TextStampOptions,
 } from '../utils/stamp';
 import {
@@ -21,6 +24,17 @@ import {
     type FontOption,
     type FontSource,
 } from '../utils/fonts';
+import {
+    DEFAULT_SCROLL_STEP_TICKS,
+    MAX_SCROLL_STEP_TICKS,
+    MIN_SCROLL_STEP_TICKS,
+    clampScrollStepTicks,
+    formatScrollTimingValue,
+    scrollCellsPerSecondToTicks,
+    scrollSecondsToTicks,
+    scrollTicksToCellsPerSecond,
+    scrollTicksToSeconds,
+} from '../utils/scrollTiming';
 import { useI18n } from '../i18n';
 
 const EmojiCatalog = React.lazy(() => import('./EmojiCatalog').then(module => ({ default: module.EmojiCatalog })));
@@ -29,6 +43,113 @@ interface TextStampPanelProps {
     initialColor: string;
     onCreate: (options: TextStampOptions) => void;
 }
+
+interface ScrollTimingInputProps {
+    label: string;
+    value: number;
+    canIncrease: boolean;
+    canDecrease: boolean;
+    increaseLabel: string;
+    decreaseLabel: string;
+    onValueChange: (value: number) => number;
+    onStep: (direction: 1 | -1) => number;
+}
+
+const ScrollTimingInput: React.FC<ScrollTimingInputProps> = ({
+    label,
+    value,
+    canIncrease,
+    canDecrease,
+    increaseLabel,
+    decreaseLabel,
+    onValueChange,
+    onStep,
+}) => {
+    const [draft, setDraft] = React.useState(() => formatScrollTimingValue(value));
+    const [focused, setFocused] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!focused) setDraft(formatScrollTimingValue(value));
+    }, [focused, value]);
+
+    const applyDraft = () => {
+        const parsed = Number(draft.replace(',', '.'));
+        const canonicalValue = draft.trim() && Number.isFinite(parsed)
+            ? onValueChange(parsed)
+            : value;
+        setDraft(formatScrollTimingValue(canonicalValue));
+    };
+
+    const step = (direction: 1 | -1) => {
+        setDraft(formatScrollTimingValue(onStep(direction)));
+    };
+
+    return (
+        <div className="text-[9px] text-gray-500">
+            <span>{label}</span>
+            <div className="mt-1 flex overflow-hidden rounded border border-gray-600 bg-gray-800 focus-within:border-blue-500">
+                <input
+                    type="text"
+                    inputMode="decimal"
+                    aria-label={label}
+                    value={draft}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => {
+                        applyDraft();
+                        setFocused(false);
+                    }}
+                    onChange={(event) => {
+                        const nextDraft = event.target.value;
+                        if (!/^\d*(?:[.,]\d*)?$/.test(nextDraft)) return;
+                        setDraft(nextDraft);
+                        const parsed = Number(nextDraft.replace(',', '.'));
+                        if (nextDraft.trim() && Number.isFinite(parsed)) onValueChange(parsed);
+                    }}
+                    onKeyDown={(event) => {
+                        if (event.key === 'ArrowUp' && canIncrease) {
+                            event.preventDefault();
+                            step(1);
+                        } else if (event.key === 'ArrowDown' && canDecrease) {
+                            event.preventDefault();
+                            step(-1);
+                        } else if (event.key === 'Enter') {
+                            event.preventDefault();
+                            event.currentTarget.blur();
+                        } else if (event.key === 'Escape') {
+                            setDraft(formatScrollTimingValue(value));
+                            event.currentTarget.blur();
+                        }
+                    }}
+                    className="min-w-0 flex-1 bg-transparent px-2 py-1 font-mono text-xs text-blue-300 outline-none"
+                />
+                <div className="flex w-6 shrink-0 flex-col border-l border-gray-600">
+                    <button
+                        type="button"
+                        aria-label={`${increaseLabel}: ${label}`}
+                        title={`${increaseLabel}: ${label}`}
+                        disabled={!canIncrease}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={() => step(1)}
+                        className="flex h-1/2 min-h-3 items-center justify-center border-b border-gray-600 text-[8px] leading-none text-gray-300 hover:bg-gray-700 hover:text-blue-200 disabled:cursor-not-allowed disabled:opacity-25"
+                    >
+                        ▲
+                    </button>
+                    <button
+                        type="button"
+                        aria-label={`${decreaseLabel}: ${label}`}
+                        title={`${decreaseLabel}: ${label}`}
+                        disabled={!canDecrease}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={() => step(-1)}
+                        className="flex h-1/2 min-h-3 items-center justify-center text-[8px] leading-none text-gray-300 hover:bg-gray-700 hover:text-blue-200 disabled:cursor-not-allowed disabled:opacity-25"
+                    >
+                        ▼
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const ANIMATED_EMOJIS = [
     { label: 'Blink', frames: ['😐', '😑', '😐', '🙂'] },
@@ -51,6 +172,7 @@ const ANIMATED_EMOJIS = [
 ] as const;
 
 const fontFingerprintCache = new Map<string, string>();
+const recommendedFontSizeCache = new Map<string, number>();
 
 const FONT_PROBE_TEXT = 'BESbswy 0123 @#MWil';
 const EMOJI_PROBE_TEXT = '😀🔥❤️🌍';
@@ -99,8 +221,57 @@ const detectFontCategory = (family: string): FontCategory => {
     return Math.abs(narrowWidth - wideWidth) < 0.5 ? 'monospace' : 'proportional';
 };
 
+/**
+ * OpenType/TrueType fonts are vector based and do not contain an authoritative
+ * minimum size. This conservative runtime estimate finds the first pixel size
+ * where capitals, x-height, punctuation, and narrow glyphs all keep a useful
+ * raster footprint in the browser's actual font renderer.
+ */
+const detectRecommendedMinimumFontSize = (family: string): number => {
+    const cached = recommendedFontSizeCache.get(family);
+    if (cached) return cached;
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return 12;
+    for (let size = 6; size <= 32; size++) {
+        context.font = `${size}px ${fontFamilyCss(family)}`;
+        const capital = context.measureText('HMW');
+        const lowercase = context.measureText('xsea');
+        const punctuation = context.measureText('.:');
+        const narrow = context.measureText('il1');
+        const capitalHeight = (capital.actualBoundingBoxAscent || 0) + (capital.actualBoundingBoxDescent || 0);
+        const lowercaseHeight = (lowercase.actualBoundingBoxAscent || 0) + (lowercase.actualBoundingBoxDescent || 0);
+        const punctuationHeight = (punctuation.actualBoundingBoxAscent || 0) + (punctuation.actualBoundingBoxDescent || 0);
+        if (
+            capitalHeight >= 7
+            && lowercaseHeight >= 5
+            && punctuationHeight >= 1
+            && narrow.width >= 3
+        ) {
+            recommendedFontSizeCache.set(family, size);
+            return size;
+        }
+    }
+    recommendedFontSizeCache.set(family, 32);
+    return 32;
+};
+
+const selectionGraphemeIndices = (value: string, start: number, end: number): number[] => {
+    if (end <= start) return [];
+    const result: number[] = [];
+    let codeUnitOffset = 0;
+    splitTextGraphemes(value).forEach((grapheme, index) => {
+        const graphemeEnd = codeUnitOffset + grapheme.length;
+        if (codeUnitOffset < end && graphemeEnd > start && grapheme !== '\n') result.push(index);
+        codeUnitOffset = graphemeEnd;
+    });
+    return result;
+};
+
 export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, onCreate }) => {
     const { t } = useI18n();
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const contextMenuRef = React.useRef<HTMLDivElement>(null);
     const [text, setText] = React.useState('');
     const [globalStyle, setGlobalStyle] = React.useState<TextCharacterStyle>({
         fontSize: 18,
@@ -109,7 +280,6 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
     });
     const [characterStyles, setCharacterStyles] = React.useState<Record<number, Partial<TextCharacterStyle>>>({});
     const [animatedCharacters, setAnimatedCharacters] = React.useState<Record<number, string[]>>({});
-    const [selectedCharacter, setSelectedCharacter] = React.useState<number | null>(null);
     const [importedFonts, setImportedFonts] = React.useState<FontOption[]>([]);
     const [systemFonts, setSystemFonts] = React.useState<FontOption[]>([]);
     const [fontInventory, setFontInventory] = React.useState<{ state: 'loading' | 'detected' | 'fallback'; count: number }>({
@@ -117,9 +287,11 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
         count: 0,
     });
     const [viewportEnabled, setViewportEnabled] = React.useState(false);
-    const [viewportWidth, setViewportWidth] = React.useState(32);
+    const [viewportWidth, setViewportWidth] = React.useState(DEFAULT_TEXT_VIEWPORT_WIDTH);
+    const [viewportHeight, setViewportHeight] = React.useState(DEFAULT_TEXT_VIEWPORT_HEIGHT);
     const [scrollEnabled, setScrollEnabled] = React.useState(true);
-    const [frameSeconds, setFrameSeconds] = React.useState(0.1);
+    const [scrollDirection, setScrollDirection] = React.useState<TextScrollDirection>('right-to-left');
+    const [frameDurationTicks, setFrameDurationTicks] = React.useState(DEFAULT_SCROLL_STEP_TICKS);
     const [fontStatus, setFontStatus] = React.useState('');
     const [emojiStyle, setEmojiStyle] = React.useState<EmojiFontStyle>('automatic');
     const [emojiAvailability, setEmojiAvailability] = React.useState<EmojiFontAvailability>({
@@ -129,22 +301,44 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
     });
     const [nativeEmojiOpen, setNativeEmojiOpen] = React.useState(false);
     const [animatedEmojiOpen, setAnimatedEmojiOpen] = React.useState(false);
+    const [selection, setSelection] = React.useState({ start: 0, end: 0 });
+    const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number } | null>(null);
 
     const platform = navigator.platform ?? navigator.userAgent ?? '';
-    const graphemes = React.useMemo(() => splitTextGraphemes(text), [text]);
-    const availableFonts = React.useMemo(() => [
-        ...BUNDLED_FONT_OPTIONS,
-        ...systemFonts,
-        ...importedFonts,
-    ], [importedFonts, systemFonts]);
+    const availableFonts = React.useMemo(() => (
+        [
+            ...BUNDLED_FONT_OPTIONS,
+            ...systemFonts,
+            ...importedFonts,
+        ].map(font => ({
+            ...font,
+            recommendedMinSize: font.recommendedMinSize ?? detectRecommendedMinimumFontSize(font.family),
+        }))
+    ), [importedFonts, systemFonts]);
     const automaticEmojiStyle = resolveAutomaticEmojiStyle(emojiAvailability, platform);
     const resolvedEmojiStyle = emojiStyle === 'automatic' ? automaticEmojiStyle : emojiStyle;
     const selectedEmojiFontFamily = emojiFontFamily(resolvedEmojiStyle);
-    const selectedOverride = selectedCharacter === null ? undefined : characterStyles[selectedCharacter];
-    const selectedStyle: TextCharacterStyle = {
-        ...globalStyle,
-        ...(selectedOverride ?? {}),
-    };
+    const verticalScroll = scrollDirection === 'top-to-bottom' || scrollDirection === 'bottom-to-top';
+    const selectedGraphemeIndices = React.useMemo(() => (
+        selectionGraphemeIndices(text, selection.start, selection.end)
+    ), [selection.end, selection.start, text]);
+
+    React.useEffect(() => {
+        if (!contextMenu) return;
+        const closeMenu = (event: PointerEvent) => {
+            if (contextMenuRef.current?.contains(event.target as Node)) return;
+            setContextMenu(null);
+        };
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setContextMenu(null);
+        };
+        window.addEventListener('pointerdown', closeMenu);
+        window.addEventListener('keydown', closeOnEscape);
+        return () => {
+            window.removeEventListener('pointerdown', closeMenu);
+            window.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [contextMenu]);
 
     React.useEffect(() => {
         let active = true;
@@ -174,6 +368,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                     label: family,
                     category: detectFontCategory(family),
                     source: 'system',
+                    recommendedMinSize: detectRecommendedMinimumFontSize(family),
                 }));
             const installedFamilies = options.map(font => font.family);
             const availability: EmojiFontAvailability = {
@@ -197,25 +392,14 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
         };
     }, []);
 
-    const updateSelectedStyle = (patch: Partial<TextCharacterStyle>) => {
-        if (selectedCharacter === null) return;
-        setCharacterStyles(previous => ({
-            ...previous,
-            [selectedCharacter]: { ...previous[selectedCharacter], ...patch },
-        }));
-    };
-
     const appendEmoji = (emoji: string) => {
-        const nextIndex = splitTextGraphemes(text).length;
         setText(previous => previous + emoji);
-        setSelectedCharacter(nextIndex);
     };
 
     const appendAnimatedEmoji = (frames: readonly string[]) => {
         const nextIndex = splitTextGraphemes(text).length;
         setText(previous => previous + frames[0]);
         setAnimatedCharacters(previous => ({ ...previous, [nextIndex]: [...frames] }));
-        setSelectedCharacter(nextIndex);
     };
 
     const importFont = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,6 +418,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                 label: cleanName,
                 category: detectFontCategory(family),
                 source: 'imported',
+                recommendedMinSize: detectRecommendedMinimumFontSize(family),
             }]);
             setGlobalStyle(previous => ({ ...previous, fontFamily: family }));
             setFontStatus(`${file.name} · ${t('Font loaded')}`);
@@ -249,10 +434,117 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
         characterStyles,
         animatedCharacters,
         emojiFontFamily: selectedEmojiFontFamily,
-        viewportWidth: viewportEnabled ? Math.max(3, viewportWidth) : undefined,
+        viewportWidth: viewportEnabled && !verticalScroll ? Math.max(3, viewportWidth) : undefined,
+        viewportHeight: viewportEnabled && verticalScroll ? Math.max(3, viewportHeight) : undefined,
         scroll: viewportEnabled && scrollEnabled,
-        frameDurationTicks: Math.max(2, Math.round(frameSeconds * 60)),
+        scrollDirection,
+        frameDurationTicks,
     });
+
+    const updateTimingFromSeconds = (seconds: number): number => {
+        const ticks = scrollSecondsToTicks(seconds);
+        setFrameDurationTicks(ticks);
+        return scrollTicksToSeconds(ticks);
+    };
+
+    const updateTimingFromTicks = (ticksValue: number): number => {
+        const ticks = clampScrollStepTicks(ticksValue);
+        setFrameDurationTicks(ticks);
+        return ticks;
+    };
+
+    const updateTimingFromSpeed = (cellsPerSecond: number): number => {
+        const ticks = scrollCellsPerSecondToTicks(cellsPerSecond);
+        setFrameDurationTicks(ticks);
+        return scrollTicksToCellsPerSecond(ticks);
+    };
+
+    const stepTiming = (
+        unit: 'seconds' | 'ticks' | 'speed',
+        direction: 1 | -1,
+    ): number => {
+        const tickDirection = unit === 'speed' ? -direction : direction;
+        const ticks = clampScrollStepTicks(frameDurationTicks + tickDirection);
+        setFrameDurationTicks(ticks);
+        if (unit === 'seconds') return scrollTicksToSeconds(ticks);
+        if (unit === 'speed') return scrollTicksToCellsPerSecond(ticks);
+        return ticks;
+    };
+
+    const readTextareaSelection = (textarea = textareaRef.current) => {
+        if (!textarea) return;
+        setSelection({ start: textarea.selectionStart, end: textarea.selectionEnd });
+    };
+
+    const replaceSelectedText = (replacement: string) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const nextText = `${text.slice(0, start)}${replacement}${text.slice(end)}`;
+        const caret = start + replacement.length;
+        setText(nextText);
+        setAnimatedCharacters({});
+        setCharacterStyles({});
+        setSelection({ start: caret, end: caret });
+        setContextMenu(null);
+        requestAnimationFrame(() => {
+            textarea.focus();
+            textarea.setSelectionRange(caret, caret);
+        });
+    };
+
+    const copySelection = async (cut = false) => {
+        const textarea = textareaRef.current;
+        if (!textarea || textarea.selectionEnd <= textarea.selectionStart) return;
+        const selectedText = text.slice(textarea.selectionStart, textarea.selectionEnd);
+        if (window.factorioLampEditor?.copyText) await window.factorioLampEditor.copyText(selectedText);
+        else await navigator.clipboard.writeText(selectedText);
+        if (cut) replaceSelectedText('');
+        else setContextMenu(null);
+    };
+
+    const pasteFromClipboard = async () => {
+        try {
+            const clipboardText = window.factorioLampEditor?.readText
+                ? await window.factorioLampEditor.readText()
+                : await navigator.clipboard.readText();
+            replaceSelectedText(clipboardText);
+        } catch (error) {
+            console.warn('Unable to read clipboard text.', error);
+            setContextMenu(null);
+        }
+    };
+
+    const selectionStyleEnabled = (
+        property: 'fontWeight' | 'fontStyle' | 'underline',
+    ): boolean => selectedGraphemeIndices.length > 0 && selectedGraphemeIndices.every(index => {
+        const style = characterStyles[index] ?? {};
+        if (property === 'fontWeight') return (style.fontWeight ?? globalStyle.fontWeight) === 'bold';
+        if (property === 'fontStyle') return (style.fontStyle ?? globalStyle.fontStyle) === 'italic';
+        return Boolean(style.underline ?? globalStyle.underline);
+    });
+
+    const toggleSelectionStyle = (property: 'fontWeight' | 'fontStyle' | 'underline') => {
+        if (!selectedGraphemeIndices.length) return;
+        const enabled = !selectionStyleEnabled(property);
+        setCharacterStyles(previous => {
+            const next = { ...previous };
+            selectedGraphemeIndices.forEach(index => {
+                next[index] = {
+                    ...next[index],
+                    ...(property === 'fontWeight' ? { fontWeight: enabled ? 'bold' : 'normal' } : {}),
+                    ...(property === 'fontStyle' ? { fontStyle: enabled ? 'italic' : 'normal' } : {}),
+                    ...(property === 'underline' ? { underline: enabled } : {}),
+                };
+            });
+            return next;
+        });
+        requestAnimationFrame(() => {
+            textareaRef.current?.focus();
+            textareaRef.current?.setSelectionRange(selection.start, selection.end);
+        });
+    };
 
     const renderFontOptions = () => (
         (['bundled', 'system', 'imported'] as FontSource[]).flatMap(source => (
@@ -277,7 +569,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                                 value={font.family}
                                 style={{ fontFamily: fontFamilyCss(font.family) }}
                             >
-                                {font.label}
+                                {font.label} ({t('recommended min.')} {font.recommendedMinSize ?? 12} px)
                             </option>
                         ))}
                     </optgroup>
@@ -289,34 +581,103 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
     return (
         <div className="space-y-3">
             <div className="flex items-stretch gap-2">
-                <textarea
-                    value={text}
-                    onChange={(event) => {
-                        setText(event.target.value);
-                        setSelectedCharacter(null);
-                        setAnimatedCharacters({});
-                    }}
-                    placeholder={'Text\n日本語も対応'}
-                    rows={3}
-                    className="min-w-0 flex-1 resize-y rounded border border-gray-600 bg-gray-900 px-3 py-2 text-xs text-yellow-400 outline-none transition-colors focus:border-yellow-500"
-                    style={{ fontFamily: selectedEmojiFontFamily }}
-                    onKeyDown={(event) => {
-                        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                <div className="min-w-0 flex-1">
+                    <textarea
+                        ref={textareaRef}
+                        value={text}
+                        onChange={(event) => {
+                            setText(event.target.value);
+                            setAnimatedCharacters({});
+                            setCharacterStyles({});
+                            requestAnimationFrame(() => readTextareaSelection(event.target));
+                        }}
+                        onSelect={event => readTextareaSelection(event.currentTarget)}
+                        onMouseUp={event => readTextareaSelection(event.currentTarget)}
+                        onKeyUp={event => readTextareaSelection(event.currentTarget)}
+                        onContextMenu={(event) => {
                             event.preventDefault();
-                            submit();
-                        }
-                    }}
-                />
+                            readTextareaSelection(event.currentTarget);
+                            setContextMenu({ x: event.clientX, y: event.clientY });
+                        }}
+                        placeholder={t('Text\n日本語も対応')}
+                        rows={3}
+                        className="w-full resize-y rounded border border-gray-600 bg-gray-900 px-3 py-2 text-xs text-yellow-400 outline-none transition-colors focus:border-yellow-500"
+                        style={{ fontFamily: selectedEmojiFontFamily }}
+                        onKeyDown={(event) => {
+                            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                                event.preventDefault();
+                                submit();
+                            }
+                        }}
+                    />
+                    {selectedGraphemeIndices.length > 0 && (
+                        <div className="mt-1 flex items-center gap-1 rounded border border-gray-700 bg-gray-900 p-1" aria-label={t('Selected text formatting')}>
+                            <span className="mr-1 text-[9px] text-gray-500">{t('Selection')}</span>
+                            {([
+                                ['fontWeight', 'fa-bold', 'Bold'],
+                                ['fontStyle', 'fa-italic', 'Italic'],
+                                ['underline', 'fa-underline', 'Underline'],
+                            ] as const).map(([property, icon, label]) => (
+                                <button
+                                    key={property}
+                                    type="button"
+                                    aria-pressed={selectionStyleEnabled(property)}
+                                    aria-label={t(label)}
+                                    title={t(label)}
+                                    onMouseDown={event => event.preventDefault()}
+                                    onClick={() => toggleSelectionStyle(property)}
+                                    className={`flex h-7 w-7 items-center justify-center rounded border text-[10px] ${selectionStyleEnabled(property)
+                                        ? 'border-yellow-500 bg-yellow-600 text-white'
+                                        : 'border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                                >
+                                    <i className={`fa-solid ${icon}`} />
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
                 <button
                     type="button"
                     className="rounded border border-yellow-500/50 bg-yellow-600 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-yellow-500 disabled:opacity-40"
                     onClick={submit}
                     disabled={!text}
-                    title="Create text stamp (Ctrl+Enter)"
+                    title={t('Create text stamp (Ctrl+Enter)')}
                 >
-                    Create
+                    {t('Create')}
                 </button>
             </div>
+
+            {contextMenu && (
+                <div
+                    ref={contextMenuRef}
+                    role="menu"
+                    className="fixed z-[100] min-w-36 overflow-hidden rounded border border-gray-600 bg-gray-800 py-1 text-[10px] text-gray-200 shadow-2xl"
+                    style={{ left: contextMenu.x, top: contextMenu.y }}
+                >
+                    <button type="button" role="menuitem" onClick={() => void pasteFromClipboard()} className="block w-full px-3 py-1.5 text-left hover:bg-gray-700">
+                        <i className="fa-solid fa-paste mr-2" />{t('Paste')}
+                    </button>
+                    <button type="button" role="menuitem" disabled={selection.end <= selection.start} onClick={() => void copySelection()} className="block w-full px-3 py-1.5 text-left hover:bg-gray-700 disabled:opacity-40">
+                        <i className="fa-solid fa-copy mr-2" />{t('Copy')}
+                    </button>
+                    <button type="button" role="menuitem" disabled={selection.end <= selection.start} onClick={() => void copySelection(true)} className="block w-full px-3 py-1.5 text-left hover:bg-gray-700 disabled:opacity-40">
+                        <i className="fa-solid fa-scissors mr-2" />{t('Cut')}
+                    </button>
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                            textareaRef.current?.focus();
+                            textareaRef.current?.select();
+                            setSelection({ start: 0, end: text.length });
+                            setContextMenu(null);
+                        }}
+                        className="block w-full border-t border-gray-700 px-3 py-1.5 text-left hover:bg-gray-700"
+                    >
+                        {t('Select all')}
+                    </button>
+                </div>
+            )}
 
             <div className="grid grid-cols-3 gap-2 rounded-lg border border-gray-700 bg-gray-900 p-2">
                 <label className="text-[9px] font-bold text-gray-500">
@@ -388,78 +749,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                 <p className="col-span-3 text-[9px] leading-4 text-gray-500">
                     {t('Monospaced fonts keep the same width for every character and are commonly used in IDEs and terminals. Proportional fonts use a width adapted to each character.')}
                 </p>
-                <button
-                    type="button"
-                    onClick={() => setCharacterStyles({})}
-                    className="col-span-3 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-[9px] text-gray-300 hover:bg-gray-700"
-                >
-                    Apply global style to every character
-                </button>
             </div>
-
-            {graphemes.some(grapheme => grapheme !== '\n') && (
-                <div className="rounded-lg border border-gray-700 bg-gray-900 p-2">
-                    <p className="mb-2 text-[9px] font-bold uppercase tracking-wider text-gray-500">Individual character</p>
-                    <div className="mb-2 flex max-h-20 flex-wrap gap-1 overflow-y-auto">
-                        {graphemes.map((grapheme, index) => grapheme === '\n' ? null : (
-                            <button
-                                key={`${index}-${grapheme}`}
-                                type="button"
-                                onClick={() => setSelectedCharacter(index)}
-                                className={`relative min-w-8 rounded border px-2 py-1 text-sm ${selectedCharacter === index ? 'border-fuchsia-400 bg-fuchsia-900 text-white' : 'border-gray-600 bg-gray-800 text-gray-200 hover:bg-gray-700'}`}
-                                style={{ fontFamily: selectedEmojiFontFamily }}
-                                title={`Character ${index + 1}`}
-                            >
-                                {grapheme}
-                                {(characterStyles[index] || animatedCharacters[index]) && <span className="absolute right-0 top-0 h-1.5 w-1.5 rounded-full bg-fuchsia-400" />}
-                            </button>
-                        ))}
-                    </div>
-                    {selectedCharacter !== null && graphemes[selectedCharacter] !== undefined && (
-                        <div className="grid grid-cols-3 gap-2 border-t border-gray-700 pt-2">
-                            <label className="text-[9px] text-gray-500">
-                                Size
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="128"
-                                    value={selectedStyle.fontSize}
-                                    onChange={event => updateSelectedStyle({ fontSize: Math.max(1, Math.min(128, Number(event.target.value) || 1)) })}
-                                    className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-fuchsia-300"
-                                />
-                            </label>
-                            <label className="col-span-2 text-[9px] text-gray-500">
-                                Font
-                                <select
-                                    value={selectedStyle.fontFamily}
-                                    onChange={event => updateSelectedStyle({ fontFamily: event.target.value })}
-                                    className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200"
-                                    style={{ fontFamily: fontFamilyCss(selectedStyle.fontFamily) }}
-                                >
-                                    {renderFontOptions()}
-                                </select>
-                            </label>
-                            <label className="flex items-center gap-2 text-[9px] text-gray-500">
-                                Color
-                                <input type="color" value={selectedStyle.color} onChange={event => updateSelectedStyle({ color: event.target.value })} className="h-7 w-10" />
-                            </label>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setCharacterStyles(previous => {
-                                        const next = { ...previous };
-                                        delete next[selectedCharacter];
-                                        return next;
-                                    });
-                                }}
-                                className="col-span-2 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-[9px] text-gray-300 hover:bg-gray-700"
-                            >
-                                Reset this character
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
 
             <details
                 open={nativeEmojiOpen}
@@ -488,7 +778,8 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                 {animatedEmojiOpen && (
                     <>
                         <p className="mt-2 text-[9px] leading-4 text-gray-500">
-                            Every emoji can also be inserted as a real Factorio animation using the selected effect. Animated text increases blueprint size.
+                            {t('Every emoji can also be inserted as a real Factorio animation using the selected effect. Animated text increases blueprint size.')}
+                            {' '}{t('Emoji animation uses an independent 5 FPS clock, so changing the scroll speed does not accelerate it.')}
                         </p>
                         <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">Curated animated presets</p>
                         <div className="mt-2 grid grid-cols-2 gap-1">
@@ -515,25 +806,82 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
             <div className="rounded-lg border border-gray-700 bg-gray-900 p-2">
                 <label className="flex cursor-pointer items-center gap-2 text-[10px] text-gray-300">
                     <input type="checkbox" checked={viewportEnabled} onChange={event => setViewportEnabled(event.target.checked)} />
-                    Limit display width
+                    {t('Limit display area')}
                 </label>
                 {viewportEnabled && (
                     <div className="mt-2 grid grid-cols-2 gap-2">
-                        <label className="text-[9px] text-gray-500">
-                            Zone width (cells)
-                            <input type="number" min="3" max="1024" value={viewportWidth} onChange={event => setViewportWidth(Math.max(3, Math.min(1024, Number(event.target.value) || 3)))} className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-blue-300" />
+                        <label className="col-span-2 text-[9px] text-gray-500">
+                            {t('Scroll direction')}
+                            <select
+                                value={scrollDirection}
+                                onChange={event => setScrollDirection(event.target.value as TextScrollDirection)}
+                                className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-blue-300"
+                            >
+                                <option value="right-to-left">{t('Right to left')}</option>
+                                <option value="left-to-right">{t('Left to right')}</option>
+                                <option value="top-to-bottom">{t('Top to bottom')}</option>
+                                <option value="bottom-to-top">{t('Bottom to top')}</option>
+                            </select>
                         </label>
                         <label className="text-[9px] text-gray-500">
-                            Seconds / step
-                            <input type="number" min="0.034" max="60" step="0.01" value={frameSeconds} onChange={event => setFrameSeconds(Math.max(2 / 60, Math.min(60, Number(event.target.value) || 0.1)))} className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-blue-300" />
+                            {t(verticalScroll ? 'Zone height (cells)' : 'Zone width (cells)')}
+                            <input
+                                type="number"
+                                min="3"
+                                max="1024"
+                                value={verticalScroll ? viewportHeight : viewportWidth}
+                                onChange={event => {
+                                    const value = Math.max(3, Math.min(1024, Number(event.target.value) || 3));
+                                    if (verticalScroll) setViewportHeight(value);
+                                    else setViewportWidth(value);
+                                }}
+                                className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-blue-300"
+                            />
                         </label>
+                        <ScrollTimingInput
+                            label={t('Seconds / step')}
+                            value={scrollTicksToSeconds(frameDurationTicks)}
+                            canIncrease={frameDurationTicks < MAX_SCROLL_STEP_TICKS}
+                            canDecrease={frameDurationTicks > MIN_SCROLL_STEP_TICKS}
+                            increaseLabel={t('Increase')}
+                            decreaseLabel={t('Decrease')}
+                            onValueChange={updateTimingFromSeconds}
+                            onStep={direction => stepTiming('seconds', direction)}
+                        />
+                        <ScrollTimingInput
+                            label={t('Ticks / step')}
+                            value={frameDurationTicks}
+                            canIncrease={frameDurationTicks < MAX_SCROLL_STEP_TICKS}
+                            canDecrease={frameDurationTicks > MIN_SCROLL_STEP_TICKS}
+                            increaseLabel={t('Increase')}
+                            decreaseLabel={t('Decrease')}
+                            onValueChange={updateTimingFromTicks}
+                            onStep={direction => stepTiming('ticks', direction)}
+                        />
+                        <ScrollTimingInput
+                            label={t('Cells / second')}
+                            value={scrollTicksToCellsPerSecond(frameDurationTicks)}
+                            canIncrease={frameDurationTicks > MIN_SCROLL_STEP_TICKS}
+                            canDecrease={frameDurationTicks < MAX_SCROLL_STEP_TICKS}
+                            increaseLabel={t('Increase')}
+                            decreaseLabel={t('Decrease')}
+                            onValueChange={updateTimingFromSpeed}
+                            onStep={direction => stepTiming('speed', direction)}
+                        />
                         <label className="col-span-2 flex cursor-pointer items-center gap-2 text-[9px] text-gray-300">
                             <input type="checkbox" checked={scrollEnabled} onChange={event => setScrollEnabled(event.target.checked)} />
-                            Scroll horizontally when the text exceeds the zone
+                            {t('Scroll when the text exceeds the zone')}
                         </label>
+                        <p className="col-span-2 text-[9px] leading-4 text-gray-500">
+                            One step moves the text by one cell. Timing is quantized to whole Factorio ticks (60 ticks/s; minimum 2 ticks).
+                        </p>
                     </div>
                 )}
-                <p className="mt-2 text-[9px] leading-4 text-gray-500">Height follows the largest characters automatically. A one-cell empty border is kept on all four sides.</p>
+                <p className="mt-2 text-[9px] leading-4 text-gray-500">
+                    {t(verticalScroll
+                        ? 'Width follows the largest characters automatically. A one-cell empty border is kept on all four sides.'
+                        : 'Height follows the largest characters automatically. A one-cell empty border is kept on all four sides.')}
+                </p>
             </div>
         </div>
     );

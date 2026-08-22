@@ -73,6 +73,8 @@ const validateDecoded = (decoded) => {
   }, { ffmpegPath });
   validateDecoded(cat);
   assert.equal(cat.gifTimingRepaired, true);
+  assert.equal(cat.gifEmbeddedFrameCount, normalizedCat.frameCount);
+  assert.equal(cat.sampledFrameCount, normalizedCat.frameCount, 'Every embedded legacy frame must be decoded.');
   assert.ok(cat.frameCount > 100, 'cat-fucked.gif should no longer collapse to its first frame.');
 
   const morningAtFiveFps = await decodeMedia({
@@ -144,6 +146,8 @@ const validateDecoded = (decoded) => {
     repairedLegacyGif: {
       frames: cat.frameCount,
       fps: cat.factorioFps,
+      durationTicks: cat.durationTicks,
+      embeddedFrames: cat.gifEmbeddedFrameCount,
     },
     optimizedMorning: {
       dimensions: `${optimizedMorning.width}x${optimizedMorning.height}`,

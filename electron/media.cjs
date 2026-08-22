@@ -366,6 +366,7 @@ async function decodeMedia(request, binaries = {}) {
         ? decoded.sampledFrameCount * 60 / decoded.durationTicks
         : sampledFps,
       gifTimingRepaired: normalizedGif.repaired,
+      gifEmbeddedFrameCount: normalizedGif.frameCount || undefined,
       ...decoded,
     };
   } finally {

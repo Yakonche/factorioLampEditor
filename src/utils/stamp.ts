@@ -1,21 +1,37 @@
 import { emojiFontFamily } from './fonts';
+import { cloneGrid, type GridData } from './grid';
+import type { GridAnimationData, MediaFrameTransition } from './mediaAnimation';
+
+export const DEFAULT_TEXT_VIEWPORT_WIDTH = 512;
+export const DEFAULT_TEXT_VIEWPORT_HEIGHT = 64;
+export const EMOJI_ANIMATION_FRAME_TICKS = 12;
+
+export type TextScrollDirection =
+    | 'right-to-left'
+    | 'left-to-right'
+    | 'top-to-bottom'
+    | 'bottom-to-top';
 
 export interface StampBuffer {
     w: number;
     h: number;
     data: Uint32Array;
-    animationFrames?: StampAnimationFrame[];
+    animation?: StampAnimation;
 }
 
-export interface StampAnimationFrame {
-    data: Uint32Array;
-    durationTicks: number;
+export interface StampAnimation {
+    firstDurationTicks: number;
+    sourceFrameCount: number;
+    transitions: MediaFrameTransition[];
 }
 
 export interface TextCharacterStyle {
     fontSize: number;
     fontFamily: string;
     color: string;
+    fontWeight?: 'normal' | 'bold';
+    fontStyle?: 'normal' | 'italic';
+    underline?: boolean;
 }
 
 export interface TextStampOptions {
@@ -26,11 +42,14 @@ export interface TextStampOptions {
     emojiFontFamily?: string;
     /** Total display width, including the mandatory one-cell border. */
     viewportWidth?: number;
+    /** Total display height, including the mandatory one-cell border. */
+    viewportHeight?: number;
     scroll?: boolean;
+    scrollDirection?: TextScrollDirection;
     frameDurationTicks?: number;
 }
 
-type RenderedText = {
+export type RenderedText = {
     width: number;
     height: number;
     cells: Uint32Array;
@@ -45,8 +64,8 @@ const fontDeclaration = (
     selectedEmojiFontFamily = DEFAULT_EMOJI_FONT_STACK,
 ) => (
     EMOJI_GRAPHEME.test(grapheme)
-        ? `${style.fontSize}px ${selectedEmojiFontFamily}, ${quoteFontFamily(style.fontFamily)}, sans-serif`
-        : `${style.fontSize}px ${quoteFontFamily(style.fontFamily)}, ${selectedEmojiFontFamily}, sans-serif`
+        ? `${style.fontStyle ?? 'normal'} ${style.fontWeight ?? 'normal'} ${style.fontSize}px ${selectedEmojiFontFamily}, ${quoteFontFamily(style.fontFamily)}, sans-serif`
+        : `${style.fontStyle ?? 'normal'} ${style.fontWeight ?? 'normal'} ${style.fontSize}px ${quoteFontFamily(style.fontFamily)}, ${selectedEmojiFontFamily}, sans-serif`
 );
 
 export function splitTextGraphemes(text: string): string[] {
@@ -158,7 +177,21 @@ const renderStyledText = (
             context.font = fontDeclaration(item.style, item.grapheme, options.emojiFontFamily);
             context.fillStyle = item.style.color;
             const centeredOffset = Math.max(0, (item.width - item.glyphWidth) / 2);
-            context.fillText(item.grapheme, x + centeredOffset + item.leftBearing, baseline);
+            const glyphX = x + centeredOffset + item.leftBearing;
+            context.fillText(item.grapheme, glyphX, baseline);
+            if (item.style.underline) {
+                const underlineY = Math.min(
+                    height - 1,
+                    baseline + Math.max(1, Math.round(item.style.fontSize * 0.08)),
+                );
+                const underlineHeight = Math.max(1, Math.round(item.style.fontSize / 14));
+                context.fillRect(
+                    x + centeredOffset,
+                    underlineY,
+                    Math.max(1, item.glyphWidth),
+                    underlineHeight,
+                );
+            }
             x += item.width;
         });
         y += metrics.height;
@@ -184,6 +217,7 @@ const createViewportFrame = (
     width: number,
     height: number,
     horizontalOffset: number,
+    verticalOffset: number,
 ) => {
     const cells = new Uint32Array(width * height);
     const innerWidth = Math.max(1, width - 2);
@@ -192,11 +226,224 @@ const createViewportFrame = (
         for (let x = 0; x < innerWidth; x++) {
             const sourceX = horizontalOffset + x;
             if (sourceX < 0 || sourceX >= rendered.width) continue;
-            cells[(y + 1) * width + x + 1] = rendered.cells[y * rendered.width + sourceX];
+            const sourceY = verticalOffset + y;
+            if (sourceY < 0 || sourceY >= rendered.height) continue;
+            cells[(y + 1) * width + x + 1] = rendered.cells[sourceY * rendered.width + sourceX];
         }
     }
     return cells;
 };
+
+const viewportCell = (
+    rendered: RenderedText,
+    viewportWidth: number,
+    viewportHeight: number,
+    horizontalOffset: number,
+    verticalOffset: number,
+    x: number,
+    y: number,
+) => {
+    if (x === 0 || y === 0 || x >= viewportWidth - 1 || y >= viewportHeight - 1) return 0;
+    const sourceX = horizontalOffset + x - 1;
+    const sourceY = verticalOffset + y - 1;
+    if (sourceX < 0 || sourceX >= rendered.width || sourceY < 0 || sourceY >= rendered.height) return 0;
+    return rendered.cells[sourceY * rendered.width + sourceX];
+};
+
+const yieldToEventLoop = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+
+const scrollOffsets = (
+    direction: TextScrollDirection,
+    frameIndex: number,
+    scrollFrameCount: number,
+) => {
+    if (scrollFrameCount <= 1) return { horizontal: 0, vertical: 0 };
+    const forwardOffset = frameIndex % scrollFrameCount;
+    const reverseOffset = scrollFrameCount - 1 - forwardOffset;
+    if (direction === 'left-to-right') return { horizontal: reverseOffset, vertical: 0 };
+    if (direction === 'top-to-bottom') return { horizontal: 0, vertical: reverseOffset };
+    if (direction === 'bottom-to-top') return { horizontal: 0, vertical: forwardOffset };
+    return { horizontal: forwardOffset, vertical: 0 };
+};
+
+/**
+ * Builds viewport animation differences without retaining every complete frame.
+ * This keeps long scrolling text bounded by the actual pixel changes instead of
+ * viewport area × frame count.
+ */
+export async function createSparseViewportAnimation(
+    renderedFrames: readonly RenderedText[],
+    width: number,
+    height: number,
+    scrollFrameCount: number,
+    frameCount: number,
+    durationTicks: number,
+    direction: TextScrollDirection = 'right-to-left',
+    animationFrameDurationTicks = durationTicks,
+): Promise<{ data: Uint32Array; animation?: StampAnimation }> {
+    if (!renderedFrames.length || frameCount < 1) {
+        return { data: new Uint32Array(Math.max(0, width * height)) };
+    }
+
+    const normalizedDuration = Math.max(2, Math.round(durationTicks));
+    const normalizedAnimationDuration = Math.max(2, Math.round(animationFrameDurationTicks));
+    const firstRendered = renderedFrames[0];
+    const firstOffset = scrollOffsets(direction, 0, scrollFrameCount);
+    const data = createViewportFrame(
+        firstRendered,
+        width,
+        height,
+        firstOffset.horizontal,
+        firstOffset.vertical,
+    );
+    if (frameCount === 1) return { data };
+
+    const transitions: MediaFrameTransition[] = [];
+    let firstDurationTicks = normalizedDuration;
+    let previousRendered = firstRendered;
+    let previousOffset = firstOffset;
+
+    for (let frameIndex = 1; frameIndex < frameCount; frameIndex++) {
+        const animationIndex = Math.floor(frameIndex * normalizedDuration / normalizedAnimationDuration);
+        const rendered = renderedFrames[animationIndex % renderedFrames.length];
+        const offset = scrollOffsets(direction, frameIndex, scrollFrameCount);
+        const indices: number[] = [];
+        const colors: number[] = [];
+
+        for (let y = 1; y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
+                const previousColor = viewportCell(
+                    previousRendered,
+                    width,
+                    height,
+                    previousOffset.horizontal,
+                    previousOffset.vertical,
+                    x,
+                    y,
+                );
+                const color = viewportCell(
+                    rendered,
+                    width,
+                    height,
+                    offset.horizontal,
+                    offset.vertical,
+                    x,
+                    y,
+                );
+                if (color === previousColor) continue;
+                indices.push(y * width + x);
+                colors.push(color);
+            }
+        }
+
+        if (indices.length) {
+            transitions.push({
+                indices: Uint32Array.from(indices),
+                colors: Uint32Array.from(colors),
+                durationTicks: normalizedDuration,
+            });
+        } else if (transitions.length) {
+            transitions[transitions.length - 1].durationTicks += normalizedDuration;
+        } else {
+            firstDurationTicks += normalizedDuration;
+        }
+
+        previousRendered = rendered;
+        previousOffset = offset;
+        if ((frameIndex & 127) === 0) await yieldToEventLoop();
+    }
+
+    return {
+        data,
+        ...(transitions.length ? {
+            animation: {
+                firstDurationTicks,
+                sourceFrameCount: frameCount,
+                transitions,
+            },
+        } : {}),
+    };
+}
+
+/**
+ * Converts stamp-local sparse transitions to grid indices. The local transition
+ * indices are intentionally reused in place for an unclipped 1× stamp to avoid
+ * temporarily doubling the memory needed by very long scrolling text.
+ */
+export async function placeSparseStampAnimation(
+    stamp: Pick<StampBuffer, 'w' | 'h' | 'animation'>,
+    firstFrame: GridData,
+    startX: number,
+    startY: number,
+    scale: number,
+): Promise<{ animation: GridAnimationData; unionGrid: GridData }> {
+    if (!stamp.animation) throw new Error('The stamp does not contain an animation.');
+    const stampAnimation: StampAnimation = stamp.animation;
+    const stampWidth: number = stamp.w;
+    const integerScale = Math.max(1, Math.round(scale));
+    const destWidth = stampWidth * integerScale;
+    const destHeight = stamp.h * integerScale;
+    const fullyVisible = startX >= 0
+        && startY >= 0
+        && startX + destWidth <= firstFrame.width
+        && startY + destHeight <= firstFrame.height;
+    const unionGrid = cloneGrid(firstFrame);
+    const transitions: MediaFrameTransition[] = [];
+
+    for (let transitionIndex = 0; transitionIndex < stampAnimation.transitions.length; transitionIndex++) {
+        const sourceTransition: MediaFrameTransition = stampAnimation.transitions[transitionIndex];
+        if (integerScale === 1 && fullyVisible) {
+            for (let patchIndex = 0; patchIndex < sourceTransition.indices.length; patchIndex++) {
+                const localIndex: number = sourceTransition.indices[patchIndex];
+                const localX: number = localIndex % stampWidth;
+                const localY: number = Math.floor(localIndex / stampWidth);
+                const gridIndex = (startY + localY) * firstFrame.width + startX + localX;
+                sourceTransition.indices[patchIndex] = gridIndex;
+                if (sourceTransition.colors[patchIndex]) {
+                    unionGrid.cells[gridIndex] = sourceTransition.colors[patchIndex];
+                }
+            }
+            transitions.push(sourceTransition);
+        } else {
+            const indices: number[] = [];
+            const colors: number[] = [];
+            for (let patchIndex = 0; patchIndex < sourceTransition.indices.length; patchIndex++) {
+                const localIndex: number = sourceTransition.indices[patchIndex];
+                const localX: number = localIndex % stampWidth;
+                const localY: number = Math.floor(localIndex / stampWidth);
+                const color = sourceTransition.colors[patchIndex];
+                for (let offsetY = 0; offsetY < integerScale; offsetY++) {
+                    const gridY = startY + localY * integerScale + offsetY;
+                    if (gridY < 0 || gridY >= firstFrame.height) continue;
+                    for (let offsetX = 0; offsetX < integerScale; offsetX++) {
+                        const gridX: number = startX + localX * integerScale + offsetX;
+                        if (gridX < 0 || gridX >= firstFrame.width) continue;
+                        const gridIndex = gridY * firstFrame.width + gridX;
+                        indices.push(gridIndex);
+                        colors.push(color);
+                        if (color) unionGrid.cells[gridIndex] = color;
+                    }
+                }
+            }
+            transitions.push({
+                indices: Uint32Array.from(indices),
+                colors: Uint32Array.from(colors),
+                durationTicks: sourceTransition.durationTicks,
+            });
+        }
+
+        if ((transitionIndex & 63) === 63) await yieldToEventLoop();
+    }
+
+    return {
+        animation: {
+            firstFrame,
+            firstDurationTicks: stampAnimation.firstDurationTicks,
+            transitions,
+        },
+        unionGrid,
+    };
+}
 
 export async function createTextStamp(options: TextStampOptions): Promise<StampBuffer | null> {
     if (!options.text) return null;
@@ -227,29 +474,41 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
 
     const maximumContentWidth = Math.max(...renderedFrames.map(frame => frame.width));
     const maximumContentHeight = Math.max(...renderedFrames.map(frame => frame.height));
-    const width = Math.min(1024, Math.max(3, Math.round(options.viewportWidth ?? maximumContentWidth + 2)));
-    const height = Math.min(1024, maximumContentHeight + 2);
-    const maximumOffset = Math.max(0, maximumContentWidth - Math.max(1, width - 2));
+    const direction = options.scrollDirection ?? 'right-to-left';
+    const verticalScroll = direction === 'top-to-bottom' || direction === 'bottom-to-top';
+    const width = Math.min(1024, Math.max(3, Math.round(
+        verticalScroll ? maximumContentWidth + 2 : options.viewportWidth ?? maximumContentWidth + 2,
+    )));
+    const height = Math.min(1024, Math.max(3, Math.round(
+        verticalScroll ? options.viewportHeight ?? maximumContentHeight + 2 : maximumContentHeight + 2,
+    )));
+    const maximumOffset = verticalScroll
+        ? Math.max(0, maximumContentHeight - Math.max(1, height - 2))
+        : Math.max(0, maximumContentWidth - Math.max(1, width - 2));
     const scrollFrameCount = options.scroll && maximumOffset > 0 ? maximumOffset + 1 : 1;
-    const frameCount = Math.max(animationLength, scrollFrameCount);
-    const durationTicks = Math.max(2, Math.round(options.frameDurationTicks ?? 6));
-    const animationFrames: StampAnimationFrame[] = [];
-
-    for (let frameIndex = 0; frameIndex < frameCount; frameIndex++) {
-        const rendered = renderedFrames[frameIndex % renderedFrames.length];
-        const offset = scrollFrameCount > 1 ? frameIndex % scrollFrameCount : 0;
-        animationFrames.push({
-            data: createViewportFrame(rendered, width, height, offset),
-            durationTicks,
-        });
-    }
-    const hasVisiblePixel = animationFrames.some(frame => frame.data.some(Boolean));
+    const scrolling = scrollFrameCount > 1;
+    const frameCount = scrolling ? scrollFrameCount : animationLength;
+    const durationTicks = scrolling
+        ? Math.max(2, Math.round(options.frameDurationTicks ?? 6))
+        : EMOJI_ANIMATION_FRAME_TICKS;
+    const viewportAnimation = await createSparseViewportAnimation(
+        renderedFrames,
+        width,
+        height,
+        scrollFrameCount,
+        frameCount,
+        durationTicks,
+        direction,
+        EMOJI_ANIMATION_FRAME_TICKS,
+    );
+    const hasVisiblePixel = viewportAnimation.data.some(Boolean)
+        || viewportAnimation.animation?.transitions.some(transition => transition.colors.some(Boolean));
     if (!hasVisiblePixel) return null;
     return {
         w: width,
         h: height,
-        data: animationFrames[0].data,
-        ...(animationFrames.length > 1 ? { animationFrames } : {}),
+        data: viewportAnimation.data,
+        ...(viewportAnimation.animation ? { animation: viewportAnimation.animation } : {}),
     };
 }
 

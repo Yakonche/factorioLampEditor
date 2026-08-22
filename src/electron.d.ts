@@ -1,6 +1,7 @@
 interface Window {
   factorioLampEditor?: {
     copyText: (text: string) => Promise<{ length: number; verified?: boolean }>;
+    readText: () => Promise<string>;
     saveBlueprint: (text: string, suggestedName: string) => Promise<{
       canceled: boolean;
       filePath?: string;
