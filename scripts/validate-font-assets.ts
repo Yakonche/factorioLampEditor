@@ -6,8 +6,12 @@ import {
     BUNDLED_FONT_OPTIONS,
     EMOJI_FONT_STYLES,
     SYSTEM_FONT_OPTIONS,
+    emojiStyleLabel,
     emojiFontFamily,
     emojiStyleAvailable,
+    fontFamilyCss,
+    normalizeFontFamilies,
+    resolveAutomaticEmojiStyle,
 } from '../src/utils/fonts';
 
 const bundledFiles = [
@@ -46,10 +50,15 @@ assert.deepEqual(
 assert.ok(SYSTEM_FONT_OPTIONS.every(font => font.source === 'system'));
 assert.deepEqual(EMOJI_FONT_STYLES.map(style => style.id), ['automatic', 'apple', 'segoe', 'noto']);
 assert.match(emojiFontFamily('noto'), /^"Noto Color Emoji"/);
-assert.equal(emojiStyleAvailable(EMOJI_FONT_STYLES[1], 'MacIntel'), true);
-assert.equal(emojiStyleAvailable(EMOJI_FONT_STYLES[1], 'Win32'), false);
-assert.equal(emojiStyleAvailable(EMOJI_FONT_STYLES[2], 'Win32'), true);
-assert.equal(emojiStyleAvailable(EMOJI_FONT_STYLES[2], 'Linux x86_64'), false);
+const windowsEmojiAvailability = { apple: false, segoe: true, noto: true };
+const bundledOnlyEmojiAvailability = { apple: false, segoe: false, noto: true };
+assert.equal(emojiStyleAvailable(EMOJI_FONT_STYLES[1], windowsEmojiAvailability), false);
+assert.equal(emojiStyleAvailable(EMOJI_FONT_STYLES[2], windowsEmojiAvailability), true);
+assert.equal(resolveAutomaticEmojiStyle(windowsEmojiAvailability, 'Win32'), 'segoe');
+assert.equal(resolveAutomaticEmojiStyle(bundledOnlyEmojiAvailability, 'Linux x86_64'), 'noto');
+assert.equal(emojiStyleLabel('noto'), 'Noto Color Emoji (bundled)');
+assert.equal(fontFamilyCss('Space "Grotesk'), '"Space Grotesk", sans-serif');
+assert.deepEqual(normalizeFontFamilies([' Verdana ', 'arial', 'Arial', '']), ['arial', 'Verdana']);
 
 console.log(JSON.stringify({
     bundledTextFonts: BUNDLED_FONT_OPTIONS.length,

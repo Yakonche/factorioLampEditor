@@ -9,6 +9,7 @@ dist/
 dist-ssr/
 release/
 release-build-*/
+build-resources/ffmpeg/
 *.tsbuildinfo
 *.map
 

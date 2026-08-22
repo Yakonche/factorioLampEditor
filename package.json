@@ -1,7 +1,7 @@
 {
   "name": "factorio-lamp-editor",
   "private": true,
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Create Factorio lamp blueprints from images, slideshows, GIFs, and videos.",
   "license": "UNLICENSED",
   "author": "Factorio Lamp Editor contributors",
@@ -14,10 +14,11 @@
     "electron"
   ],
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22.12.0"
   },
   "type": "module",
   "main": "electron/main.cjs",
+  "desktopName": "factorio-lamp-editor",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -27,17 +28,18 @@
     "test:audio": "node scripts/validate-audio-decoder.cjs",
     "test:fonts": "esbuild scripts/validate-font-assets.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-font-test.mjs && node node_modules/.cache/factorio-lamp-font-test.mjs",
     "test:morning": "esbuild scripts/validate-morning-blueprint.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-morning-test.mjs && node --max-old-space-size=6144 node_modules/.cache/factorio-lamp-morning-test.mjs",
-    "test:ci": "npm run test:blueprint && npm run test:media && npm run test:audio && npm run test:fonts",
+    "test:system-fonts": "node scripts/validate-system-fonts.cjs",
+    "test:ci": "npm run test:blueprint && npm run test:media && npm run test:audio && npm run test:fonts && npm run test:system-fonts",
     "lint": "eslint .",
     "preview": "vite preview",
     "desktop:dev": "npm run build && electron .",
     "desktop:pack": "npm run build && electron-builder --win portable --publish never",
-    "desktop:portable": "npm run build && electron-builder --win portable --publish never"
+    "desktop:portable": "npm run build && electron-builder --win portable --publish never",
+    "desktop:linux": "npm run build && node scripts/prepare-linux-ffmpeg.cjs && electron-builder --linux --x64 --publish never"
   },
   "build": {
     "appId": "com.jojkos.factoriolampeditor",
     "productName": "Factorio Lamp Editor",
-    "electronDist": "node_modules/electron/dist",
     "directories": {
       "output": "release"
     },
@@ -52,28 +54,55 @@
         "to": "app-icon.png"
       },
       {
-        "from": "node_modules/ffmpeg-static/ffmpeg.exe",
-        "to": "ffmpeg/ffmpeg.exe"
-      },
-      {
-        "from": "node_modules/ffmpeg-static/ffmpeg.exe.LICENSE",
-        "to": "ffmpeg/COPYING.GPLv3.txt"
-      },
-      {
-        "from": "node_modules/ffmpeg-static/ffmpeg.exe.README",
-        "to": "ffmpeg/BUILD-AND-SOURCE.txt"
-      },
-      {
         "from": "public/licenses",
         "to": "licenses"
       }
     ],
     "asar": true,
+    "afterPack": "scripts/electron-builder-hooks.cjs",
     "win": {
       "target": [
         "portable"
       ],
-      "icon": "public/favicon/android-chrome-512x512.png"
+      "icon": "public/favicon/android-chrome-512x512.png",
+      "extraResources": [
+        {
+          "from": "node_modules/ffmpeg-static/ffmpeg.exe",
+          "to": "ffmpeg/ffmpeg.exe"
+        },
+        {
+          "from": "node_modules/ffmpeg-static/ffmpeg.exe.LICENSE",
+          "to": "ffmpeg/COPYING.GPLv3.txt"
+        },
+        {
+          "from": "node_modules/ffmpeg-static/ffmpeg.exe.README",
+          "to": "ffmpeg/BUILD-AND-SOURCE.txt"
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "category": "Graphics",
+      "syncDesktopName": true,
+      "icon": "public/favicon/android-chrome-512x512.png",
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}",
+      "extraResources": [
+        {
+          "from": "build-resources/ffmpeg/linux-x64/ffmpeg",
+          "to": "ffmpeg/ffmpeg"
+        },
+        {
+          "from": "build-resources/ffmpeg/linux-x64/COPYING.GPLv3.txt",
+          "to": "ffmpeg/COPYING.GPLv3.txt"
+        },
+        {
+          "from": "build-resources/ffmpeg/linux-x64/BUILD-AND-SOURCE.txt",
+          "to": "ffmpeg/BUILD-AND-SOURCE.txt"
+        }
+      ]
     },
     "nsis": {
       "artifactName": "${productName}-${version}-win-${arch}-setup.${ext}",

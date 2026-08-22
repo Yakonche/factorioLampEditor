@@ -3,6 +3,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { decodeMedia } = require('./media.cjs');
 const { decodeAudioNotes } = require('./audio.cjs');
+const { listSystemFontFamilies } = require('./fonts.cjs');
 
 let mainWindow;
 
@@ -13,7 +14,7 @@ app.commandLine.appendSwitch('js-flags', '--max-old-space-size=6144');
 
 function getFfmpegPath() {
   return app.isPackaged
-    ? path.join(process.resourcesPath, 'ffmpeg', 'ffmpeg.exe')
+    ? path.join(process.resourcesPath, 'ffmpeg', process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg')
     : require('ffmpeg-static');
 }
 
@@ -108,6 +109,8 @@ ipcMain.handle('media:decode', (_event, request) => decodeMedia(request, {
 ipcMain.handle('audio:decode-notes', (_event, request) => decodeAudioNotes(request, {
   ffmpegPath: getFfmpegPath(),
 }));
+
+ipcMain.handle('fonts:list-system', () => listSystemFontFamilies());
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);

@@ -36,6 +36,12 @@ export const SYSTEM_FONT_OPTIONS: readonly FontOption[] = [
 
 export type EmojiFontStyle = 'automatic' | 'apple' | 'segoe' | 'noto';
 
+export interface EmojiFontAvailability {
+    apple: boolean;
+    segoe: boolean;
+    noto: boolean;
+}
+
 export interface EmojiFontStyleOption {
     id: EmojiFontStyle;
     label: string;
@@ -73,13 +79,57 @@ export const emojiFontFamily = (style: EmojiFontStyle): string => (
     ?? EMOJI_FONT_STYLES[0].family
 );
 
-export const emojiStyleAvailable = (style: EmojiFontStyleOption, platform: string): boolean => {
-    if (!style.platform) return true;
+export const resolveAutomaticEmojiStyle = (
+    availability: EmojiFontAvailability,
+    platform: string,
+): Exclude<EmojiFontStyle, 'automatic'> => {
     const normalizedPlatform = platform.toLocaleLowerCase();
-    if (style.platform === 'apple') {
-        return normalizedPlatform.includes('mac')
-            || normalizedPlatform.includes('iphone')
-            || normalizedPlatform.includes('ipad');
+    const applePlatform = normalizedPlatform.includes('mac')
+        || normalizedPlatform.includes('iphone')
+        || normalizedPlatform.includes('ipad');
+    if (applePlatform && availability.apple) return 'apple';
+    if (normalizedPlatform.includes('win') && availability.segoe) return 'segoe';
+    if (availability.apple) return 'apple';
+    if (availability.segoe) return 'segoe';
+    return 'noto';
+};
+
+export const emojiStyleAvailable = (
+    style: EmojiFontStyleOption,
+    availability: EmojiFontAvailability,
+): boolean => {
+    if (style.id === 'apple') return availability.apple;
+    if (style.id === 'segoe') return availability.segoe;
+    if (style.id === 'noto') return availability.noto;
+    return true;
+};
+
+export const emojiStyleLabel = (style: Exclude<EmojiFontStyle, 'automatic'>): string => {
+    const option = EMOJI_FONT_STYLES.find(candidate => candidate.id === style);
+    if (option) return option.label;
+    return EMOJI_FONT_STYLES[3].label;
+};
+
+export const containsFontFamily = (families: readonly string[], wantedFamily: string): boolean => {
+    const normalizedWanted = wantedFamily.trim().toLocaleLowerCase();
+    return families.some(family => family.trim().toLocaleLowerCase() === normalizedWanted);
+};
+
+export const fontFamilyCss = (family: string, fallback = 'sans-serif'): string => {
+    const escapedFamily = family.replace(/["\\]/g, '');
+    return `"${escapedFamily}", ${fallback}`;
+};
+
+export const normalizeFontFamilies = (families: readonly string[]): string[] => {
+    const unique = new Map<string, string>();
+    for (const value of families) {
+        const family = value.trim().replace(/\s+/g, ' ');
+        if (!family) continue;
+        const key = family.toLocaleLowerCase();
+        if (!unique.has(key)) unique.set(key, family);
     }
-    return normalizedPlatform.includes('win');
+    return [...unique.values()].sort((left, right) => left.localeCompare(right, undefined, {
+        numeric: true,
+        sensitivity: 'base',
+    }));
 };

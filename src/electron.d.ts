@@ -22,5 +22,6 @@ interface Window {
       bytes: ArrayBuffer;
       notesPerSecond: number;
     }) => Promise<import('./utils/audio').DecodedAudioTrack>;
+    listSystemFonts: () => Promise<string[]>;
   };
 }

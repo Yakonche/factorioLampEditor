@@ -17,7 +17,7 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 
 - Dessiner sur la grille, effacer des cellules, importer une image fixe ou réinitialiser complètement le canevas.
 - Créer des tampons de texte avec des réglages globaux et des tailles, couleurs et polices différentes pour chaque caractère.
-- Choisir entre des polices intégrées au rendu identique partout, les polices système réellement détectées et des fichiers TTF/OTF importés. Chaque source reste divisée entre polices à chasse fixe et proportionnelles.
+- Choisir entre des polices intégrées au rendu identique partout, l’inventaire complet des polices exposé par l’OS dans l’application de bureau et des fichiers TTF/OTF importés. Chaque source reste divisée entre polices à chasse fixe et proportionnelles, et chaque entrée du menu prévisualise sa propre police.
 - Rechercher et filtrer le catalogue Unicode RGI complet, avec les variantes de couleur de peau prises en charge. Utiliser le style Apple ou Segoe natif lorsqu’il est disponible, ou le style Noto Color Emoji intégré sur toutes les plateformes. Le même style s’applique aux emojis statiques et animés.
 - Basculer toute l’interface entre le français et l’anglais grâce aux boutons drapeaux ; les noms des items Factorio restent en anglais.
 - Définir une zone d’affichage pour un texte. Un texte trop large défile automatiquement et conserve une marge vide d’une cellule.
@@ -53,7 +53,7 @@ Les empreintes cyan affichées autour d’une animation constituent l’aperçu 
 
 ## Capacités navigateur et application de bureau
 
-| Fonction | Version navigateur de développement | Application Windows |
+| Fonction | Version navigateur de développement | Application Windows/Linux |
 | --- | :---: | :---: |
 | Dessin, texte, polices, emojis, images fixes | Oui | Oui |
 | Diaporamas multi-images | Oui | Oui |
@@ -64,7 +64,7 @@ L’application de bureau embarque FFmpeg pour décoder les médias localement. 
 
 ## Utilisation
 
-1. Lancez l’exécutable Windows portable ou le serveur de développement.
+1. Lancez l’exécutable Windows portable, l’AppImage Linux ou le serveur de développement.
 2. Dessinez sur la grille, utilisez **Stamps** ou importez un ou plusieurs médias.
 3. Pour une animation, vérifiez les dimensions, les FPS, la sélection des frames, le mode couleur et les durées.
 4. Vous pouvez lier un fichier audio. L’éditeur convertit ses hauteurs dominantes en notes de speakers natifs, mais ne conserve pas la forme d’onde originale.
@@ -84,9 +84,9 @@ L’échantillonnage accepte de 1 à 60 notes par seconde, Factorio fonctionnant
 
 ## Prérequis
 
-- Node.js 20.19 ou plus récent (Node.js 22.12 ou plus récent est également pris en charge par les outils de compilation)
+- Node.js 22.12 ou plus récent
 - npm
-- Windows x64 pour produire et utiliser la cible portable configurée
+- Windows x64 pour l’exécutable portable Windows, ou Linux x64 pour l’AppImage
 - Factorio 2.x pour importer la blueprint générée
 
 ## Développement
@@ -131,7 +131,18 @@ npm ci
 npm run desktop:portable
 ```
 
-Le résultat pour cette version est `release/Factorio Lamp Editor-1.3.0-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
+Le résultat pour cette version est `release/Factorio Lamp Editor-1.4.0-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
+
+## Compiler l’application Linux portable
+
+Sous Linux x64 :
+
+```sh
+npm ci
+npm run desktop:linux
+```
+
+Cette commande produit une AppImage et une archive portable `tar.gz`. Depuis Windows avec WSL2 Debian disponible, `wsl.exe -- bash scripts/build-linux-wsl.sh` effectue une compilation Linux isolée sans remplacer le dossier `node_modules` Windows. L’AppImage cible les installations x64 actuelles d’Arch Linux, Kubuntu et Debian ; l’archive reste disponible lorsqu’AppImage/FUSE n’est pas utilisable.
 
 ## Organisation du projet
 

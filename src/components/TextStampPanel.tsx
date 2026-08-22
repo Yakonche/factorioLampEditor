@@ -8,8 +8,14 @@ import {
     BUNDLED_FONT_OPTIONS,
     EMOJI_FONT_STYLES,
     SYSTEM_FONT_OPTIONS,
+    containsFontFamily,
     emojiFontFamily,
     emojiStyleAvailable,
+    emojiStyleLabel,
+    fontFamilyCss,
+    normalizeFontFamilies,
+    resolveAutomaticEmojiStyle,
+    type EmojiFontAvailability,
     type EmojiFontStyle,
     type FontCategory,
     type FontOption,
@@ -46,8 +52,12 @@ const ANIMATED_EMOJIS = [
 
 const fontFingerprintCache = new Map<string, string>();
 
-const fontFingerprint = (fontDeclaration: string): string => {
-    const cached = fontFingerprintCache.get(fontDeclaration);
+const FONT_PROBE_TEXT = 'BESbswy 0123 @#MWil';
+const EMOJI_PROBE_TEXT = '😀🔥❤️🌍';
+
+const fontFingerprint = (fontDeclaration: string, sample = FONT_PROBE_TEXT): string => {
+    const cacheKey = `${fontDeclaration}\0${sample}`;
+    const cached = fontFingerprintCache.get(cacheKey);
     if (cached) return cached;
     const canvas = document.createElement('canvas');
     canvas.width = 420;
@@ -55,7 +65,7 @@ const fontFingerprint = (fontDeclaration: string): string => {
     const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) return '';
     context.font = `48px ${fontDeclaration}`;
-    context.fillText('BESbswy 0123 @#MWil', 2, 58);
+    context.fillText(sample, 2, 58);
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
     let hash = 2166136261;
     for (let index = 3; index < pixels.length; index += 4) {
@@ -63,7 +73,7 @@ const fontFingerprint = (fontDeclaration: string): string => {
         hash = Math.imul(hash, 16777619);
     }
     const fingerprint = (hash >>> 0).toString(16);
-    fontFingerprintCache.set(fontDeclaration, fingerprint);
+    fontFingerprintCache.set(cacheKey, fingerprint);
     return fingerprint;
 };
 
@@ -72,6 +82,11 @@ const systemFontAvailable = (family: string): boolean => (
         fontFingerprint(`"${family.replace(/["\\]/g, '')}", ${fallback}`)
         !== fontFingerprint(fallback)
     ))
+);
+
+const nativeEmojiFontAvailable = (family: string): boolean => (
+    fontFingerprint(fontFamilyCss(family, '"Noto Color Emoji", sans-serif'), EMOJI_PROBE_TEXT)
+    !== fontFingerprint('"Noto Color Emoji", sans-serif', EMOJI_PROBE_TEXT)
 );
 
 const detectFontCategory = (family: string): FontCategory => {
@@ -96,31 +111,91 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
     const [animatedCharacters, setAnimatedCharacters] = React.useState<Record<number, string[]>>({});
     const [selectedCharacter, setSelectedCharacter] = React.useState<number | null>(null);
     const [importedFonts, setImportedFonts] = React.useState<FontOption[]>([]);
+    const [systemFonts, setSystemFonts] = React.useState<FontOption[]>([]);
+    const [fontInventory, setFontInventory] = React.useState<{ state: 'loading' | 'detected' | 'fallback'; count: number }>({
+        state: 'loading',
+        count: 0,
+    });
     const [viewportEnabled, setViewportEnabled] = React.useState(false);
     const [viewportWidth, setViewportWidth] = React.useState(32);
     const [scrollEnabled, setScrollEnabled] = React.useState(true);
     const [frameSeconds, setFrameSeconds] = React.useState(0.1);
     const [fontStatus, setFontStatus] = React.useState('');
     const [emojiStyle, setEmojiStyle] = React.useState<EmojiFontStyle>('automatic');
+    const [emojiAvailability, setEmojiAvailability] = React.useState<EmojiFontAvailability>({
+        apple: false,
+        segoe: false,
+        noto: true,
+    });
     const [nativeEmojiOpen, setNativeEmojiOpen] = React.useState(false);
     const [animatedEmojiOpen, setAnimatedEmojiOpen] = React.useState(false);
 
+    const platform = navigator.platform ?? navigator.userAgent ?? '';
     const graphemes = React.useMemo(() => splitTextGraphemes(text), [text]);
-    const systemFonts = React.useMemo(() => SYSTEM_FONT_OPTIONS.filter(font => (
-        systemFontAvailable(font.family)
-    )), []);
     const availableFonts = React.useMemo(() => [
         ...BUNDLED_FONT_OPTIONS,
         ...systemFonts,
         ...importedFonts,
     ], [importedFonts, systemFonts]);
-    const selectedEmojiFontFamily = emojiFontFamily(emojiStyle);
-    const platform = navigator.platform ?? navigator.userAgent ?? '';
+    const automaticEmojiStyle = resolveAutomaticEmojiStyle(emojiAvailability, platform);
+    const resolvedEmojiStyle = emojiStyle === 'automatic' ? automaticEmojiStyle : emojiStyle;
+    const selectedEmojiFontFamily = emojiFontFamily(resolvedEmojiStyle);
     const selectedOverride = selectedCharacter === null ? undefined : characterStyles[selectedCharacter];
     const selectedStyle: TextCharacterStyle = {
         ...globalStyle,
         ...(selectedOverride ?? {}),
     };
+
+    React.useEffect(() => {
+        let active = true;
+        const loadSystemFonts = async () => {
+            await document.fonts.ready;
+            let families: string[] = [];
+            try {
+                families = normalizeFontFamilies(
+                    await window.factorioLampEditor?.listSystemFonts?.() ?? [],
+                );
+            } catch (error) {
+                console.warn('Unable to request the native system-font inventory.', error);
+            }
+
+            const nativeInventoryAvailable = families.length > 0;
+            if (!nativeInventoryAvailable) {
+                families = SYSTEM_FONT_OPTIONS
+                    .filter(font => systemFontAvailable(font.family))
+                    .map(font => font.family);
+            }
+
+            const bundledFamilies = new Set(BUNDLED_FONT_OPTIONS.map(font => font.family.toLocaleLowerCase()));
+            const options = normalizeFontFamilies(families)
+                .filter(family => !bundledFamilies.has(family.toLocaleLowerCase()))
+                .map<FontOption>(family => ({
+                    family,
+                    label: family,
+                    category: detectFontCategory(family),
+                    source: 'system',
+                }));
+            const installedFamilies = options.map(font => font.family);
+            const availability: EmojiFontAvailability = {
+                apple: containsFontFamily(families, 'Apple Color Emoji')
+                    || nativeEmojiFontAvailable('Apple Color Emoji'),
+                segoe: containsFontFamily(families, 'Segoe UI Emoji')
+                    || nativeEmojiFontAvailable('Segoe UI Emoji'),
+                noto: true,
+            };
+            if (!active) return;
+            setSystemFonts(options);
+            setEmojiAvailability(availability);
+            setFontInventory({
+                state: nativeInventoryAvailable ? 'detected' : 'fallback',
+                count: installedFamilies.length,
+            });
+        };
+        void loadSystemFonts();
+        return () => {
+            active = false;
+        };
+    }, []);
 
     const updateSelectedStyle = (patch: Partial<TextCharacterStyle>) => {
         if (selectedCharacter === null) return;
@@ -197,7 +272,13 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                 return (
                     <optgroup key={`${source}-${category}`} label={`${sourceLabel} · ${categoryLabel}`}>
                         {fonts.map(font => (
-                            <option key={font.family} value={font.family}>{font.label}</option>
+                            <option
+                                key={`${font.source}-${font.family}`}
+                                value={font.family}
+                                style={{ fontFamily: fontFamilyCss(font.family) }}
+                            >
+                                {font.label}
+                            </option>
                         ))}
                     </optgroup>
                 );
@@ -255,6 +336,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                         value={globalStyle.fontFamily}
                         onChange={event => setGlobalStyle(previous => ({ ...previous, fontFamily: event.target.value }))}
                         className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none"
+                        style={{ fontFamily: fontFamilyCss(globalStyle.fontFamily) }}
                     >
                         {renderFontOptions()}
                     </select>
@@ -267,10 +349,13 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                         className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none"
                     >
                         {EMOJI_FONT_STYLES.map(style => {
-                            const available = emojiStyleAvailable(style, platform);
+                            const available = emojiStyleAvailable(style, emojiAvailability);
+                            const label = style.id === 'automatic'
+                                ? `${t('Automatic')} — ${t('Detected')}: ${t(emojiStyleLabel(automaticEmojiStyle))}`
+                                : t(style.label);
                             return (
                                 <option key={style.id} value={style.id} disabled={!available}>
-                                    {t(style.label)}{available ? '' : ` — ${t('not available on this OS')}`}
+                                    {label}{available ? '' : ` — ${t('not detected on this OS')}`}
                                 </option>
                             );
                         })}
@@ -290,6 +375,13 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                     <input type="file" accept=".ttf,.otf,font/ttf,font/otf" className="hidden" onChange={importFont} />
                 </label>
                 {fontStatus && <p className="col-span-3 truncate text-[9px] text-blue-300" title={fontStatus}>{fontStatus}</p>}
+                <p className="col-span-3 text-[9px] leading-4 text-blue-300">
+                    {fontInventory.state === 'loading'
+                        ? t('Detecting system fonts…')
+                        : fontInventory.state === 'detected'
+                            ? `${fontInventory.count} ${t('system font families detected')}`
+                            : `${fontInventory.count} ${t('fallback system font families available')}`}
+                </p>
                 <p className="col-span-3 text-[9px] leading-4 text-gray-500">
                     {t('Bundled fonts render identically on every OS. Only detected system fonts are listed; imported fonts remain available for this session.')}
                 </p>
@@ -342,6 +434,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                                     value={selectedStyle.fontFamily}
                                     onChange={event => updateSelectedStyle({ fontFamily: event.target.value })}
                                     className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200"
+                                    style={{ fontFamily: fontFamilyCss(selectedStyle.fontFamily) }}
                                 >
                                     {renderFontOptions()}
                                 </select>

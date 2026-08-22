@@ -17,7 +17,7 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 
 - Draw on the grid, erase cells, import a static image, or reset the complete canvas.
 - Create text stamps with global defaults and per-character size, color, and font overrides.
-- Choose consistently rendered bundled fonts, detected system fonts, or imported TTF/OTF files. Every source remains split into monospaced and proportional groups.
+- Choose consistently rendered bundled fonts, the complete system-font inventory exposed by the desktop OS, or imported TTF/OTF files. Every source remains split into monospaced and proportional groups, and every menu entry previews its own typeface.
 - Search and filter the complete Unicode RGI emoji catalog, including supported skin-tone variants. Select the OS-native Apple or Segoe style when available, or use the bundled Noto Color Emoji style on every platform. The same style is used by static and animated emoji.
 - Switch the complete interface between English and French with the flag buttons; Factorio item names remain in English.
 - Give a text stamp a bounded display area. Oversized text becomes a scrolling animation and keeps a one-cell empty margin.
@@ -53,7 +53,7 @@ The cyan controller footprints shown around an animation are a blueprint infrast
 
 ## Desktop and browser capabilities
 
-| Capability | Browser development build | Windows desktop build |
+| Capability | Browser development build | Windows/Linux desktop build |
 | --- | :---: | :---: |
 | Drawing, text, fonts, emoji, static images | Yes | Yes |
 | Multi-image slideshows | Yes | Yes |
@@ -64,7 +64,7 @@ The desktop application bundles FFmpeg for local media decoding. Media stays on 
 
 ## Using the editor
 
-1. Start the portable Windows executable, or run the development server.
+1. Start the portable Windows executable, Linux AppImage, or development server.
 2. Draw on the grid, use **Stamps**, or import one or more media files.
 3. For animations, review dimensions, FPS, frame selection, color mode, and timing.
 4. Optionally link an audio file. The editor converts its dominant pitches to native programmable-speaker notes; it cannot preserve the original waveform.
@@ -84,9 +84,9 @@ Sampling accepts 1 to 60 notes per second because Factorio updates at 60 ticks p
 
 ## Requirements
 
-- Node.js 20.19 or newer (Node.js 22.12 or newer is also supported by the build tools)
+- Node.js 22.12 or newer
 - npm
-- Windows x64 to produce and run the configured portable desktop target
+- Windows x64 for the Windows portable executable, or Linux x64 for the AppImage
 - Factorio 2.x to import the generated blueprint
 
 ## Development
@@ -131,7 +131,18 @@ npm ci
 npm run desktop:portable
 ```
 
-The output for this version is `release/Factorio Lamp Editor-1.3.0-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
+The output for this version is `release/Factorio Lamp Editor-1.4.0-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
+
+## Building the Linux portable application
+
+On Linux x64:
+
+```sh
+npm ci
+npm run desktop:linux
+```
+
+This produces an AppImage and a `tar.gz` portable directory archive. From Windows with WSL2 Debian available, `wsl.exe -- bash scripts/build-linux-wsl.sh` performs an isolated Linux build without replacing the Windows `node_modules` tree. The AppImage targets current x64 Arch Linux, Kubuntu, and Debian installations; the archive remains available when AppImage/FUSE support is unavailable.
 
 ## Project structure
 
