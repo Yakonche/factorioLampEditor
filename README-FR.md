@@ -17,12 +17,14 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 
 - Dessiner sur la grille, effacer des cellules, importer une image fixe ou réinitialiser complètement le canevas.
 - Créer des tampons de texte avec des réglages globaux et des tailles, couleurs et polices différentes pour chaque caractère.
-- Importer une police locale TTF ou OTF.
-- Insérer des emojis natifs ou des modèles d’emojis animés intégrés.
+- Choisir les polices intégrées dans deux groupes distincts — polices à chasse fixe (caractères de même largeur) et polices proportionnelles (largeur variable) — puis importer une police locale TTF ou OTF, automatiquement classée.
+- Rechercher et filtrer le catalogue Unicode RGI complet, avec les variantes de couleur de peau prises en charge. Chaque emoji du catalogue peut aussi devenir une animation Factorio, en plus des modèles animés prédéfinis.
+- Basculer toute l’interface entre le français et l’anglais grâce aux boutons drapeaux ; les noms des items Factorio restent en anglais.
 - Définir une zone d’affichage pour un texte. Un texte trop large défile automatiquement et conserve une marge vide d’une cellule.
 - Redimensionner la barre d’outils en faisant glisser son bord droit ; un double-clic sur la poignée restaure la largeur par défaut.
 - Ajouter de la brique, du béton, du béton de danger, du béton raffiné ou du béton de danger raffiné une case entière au-delà des lampes.
 - Placer les combinateurs d’animation au-dessus, en dessous, à gauche ou à droite. Le placement au-dessus est utilisé par défaut.
+- Le placement automatique des poles est activé par défaut. L’écran facultatif d’aide et de durée dans le jeu est désactivé par défaut.
 
 ### Images et animations
 
@@ -35,6 +37,7 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 - Examiner et retirer manuellement des frames lorsque la limite est dépassée, ou appliquer une sélection automatique uniforme.
 - Lier une piste audio à un GIF ou une vidéo afin qu’ils utilisent le même compteur à 60 ticks par seconde et démarrent ensemble.
 - Suivre la génération d’une blueprint longue avec un pourcentage réel d’avancement.
+- Copier directement les blueprints ordinaires. Pour les exports exceptionnellement grands comme Bad Apple en fidélité complète, l’application évite une relecture coûteuse du presse-papiers et propose **Enregistrer la blueprint** comme solution de secours, sans nouvelle génération.
 
 ### Réduction de la taille des blueprints
 
@@ -45,6 +48,8 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 - Lorsque c’est possible, les événements des deux speakers sont regroupés pour un même instant échantillonné.
 
 Une animation longue conservant sa définition et ses FPS peut malgré tout produire une blueprint gigantesque. La génération est exécutée hors du thread de l’interface, qui reste donc utilisable et indique la progression réelle pendant la création des entités, la sérialisation JSON, la compression et l’encodage Base64.
+
+Les empreintes cyan affichées autour d’une animation constituent l’aperçu de son infrastructure de blueprint. Elles représentent les combinators, substations du contrôleur, relais du circuit, speakers et l’écran facultatif qui seront inclus dans la nouvelle blueprint. Si Windows refuse un transfert très volumineux vers le presse-papiers, l’ancien contenu est effacé et la même chaîne générée peut immédiatement être enregistrée dans un fichier texte.
 
 ## Capacités navigateur et application de bureau
 
@@ -126,7 +131,7 @@ npm ci
 npm run desktop:portable
 ```
 
-Le résultat est `release/Factorio Lamp Editor-1.0.0-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
+Le résultat pour cette version est `release/Factorio Lamp Editor-1.1.0-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
 
 ## Organisation du projet
 

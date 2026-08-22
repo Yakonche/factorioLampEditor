@@ -35,8 +35,11 @@ type RenderedText = {
 
 const quoteFontFamily = (family: string) => `"${family.replace(/["\\]/g, '')}"`;
 const EMOJI_FONT_STACK = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"';
-const fontDeclaration = (style: TextCharacterStyle) => (
-    `${style.fontSize}px ${quoteFontFamily(style.fontFamily)}, ${EMOJI_FONT_STACK}, sans-serif`
+const EMOJI_GRAPHEME = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20e3)/u;
+const fontDeclaration = (style: TextCharacterStyle, grapheme = '') => (
+    EMOJI_GRAPHEME.test(grapheme)
+        ? `${style.fontSize}px ${EMOJI_FONT_STACK}, ${quoteFontFamily(style.fontFamily)}, sans-serif`
+        : `${style.fontSize}px ${quoteFontFamily(style.fontFamily)}, ${EMOJI_FONT_STACK}, sans-serif`
 );
 
 export function splitTextGraphemes(text: string): string[] {
@@ -72,6 +75,7 @@ const renderStyledText = (
         grapheme: string;
         style: TextCharacterStyle;
         width: number;
+        glyphWidth: number;
         leftBearing: number;
         ascent: number;
         descent: number;
@@ -82,26 +86,45 @@ const renderStyledText = (
             return;
         }
         const animation = options.animatedCharacters?.[graphemeIndex];
+        const variants = animation?.length ? animation : [originalGrapheme];
         const grapheme = animation?.length
-            ? animation[animationIndex % animation.length]
+            ? variants[animationIndex % variants.length]
             : originalGrapheme;
         const style = resolveStyle(options, graphemeIndex);
-        measurementContext.font = fontDeclaration(style);
-        const metrics = measurementContext.measureText(grapheme);
-        const leftBearing = Math.max(0, Math.ceil(metrics.actualBoundingBoxLeft || 0));
-        const rightBearing = Math.max(0, Math.ceil(metrics.actualBoundingBoxRight || 0));
-        const width = Math.max(1, Math.ceil(metrics.width), leftBearing + rightBearing);
+        const variantMetrics = variants.map(variant => {
+            measurementContext.font = fontDeclaration(style, variant);
+            const metrics = measurementContext.measureText(variant);
+            const leftBearing = Math.max(0, Math.ceil(metrics.actualBoundingBoxLeft || 0));
+            const rightBearing = Math.max(0, Math.ceil(metrics.actualBoundingBoxRight || 0));
+            return {
+                variant,
+                width: Math.max(1, Math.ceil(metrics.width), leftBearing + rightBearing),
+                leftBearing,
+                ascent: Math.max(1, Math.ceil(metrics.actualBoundingBoxAscent || 0)),
+                descent: Math.max(1, Math.ceil(metrics.actualBoundingBoxDescent || 0)),
+            };
+        });
+        const selectedMetrics = variantMetrics.find(metrics => metrics.variant === grapheme) ?? variantMetrics[0];
+        const width = Math.max(...variantMetrics.map(metrics => metrics.width));
         const ascent = Math.max(
             1,
-            Math.ceil(metrics.actualBoundingBoxAscent || 0),
+            ...variantMetrics.map(metrics => metrics.ascent),
             Math.ceil(style.fontSize * 0.9),
         );
         const descent = Math.max(
             1,
-            Math.ceil(metrics.actualBoundingBoxDescent || 0),
+            ...variantMetrics.map(metrics => metrics.descent),
             Math.ceil(style.fontSize * 0.25),
         );
-        lines[lines.length - 1].push({ grapheme, style, width, leftBearing, ascent, descent });
+        lines[lines.length - 1].push({
+            grapheme,
+            style,
+            width,
+            glyphWidth: selectedMetrics.width,
+            leftBearing: selectedMetrics.leftBearing,
+            ascent,
+            descent,
+        });
     });
 
     const lineMetrics = lines.map(line => {
@@ -125,9 +148,10 @@ const renderStyledText = (
         const metrics = lineMetrics[lineIndex];
         const baseline = y + 2 + metrics.ascent;
         line.forEach((item) => {
-            context.font = fontDeclaration(item.style);
+            context.font = fontDeclaration(item.style, item.grapheme);
             context.fillStyle = item.style.color;
-            context.fillText(item.grapheme, x + item.leftBearing, baseline);
+            const centeredOffset = Math.max(0, (item.width - item.glyphWidth) / 2);
+            context.fillText(item.grapheme, x + centeredOffset + item.leftBearing, baseline);
             x += item.width;
         });
         y += metrics.height;
@@ -174,7 +198,7 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
     graphemes.forEach((grapheme, graphemeIndex) => {
         if (grapheme === '\n') return;
         const style = resolveStyle(options, graphemeIndex);
-        const descriptor = fontDeclaration(style);
+        const descriptor = fontDeclaration(style, grapheme);
         if (!fontLoads.has(descriptor)) {
             fontLoads.set(descriptor, document.fonts.load(descriptor, grapheme));
         }

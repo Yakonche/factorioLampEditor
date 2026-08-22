@@ -31,7 +31,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             <li>Brush, fill, erase, and pan use the B, F, E, and H shortcuts.</li>
                             <li>Imported images are centered automatically. Width and height can be edited while the link button controls proportions.</li>
                             <li>Text stamps support grapheme-by-grapheme size, font, and color overrides, plus imported TTF/OTF fonts.</li>
-                            <li>Native and animated emoji presets are built in. Limited display zones keep a one-cell border and become scrolling Factorio animations when needed.</li>
+                            <li>The complete Unicode RGI emoji catalog is built in, including categories, search, skin tones, and an animation mode for every emoji. Limited display zones keep a one-cell border and become scrolling Factorio animations when needed.</li>
                             <li>Press <strong>Ctrl+Enter</strong> to create a text stamp, then click the grid to place it.</li>
                             <li>The mouse wheel zooms the canvas; <strong>+/-</strong> resize text stamps.</li>
                         </ul>

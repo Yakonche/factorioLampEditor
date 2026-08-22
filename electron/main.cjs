@@ -1,4 +1,5 @@
-const { app, BrowserWindow, clipboard, ipcMain, Menu, shell } = require('electron');
+const { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, shell } = require('electron');
+const fs = require('node:fs/promises');
 const path = require('node:path');
 const { decodeMedia } = require('./media.cjs');
 const { decodeAudioNotes } = require('./audio.cjs');
@@ -57,16 +58,47 @@ function createMainWindow() {
 
 app.setAppUserModelId('com.jojkos.factoriolampeditor');
 
+const MAX_BLUEPRINT_CHARACTERS = 500_000_000;
+const MAX_VERIFIED_CLIPBOARD_CHARACTERS = 16 * 1024 * 1024;
+
 ipcMain.handle('clipboard:write-text', (_event, text) => {
-  if (typeof text !== 'string' || text.length > 250_000_000) {
+  if (typeof text !== 'string' || text.length > MAX_BLUEPRINT_CHARACTERS) {
     throw new TypeError('Clipboard content must be a reasonably sized string.');
   }
+  // Clearing first prevents a failed huge copy from leaving an older blueprint
+  // in place, which could otherwise look like a preview/export mismatch.
+  clipboard.clear();
   clipboard.writeText(text);
-  const copiedText = clipboard.readText();
-  if (copiedText.length !== text.length || copiedText !== text) {
-    throw new Error(`Clipboard verification failed (${copiedText.length} of ${text.length} characters copied).`);
+  // Reading a 100+ MB Bad Apple blueprint back immediately doubles peak memory
+  // and has produced false failures on Windows. Small/normal strings still get
+  // strict verification; Electron reports successful completion for huge ones.
+  if (text.length <= MAX_VERIFIED_CLIPBOARD_CHARACTERS) {
+    const copiedText = clipboard.readText();
+    if (copiedText.length !== text.length || copiedText !== text) {
+      throw new Error(`Clipboard verification failed (${copiedText.length} of ${text.length} characters copied).`);
+    }
   }
-  return { length: copiedText.length };
+  return { length: text.length, verified: text.length <= MAX_VERIFIED_CLIPBOARD_CHARACTERS };
+});
+
+ipcMain.handle('blueprint:save-text', async (_event, request) => {
+  const text = request?.text;
+  if (typeof text !== 'string' || text.length > MAX_BLUEPRINT_CHARACTERS) {
+    throw new TypeError('Blueprint content must be a reasonably sized string.');
+  }
+  const suggestedName = String(request?.suggestedName || 'factorio-lamp-blueprint')
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120) || 'factorio-lamp-blueprint';
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Save Factorio blueprint',
+    defaultPath: `${suggestedName}.txt`,
+    filters: [{ name: 'Factorio blueprint text', extensions: ['txt'] }],
+  });
+  if (result.canceled || !result.filePath) return { canceled: true };
+  await fs.writeFile(result.filePath, text, 'utf8');
+  return { canceled: false, filePath: result.filePath, length: text.length };
 });
 
 ipcMain.handle('media:decode', (_event, request) => decodeMedia(request, {

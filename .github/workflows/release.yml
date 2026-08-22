@@ -6,11 +6,11 @@ on:
       tag:
         description: Existing version tag to publish
         required: true
-        default: v1.0.0
+        default: v1.1.0
       title:
         description: Public release title
         required: true
-        default: Factorio Lamp Editor 1.0.0 - First Public Release
+        default: Factorio Lamp Editor 1.1.0 - Emoji, Localization & Large Blueprints
 
 permissions:
   contents: write

@@ -1,6 +1,11 @@
 interface Window {
   factorioLampEditor?: {
-    copyText: (text: string) => Promise<{ length: number }>;
+    copyText: (text: string) => Promise<{ length: number; verified?: boolean }>;
+    saveBlueprint: (text: string, suggestedName: string) => Promise<{
+      canceled: boolean;
+      filePath?: string;
+      length?: number;
+    }>;
     decodeMedia: (request: {
       sourceName: string;
       bytes: ArrayBuffer;

@@ -4,35 +4,43 @@ import {
     type TextCharacterStyle,
     type TextStampOptions,
 } from '../utils/stamp';
+import { useI18n } from '../i18n';
+
+const EmojiCatalog = React.lazy(() => import('./EmojiCatalog').then(module => ({ default: module.EmojiCatalog })));
 
 interface TextStampPanelProps {
     initialColor: string;
     onCreate: (options: TextStampOptions) => void;
 }
 
-const FONT_OPTIONS = [
-    'Noto Sans JP',
-    'Arial',
-    'Arial Black',
-    'Comic Sans MS',
-    'Courier New',
-    'Georgia',
-    'Impact',
-    'Times New Roman',
-    'Trebuchet MS',
-    'Verdana',
-    'Segoe UI Emoji',
+type FontCategory = 'monospace' | 'proportional';
+
+interface FontOption {
+    family: string;
+    label: string;
+    category: FontCategory;
+}
+
+const FONT_OPTIONS: FontOption[] = [
+    { family: 'Cascadia Mono', label: 'Cascadia Mono', category: 'monospace' },
+    { family: 'Consolas', label: 'Consolas', category: 'monospace' },
+    { family: 'Courier New', label: 'Courier New', category: 'monospace' },
+    { family: 'Lucida Console', label: 'Lucida Console', category: 'monospace' },
+    { family: 'Menlo', label: 'Menlo', category: 'monospace' },
+    { family: 'Monaco', label: 'Monaco', category: 'monospace' },
+    { family: 'Noto Sans JP', label: 'Noto Sans JP', category: 'proportional' },
+    { family: 'Arial', label: 'Arial', category: 'proportional' },
+    { family: 'Arial Black', label: 'Arial Black', category: 'proportional' },
+    { family: 'Comic Sans MS', label: 'Comic Sans MS', category: 'proportional' },
+    { family: 'Georgia', label: 'Georgia', category: 'proportional' },
+    { family: 'Impact', label: 'Impact', category: 'proportional' },
+    { family: 'Times New Roman', label: 'Times New Roman', category: 'proportional' },
+    { family: 'Trebuchet MS', label: 'Trebuchet MS', category: 'proportional' },
+    { family: 'Verdana', label: 'Verdana', category: 'proportional' },
+    { family: 'Segoe UI Emoji', label: 'Segoe UI Emoji', category: 'proportional' },
 ];
 
 const EMOJI_FONT_FAMILY = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
-
-const NATIVE_EMOJIS = [
-    '😀', '😂', '🥰', '😍', '🤩', '😎', '😭', '😡', '🤖', '👻',
-    '💀', '👽', '🐱', '🐶', '🦊', '🐸', '🐲', '🦄', '❤️', '💔',
-    '🔥', '✨', '⭐', '🌈', '☀️', '🌙', '⚡', '💥', '✅', '❌',
-    '👍', '👎', '👏', '🙏', '💪', '🎉', '🎵', '🎮', '🚀', '🏭',
-    '💡', '⚙️', '🛠️', '🚂', '🛰️', '☢️', '🟢', '🔴', '⬜', '⬛',
-];
 
 const ANIMATED_EMOJIS = [
     { label: 'Blink', frames: ['😐', '😑', '😐', '🙂'] },
@@ -41,9 +49,31 @@ const ANIMATED_EMOJIS = [
     { label: 'Fire', frames: ['🔥', '❤️‍🔥', '🔥', '✨'] },
     { label: 'Moon', frames: ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'] },
     { label: 'Signal', frames: ['🔴', '🟠', '🟡', '🟢'] },
+    { label: 'Clock', frames: ['🕛', '🕒', '🕕', '🕘'] },
+    { label: 'Weather', frames: ['☀️', '🌤️', '🌧️', '⛈️', '🌈'] },
+    { label: 'Flower', frames: ['🌱', '🌿', '🌷', '🌻'] },
+    { label: 'Earth', frames: ['🌍', '🌎', '🌏'] },
+    { label: 'Traffic light', frames: ['🔴', '🟡', '🟢', '🟡'] },
+    { label: 'Battery', frames: ['🪫', '🔋', '🪫', '🔋'] },
+    { label: 'Celebration', frames: ['🎉', '🎊', '✨', '🥳'] },
+    { label: 'Faces', frames: ['🙂', '😀', '😂', '🤣'] },
+    { label: 'Cats', frames: ['😺', '😸', '😹', '😻'] },
+    { label: 'Hearts', frames: ['❤️', '🧡', '💛', '💚', '💙', '💜'] },
+    { label: 'Dice', frames: ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'] },
 ] as const;
 
+const detectFontCategory = (family: string): FontCategory => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return 'proportional';
+    context.font = `32px "${family.replace(/["\\]/g, '')}"`;
+    const narrowWidth = context.measureText('iiiiiiiiii').width;
+    const wideWidth = context.measureText('WWWWWWWWWW').width;
+    return Math.abs(narrowWidth - wideWidth) < 0.5 ? 'monospace' : 'proportional';
+};
+
 export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, onCreate }) => {
+    const { t } = useI18n();
     const [text, setText] = React.useState('');
     const [globalStyle, setGlobalStyle] = React.useState<TextCharacterStyle>({
         fontSize: 14,
@@ -53,12 +83,14 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
     const [characterStyles, setCharacterStyles] = React.useState<Record<number, Partial<TextCharacterStyle>>>({});
     const [animatedCharacters, setAnimatedCharacters] = React.useState<Record<number, string[]>>({});
     const [selectedCharacter, setSelectedCharacter] = React.useState<number | null>(null);
-    const [importedFonts, setImportedFonts] = React.useState<string[]>([]);
+    const [importedFonts, setImportedFonts] = React.useState<FontOption[]>([]);
     const [viewportEnabled, setViewportEnabled] = React.useState(false);
     const [viewportWidth, setViewportWidth] = React.useState(32);
     const [scrollEnabled, setScrollEnabled] = React.useState(true);
     const [frameSeconds, setFrameSeconds] = React.useState(0.1);
     const [fontStatus, setFontStatus] = React.useState('');
+    const [nativeEmojiOpen, setNativeEmojiOpen] = React.useState(false);
+    const [animatedEmojiOpen, setAnimatedEmojiOpen] = React.useState(false);
 
     const graphemes = React.useMemo(() => splitTextGraphemes(text), [text]);
     const availableFonts = [...FONT_OPTIONS, ...importedFonts];
@@ -100,7 +132,11 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
             const fontFace = new FontFace(family, await file.arrayBuffer());
             await fontFace.load();
             document.fonts.add(fontFace);
-            setImportedFonts(previous => [...previous, family]);
+            setImportedFonts(previous => [...previous, {
+                family,
+                label: cleanName,
+                category: detectFontCategory(family),
+            }]);
             setGlobalStyle(previous => ({ ...previous, fontFamily: family }));
             setFontStatus(`${file.name} loaded`);
         } catch (error) {
@@ -118,6 +154,17 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
         scroll: viewportEnabled && scrollEnabled,
         frameDurationTicks: Math.max(2, Math.round(frameSeconds * 60)),
     });
+
+    const renderFontOptions = () => (['monospace', 'proportional'] as const).map(category => (
+        <optgroup
+            key={category}
+            label={t(category === 'monospace' ? 'Monospaced fonts' : 'Proportional fonts')}
+        >
+            {availableFonts
+                .filter(font => font.category === category)
+                .map(font => <option key={font.family} value={font.family}>{font.label}</option>)}
+        </optgroup>
+    ));
 
     return (
         <div className="space-y-3">
@@ -170,7 +217,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                         onChange={event => setGlobalStyle(previous => ({ ...previous, fontFamily: event.target.value }))}
                         className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none"
                     >
-                        {availableFonts.map(font => <option key={font} value={font}>{font}</option>)}
+                        {renderFontOptions()}
                     </select>
                 </label>
                 <label className="flex items-center gap-2 text-[9px] font-bold text-gray-500">
@@ -187,6 +234,9 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                     <input type="file" accept=".ttf,.otf,font/ttf,font/otf" className="hidden" onChange={importFont} />
                 </label>
                 {fontStatus && <p className="col-span-3 truncate text-[9px] text-blue-300" title={fontStatus}>{fontStatus}</p>}
+                <p className="col-span-3 text-[9px] leading-4 text-gray-500">
+                    Monospaced fonts keep the same width for every character and are commonly used in IDEs and terminals. Proportional fonts use a width adapted to each character.
+                </p>
                 <button
                     type="button"
                     onClick={() => setCharacterStyles({})}
@@ -233,7 +283,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                                     onChange={event => updateSelectedStyle({ fontFamily: event.target.value })}
                                     className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200"
                                 >
-                                    {availableFonts.map(font => <option key={font} value={font}>{font}</option>)}
+                                    {renderFontOptions()}
                                 </select>
                             </label>
                             <label className="flex items-center gap-2 text-[9px] text-gray-500">
@@ -258,38 +308,50 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                 </div>
             )}
 
-            <details className="overflow-hidden rounded-lg border border-gray-700 bg-gray-900 p-2">
+            <details
+                open={nativeEmojiOpen}
+                onToggle={event => setNativeEmojiOpen(event.currentTarget.open)}
+                className="overflow-hidden rounded-lg border border-gray-700 bg-gray-900 p-2"
+            >
                 <summary className="cursor-pointer text-[9px] font-bold uppercase tracking-wider text-gray-400">Native emoji library</summary>
-                <div
-                    className="mt-2 grid max-h-40 w-full gap-1 overflow-x-hidden overflow-y-auto pr-1"
-                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(2.25rem, 1fr))' }}
-                >
-                    {NATIVE_EMOJIS.map((emoji, index) => (
-                        <button
-                            key={`${emoji}-${index}`}
-                            type="button"
-                            onClick={() => appendEmoji(emoji)}
-                            className="flex aspect-square min-w-0 items-center justify-center overflow-hidden rounded border border-gray-700 bg-gray-800 p-0 hover:border-yellow-500 hover:bg-gray-700"
-                            aria-label={`Insert ${emoji}`}
-                            title={`Insert ${emoji}`}
-                        >
-                            <span className="block text-[22px] leading-none" style={{ fontFamily: EMOJI_FONT_FAMILY }}>{emoji}</span>
-                        </button>
-                    ))}
-                </div>
+                {nativeEmojiOpen && (
+                    <>
+                        <p className="mt-2 text-[9px] leading-4 text-gray-500">
+                            Every Unicode RGI emoji is available here. Skin-tone variants are generated when the selected emoji supports them.
+                        </p>
+                        <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
+                            <EmojiCatalog onSelect={appendEmoji} />
+                        </React.Suspense>
+                    </>
+                )}
             </details>
 
-            <details className="overflow-hidden rounded-lg border border-gray-700 bg-gray-900 p-2">
+            <details
+                open={animatedEmojiOpen}
+                onToggle={event => setAnimatedEmojiOpen(event.currentTarget.open)}
+                className="overflow-hidden rounded-lg border border-gray-700 bg-gray-900 p-2"
+            >
                 <summary className="cursor-pointer text-[9px] font-bold uppercase tracking-wider text-gray-400">Animated emoji library</summary>
-                <div className="mt-2 grid grid-cols-2 gap-1">
-                    {ANIMATED_EMOJIS.map(animation => (
-                        <button key={animation.label} type="button" onClick={() => appendAnimatedEmoji(animation.frames)} className="flex min-w-0 items-center gap-2 overflow-hidden rounded border border-gray-700 bg-gray-800 px-2 py-1 text-left text-[9px] text-gray-300 hover:border-fuchsia-500 hover:bg-gray-700">
-                            <span className="shrink-0 text-xl leading-none" style={{ fontFamily: EMOJI_FONT_FAMILY }}>{animation.frames[0]}</span>
-                            <span className="truncate">{animation.label}</span>
-                        </button>
-                    ))}
-                </div>
-                <p className="mt-2 text-[9px] leading-4 text-gray-500">Animated presets generate real Factorio animation frames; they increase blueprint size.</p>
+                {animatedEmojiOpen && (
+                    <>
+                        <p className="mt-2 text-[9px] leading-4 text-gray-500">
+                            Every emoji can also be inserted as a real Factorio animation using the selected effect. Animated text increases blueprint size.
+                        </p>
+                        <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">Curated animated presets</p>
+                        <div className="mt-2 grid grid-cols-2 gap-1">
+                            {ANIMATED_EMOJIS.map(animation => (
+                                <button key={animation.label} type="button" onClick={() => appendAnimatedEmoji(animation.frames)} className="flex min-w-0 items-center gap-2 overflow-hidden rounded border border-gray-700 bg-gray-800 px-2 py-1 text-left text-[9px] text-gray-300 hover:border-fuchsia-500 hover:bg-gray-700">
+                                    <span className="shrink-0 text-xl leading-none" style={{ fontFamily: EMOJI_FONT_FAMILY }}>{animation.frames[0]}</span>
+                                    <span className="truncate">{animation.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <p className="mt-3 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">All animated emoji</p>
+                        <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
+                            <EmojiCatalog animated onSelect={appendEmoji} onSelectAnimated={appendAnimatedEmoji} />
+                        </React.Suspense>
+                    </>
+                )}
             </details>
 
             <div className="rounded-lg border border-gray-700 bg-gray-900 p-2">

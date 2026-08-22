@@ -188,6 +188,9 @@ function App() {
   const [tool, setTool] = useState<ToolType>('pan');
   const [color, setColor] = useState('#ffffff');
   const [statusMsg, setStatusMsg] = useState("");
+  const lastGeneratedBlueprintRef = useRef<string | null>(null);
+  const lastGeneratedBlueprintLabelRef = useRef('Factorio Art');
+  const [hasGeneratedBlueprint, setHasGeneratedBlueprint] = useState(false);
 
   // History
   const historyRef = useRef<GridPatch[]>([]);
@@ -241,7 +244,7 @@ function App() {
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
   const [animationEnabled, setAnimationEnabled] = useState(false);
   const [sequenceGlobalDelaySeconds, setSequenceGlobalDelaySeconds] = useState(15);
-  const [includeAnimationHelp, setIncludeAnimationHelp] = useState(true);
+  const [includeAnimationHelp, setIncludeAnimationHelp] = useState(false);
   const [animationControllerSide, setAnimationControllerSide] = useState<AnimationControllerSide>('top');
   const [previewFrame, setPreviewFrame] = useState(0);
   const [mediaFpsLimit, setMediaFpsLimit] = useState(30);
@@ -965,7 +968,7 @@ function App() {
   }, [importImage, importMedia, maxDefinition, maxFrameCount, mediaFpsLimit]);
 
   // Power & Blueprint
-  const [autoPole, setAutoPole] = useState(false);
+  const [autoPole, setAutoPole] = useState(true);
   const [autoRoboport, setAutoRoboport] = useState(false);
   const [autoConstruction, setAutoConstruction] = useState(false);
   const [smartPlacement, setSmartPlacement] = useState(false);
@@ -1263,6 +1266,10 @@ function App() {
     }
     const { bpString, status = 'Blueprint generation failed.' } = response;
     if (bpString) {
+      lastGeneratedBlueprintRef.current = bpString;
+      lastGeneratedBlueprintLabelRef.current = blueprintLabel;
+      setHasGeneratedBlueprint(true);
+      setStatusMsg(`Blueprint generated · ${bpString.length.toLocaleString()} characters · copying…`);
       try {
         if (window.factorioLampEditor) {
           const copied = await window.factorioLampEditor.copyText(bpString);
@@ -1274,10 +1281,41 @@ function App() {
         setTimeout(() => setStatusMsg(""), 3000);
       } catch (error) {
         console.error('Unable to copy the blueprint.', error);
-        alert('Unable to copy the blueprint to the clipboard.');
+        setStatusMsg('Clipboard copy failed. The new blueprint is ready to save.');
+        if (window.factorioLampEditor?.saveBlueprint) {
+          try {
+            const saved = await window.factorioLampEditor.saveBlueprint(bpString, blueprintLabel);
+            if (!saved.canceled && saved.filePath) {
+              setStatusMsg(`Blueprint saved to ${saved.filePath}`);
+              alert(`The clipboard copy failed, but the newly generated blueprint was saved to:\n${saved.filePath}`);
+              return;
+            }
+          } catch (saveError) {
+            console.error('Unable to save the generated blueprint.', saveError);
+          }
+        }
+        alert('Unable to copy the new blueprint to the clipboard. The previous clipboard content was cleared; use Save Blueprint to keep this generated result.');
       }
     } else {
       alert(status);
+    }
+  };
+
+  const saveGeneratedBlueprint = async () => {
+    const bpString = lastGeneratedBlueprintRef.current;
+    if (!bpString || !window.factorioLampEditor?.saveBlueprint) return;
+    try {
+      const saved = await window.factorioLampEditor.saveBlueprint(
+        bpString,
+        lastGeneratedBlueprintLabelRef.current,
+      );
+      if (!saved.canceled && saved.filePath) {
+        setStatusMsg(`Blueprint saved to ${saved.filePath}`);
+        setTimeout(() => setStatusMsg(''), 5000);
+      }
+    } catch (error) {
+      console.error('Unable to save the generated blueprint.', error);
+      alert('Unable to save the generated blueprint to a file.');
     }
   };
 
@@ -1728,6 +1766,9 @@ function App() {
     setStampMode(null);
     setStampBuffer(null);
     setStampScale(1);
+    lastGeneratedBlueprintRef.current = null;
+    lastGeneratedBlueprintLabelRef.current = 'Factorio Art';
+    setHasGeneratedBlueprint(false);
     historyRef.current = [];
     gridRef.current = createEmptyGrid(GRID_W, GRID_H);
     committedGridRef.current = cloneGrid(gridRef.current);
@@ -1753,7 +1794,17 @@ function App() {
 
           {/* Canvas Area */}
           <main className="flex-1 flex flex-col relative bg-gray-950 order-1 md:order-2 h-[60vh] md:h-auto overflow-hidden">
-            <div className="absolute top-4 right-4 z-10">
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+              {hasGeneratedBlueprint && window.factorioLampEditor?.saveBlueprint && (
+                <button
+                  type="button"
+                  onClick={saveGeneratedBlueprint}
+                  className="px-3 py-2 bg-sky-700 hover:bg-sky-600 text-white font-bold rounded-lg shadow-lg text-xs md:text-sm flex items-center gap-2 transition-transform hover:-translate-y-0.5 active:scale-95 border border-sky-400/20 backdrop-blur-sm opacity-90 hover:opacity-100"
+                  title="Save the last generated blueprint without generating it again"
+                >
+                  💾 <span className="hidden sm:inline">Save Blueprint</span>
+                </button>
+              )}
               <button
                 onClick={copyBlueprint}
                 className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-lg shadow-lg text-xs md:text-sm flex items-center gap-2 transition-transform hover:-translate-y-0.5 active:scale-95 border border-yellow-400/20 backdrop-blur-sm opacity-90 hover:opacity-100"
@@ -1761,6 +1812,13 @@ function App() {
                 📋 <span className="hidden sm:inline">Copy Blueprint</span>
               </button>
             </div>
+
+            {animationPreviewEntities.length > 0 && (
+              <div className="pointer-events-none absolute right-4 top-16 z-10 max-w-72 rounded border border-cyan-400/30 bg-gray-950/85 px-3 py-2 text-[9px] leading-4 text-cyan-100 shadow-lg backdrop-blur-sm">
+                <strong className="block uppercase tracking-wider text-cyan-300">Blueprint controller preview</strong>
+                These footprints are the combinators, controller substations, relays, speakers, and optional display that will be exported with the current animation.
+              </div>
+            )}
 
             {stampMode && (
               <div className="absolute top-4 left-4 z-10 bg-blue-600/90 backdrop-blur text-white px-3 py-1.5 rounded-lg shadow-lg text-[10px] md:text-xs font-bold border border-blue-400/30 flex items-center gap-2 pointer-events-none">
