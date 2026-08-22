@@ -201,6 +201,19 @@ for (const controllerSide of ['left', 'top', 'right', 'bottom'] as const) {
         || entity.player_description === 'Media controller auto-construction roboport.'
         || (entity.name === 'medium-electric-pole' && entity.player_description?.startsWith('Generated passive media'))
     ));
+    const controllerSupports = entities.filter(entity => (
+        entity.name === 'substation'
+        && entity.player_description?.startsWith('Media animation power')
+    ));
+    const controllerSupportIds = new Set(controllerSupports.map(entity => entity.entity_number));
+    const controllerSupportWires = (blueprint.blueprint.wires ?? []).filter(([firstId, , secondId]) => (
+        controllerSupportIds.has(firstId) && controllerSupportIds.has(secondId)
+    ));
+    assert.equal(
+        controllerSupportWires.length,
+        Math.max(0, controllerSupports.length - 1),
+        `${controllerSide} controller support network must be a spanning tree.`,
+    );
     const actualKeys = infrastructure.map((entity) => {
         const rect = entityFootprint(entity);
         return `${entity.name}:${normalize(minX + rect.x)},${normalize(minY + rect.y)},${rect.width},${rect.height}`;
@@ -447,6 +460,45 @@ const audioPreview = calculateMediaAnimationPreviewLayout(
 );
 assert.equal(audioPreview.stats.programmableSpeakerCount, 2);
 assert.equal(audioPreview.stats.deciderCombinatorCount, noteRoms.length + 1);
+
+// Very large animations only render a bounded sample of their ROM footprints.
+// The sample must cover the full controller instead of clustering in the first
+// few columns, which made Bad Apple appear to have no combinators in the UI.
+const samplingWidth = 20;
+const samplingCells = Uint32Array.from({ length: samplingWidth }, () => 0xffffffff);
+const samplingIndices = Uint32Array.from({ length: samplingWidth }, (_, index) => index);
+const samplingAnimation: GridAnimationData = {
+    firstFrame: { width: samplingWidth, height: 1, cells: samplingCells },
+    firstDurationTicks: 2,
+    transitions: Array.from({ length: 600 }, (_, transitionIndex) => ({
+        indices: samplingIndices,
+        colors: Uint32Array.from(
+            { length: samplingWidth },
+            () => transitionIndex % 2 === 0 ? 0 : 0xffffffff,
+        ),
+        durationTicks: 2,
+    })),
+};
+const samplingPreview = calculateMediaAnimationPreviewLayout(
+    samplingAnimation,
+    samplingWidth,
+    1,
+    [],
+    [],
+    poleType,
+    false,
+    'top',
+);
+const sampledDeltaRoms = samplingPreview.entities.filter(entity => (
+    entity.kind === 'decider-combinator'
+    && entity.description.startsWith('Media frame ')
+));
+assert.ok(sampledDeltaRoms.length <= 5_000);
+assert.ok(sampledDeltaRoms.some(entity => entity.description.endsWith('column 20')));
+assert.ok(sampledDeltaRoms.some(entity => {
+    const frame = Number(entity.description.match(/^Media frame (\d+)/)?.[1] ?? 0);
+    return frame > 550;
+}));
 
 assert.deepEqual(evenlySpacedFrameIndices(10, 4), [0, 3, 6, 9]);
 const selectedAnimation = selectAnimationFrames(animation, [0, 2]);
