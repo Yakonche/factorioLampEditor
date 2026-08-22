@@ -69,6 +69,10 @@ import type {
   AudioInstrumentSelection,
   DecodedAudioTrack,
 } from './utils/audio';
+import {
+  notoAnimatedEmojiGifUrl,
+  type NotoAnimatedEmojiEntry,
+} from './utils/notoAnimatedEmoji';
 
 type CalculationWorkerResponse = {
   id: number;
@@ -493,6 +497,55 @@ function App() {
       setStatusMsg('');
     }
   };
+
+  const handleNotoAnimatedEmojiStamp = useCallback(async (
+    entry: NotoAnimatedEmojiEntry,
+    requestedSize: number,
+  ) => {
+    if (!window.factorioLampEditor?.decodeMedia) {
+      alert('Official animated-emoji stamps are available in the installed desktop application.');
+      return;
+    }
+    const size = Math.max(4, Math.min(128, Math.round(requestedSize)));
+    setStatusMsg(`Downloading ${entry.name} animation…`);
+    try {
+      const response = await fetch(notoAnimatedEmojiGifUrl(entry.codepoint), { cache: 'force-cache' });
+      if (!response.ok) throw new Error(`The animation server returned HTTP ${response.status}.`);
+      const decoded = await window.factorioLampEditor.decodeMedia({
+        sourceName: `noto-animated-${entry.codepoint}.gif`,
+        bytes: await response.arrayBuffer(),
+        fpsLimit: Math.max(0.1, Math.min(30, mediaFpsLimit)),
+        maxDimension: size,
+        targetWidth: size,
+        targetHeight: size,
+        colorMode: 'full',
+        monochromeThreshold: 128,
+        differenceThreshold: 0,
+      });
+      const selected = decoded.frameCount > maxFrameCount
+        ? selectDecodedMediaFrames(decoded, evenlySpacedFrameIndices(decoded.frameCount, maxFrameCount))
+        : decoded;
+      setStampBuffer({
+        w: selected.width,
+        h: selected.height,
+        data: selected.firstFrame,
+        sourceName: `Noto Animated Emoji · ${entry.name}`,
+        animation: selected.frameCount > 1 ? {
+          firstDurationTicks: selected.firstDurationTicks,
+          sourceFrameCount: decoded.frameCount,
+          transitions: selected.transitions,
+        } : undefined,
+      });
+      setStampMode('text');
+      setStampScale(1);
+      setStatusMsg(`${entry.name}: ${selected.frameCount.toLocaleString()} real frames ready — click the grid to place it.`);
+      setTimeout(() => setStatusMsg(''), 5000);
+    } catch (error) {
+      console.error('Unable to create the official animated emoji stamp.', error);
+      setStatusMsg('');
+      alert(`Unable to load this animated emoji.\n${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [maxFrameCount, mediaFpsLimit]);
 
   const startPlacedImage = useCallback((
     image: HTMLImageElement,
@@ -1530,10 +1583,11 @@ function App() {
       setPreviewFrame(0);
       setMediaPreviewFrame(0);
       setPlacedImage(null);
-      setBlueprintImageInfo({ sourceName: 'Animated text', width: destW, height: destH });
+      const animationSourceName = pendingStamp.sourceName ?? 'Animated text';
+      setBlueprintImageInfo({ sourceName: animationSourceName, width: destW, height: destH });
       const durationTicks = animationDurationTicks(animation);
       setMediaAnimationInfo({
-        sourceName: 'Animated text',
+        sourceName: animationSourceName,
         sourceWidth: destW,
         sourceHeight: destH,
         width: destW,
@@ -1552,7 +1606,7 @@ function App() {
         width: destW * PIXEL_SIZE,
         height: destH * PIXEL_SIZE,
       });
-      setStatusMsg(`${animation.transitions.length + 1} animated text frames created.`);
+      setStatusMsg(`${animation.transitions.length + 1} animation frames created.`);
       setTimeout(() => setStatusMsg(''), 3000);
       return;
     }
@@ -1895,6 +1949,7 @@ function App() {
             color={color} setColor={setColor}
             onUndo={undo} onRedo={redo}
             renderTextStamp={handleTextStamp}
+            renderNotoAnimatedEmojiStamp={handleNotoAnimatedEmojiStamp}
             onImageUpload={handleImageUpload}
             onImageDimensionChange={handleImageDimensionChange}
             lockImageAspectRatio={lockImageAspectRatio}

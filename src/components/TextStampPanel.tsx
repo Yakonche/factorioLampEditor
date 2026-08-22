@@ -37,12 +37,15 @@ import {
     scrollTicksToSeconds,
 } from '../utils/scrollTiming';
 import { useI18n } from '../i18n';
+import type { NotoAnimatedEmojiEntry } from '../utils/notoAnimatedEmoji';
 
 const EmojiCatalog = React.lazy(() => import('./EmojiCatalog').then(module => ({ default: module.EmojiCatalog })));
+const NotoAnimatedEmojiCatalog = React.lazy(() => import('./NotoAnimatedEmojiCatalog').then(module => ({ default: module.NotoAnimatedEmojiCatalog })));
 
 interface TextStampPanelProps {
     initialColor: string;
     onCreate: (options: TextStampOptions) => void;
+    onCreateNotoAnimatedEmoji: (entry: NotoAnimatedEmojiEntry, size: number) => Promise<void>;
 }
 
 interface ScrollTimingInputProps {
@@ -269,7 +272,11 @@ const selectionGraphemeIndices = (value: string, start: number, end: number): nu
     return result;
 };
 
-export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, onCreate }) => {
+export const TextStampPanel: React.FC<TextStampPanelProps> = ({
+    initialColor,
+    onCreate,
+    onCreateNotoAnimatedEmoji,
+}) => {
     const { t } = useI18n();
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const contextMenuRef = React.useRef<HTMLDivElement>(null);
@@ -766,11 +773,11 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                 onToggle={event => setNativeEmojiOpen(event.currentTarget.open)}
                 className="overflow-hidden rounded-lg border border-gray-700 bg-gray-900 p-2"
             >
-                <summary className="cursor-pointer text-[9px] font-bold uppercase tracking-wider text-gray-400">Native emoji library</summary>
+                <summary className="cursor-pointer text-[9px] font-bold uppercase tracking-wider text-gray-400">{t('Native emoji library')}</summary>
                 {nativeEmojiOpen && (
                     <>
                         <p className="mt-2 text-[9px] leading-4 text-gray-500">
-                            Every Unicode RGI emoji is available here. Skin-tone variants are generated when the selected emoji supports them.
+                            {t('Every Unicode RGI emoji is available here. Skin-tone variants are generated when the selected emoji supports them.')}
                         </p>
                         <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
                             <EmojiCatalog fontFamily={selectedEmojiFontFamily} onSelect={appendEmoji} />
@@ -784,14 +791,13 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                 onToggle={event => setAnimatedEmojiOpen(event.currentTarget.open)}
                 className="overflow-hidden rounded-lg border border-gray-700 bg-gray-900 p-2"
             >
-                <summary className="cursor-pointer text-[9px] font-bold uppercase tracking-wider text-gray-400">Animated emoji library</summary>
+                <summary className="cursor-pointer text-[9px] font-bold uppercase tracking-wider text-gray-400">{t('Animated emoji library')}</summary>
                 {animatedEmojiOpen && (
                     <>
                         <p className="mt-2 text-[9px] leading-4 text-gray-500">
-                            {t('Every emoji can also be inserted as a real Factorio animation using the selected effect. Animated text increases blueprint size.')}
-                            {' '}{t('Emoji animation uses an independent 5 FPS clock, so changing the scroll speed does not accelerate it.')}
+                            {t('Curated presets are text-glyph sequences made by the editor. The official catalog below contains only emoji with real published animation frames.')}
                         </p>
-                        <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">Curated animated presets</p>
+                        <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">{t('Curated animated presets')}</p>
                         <div className="mt-2 grid grid-cols-2 gap-1">
                             {ANIMATED_EMOJIS.map(animation => (
                                 <button key={animation.label} type="button" onClick={() => appendAnimatedEmoji({ frames: [...animation.frames], effect: 'sequence' })} className="flex min-w-0 items-center gap-2 overflow-hidden rounded border border-gray-700 bg-gray-800 px-2 py-1 text-left text-[9px] text-gray-300 hover:border-fuchsia-500 hover:bg-gray-700">
@@ -800,15 +806,19 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                                 </button>
                             ))}
                         </div>
-                        <p className="mt-3 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">All animated emoji</p>
+                        <p className="mt-3 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">{t('Official Noto Animated Emoji')}</p>
+                        <p className="mt-1 text-[9px] leading-4 text-gray-500">
+                            {t('881 genuine Google Noto animations are available. Selecting one downloads its animation once and creates a placeable Factorio stamp at the current global size.')}
+                            {' '}{t('An internet connection is required the first time an animation is selected.')}
+                        </p>
                         <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
-                            <EmojiCatalog
-                                animated
-                                fontFamily={selectedEmojiFontFamily}
-                                onSelect={appendEmoji}
-                                onSelectAnimated={appendAnimatedEmoji}
+                            <NotoAnimatedEmojiCatalog
+                                onSelect={entry => onCreateNotoAnimatedEmoji(entry, globalStyle.fontSize)}
                             />
                         </React.Suspense>
+                        <p className="mt-2 text-[8px] leading-3 text-gray-600">
+                            {t('Noto Animated Emoji by Google, licensed under CC BY 4.0.')}
+                        </p>
                     </>
                 )}
             </details>

@@ -22,6 +22,7 @@ import {
 } from '../utils/audio';
 import { TextStampPanel } from './TextStampPanel';
 import { useI18n } from '../i18n';
+import type { NotoAnimatedEmojiEntry } from '../utils/notoAnimatedEmoji';
 
 export type ToolType = 'brush' | 'fill' | 'erase' | 'pan';
 
@@ -64,6 +65,7 @@ interface ToolbarProps {
 
     // Stamp props
     renderTextStamp: (options: TextStampOptions) => void;
+    renderNotoAnimatedEmojiStamp: (entry: NotoAnimatedEmojiEntry, size: number) => Promise<void>;
     onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onImageDimensionChange: (axis: 'width' | 'height', value: number) => void;
     lockImageAspectRatio: boolean;
@@ -175,7 +177,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     currentTool, setTool,
     color, setColor,
     onUndo, onRedo,
-    renderTextStamp, onImageUpload, onImageDimensionChange,
+    renderTextStamp, renderNotoAnimatedEmojiStamp, onImageUpload, onImageDimensionChange,
     lockImageAspectRatio, setLockImageAspectRatio,
     autoPole, setAutoPole,
     autoRoboport, setAutoRoboport,
@@ -325,7 +327,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     Stamps
                 </h3>
                 <div className="mb-3 md:mb-5">
-                    <TextStampPanel initialColor={color} onCreate={renderTextStamp} />
+                    <TextStampPanel
+                        initialColor={color}
+                        onCreate={renderTextStamp}
+                        onCreateNotoAnimatedEmoji={renderNotoAnimatedEmojiStamp}
+                    />
                 </div>
 
                 <div className="mb-2">

@@ -1,7 +1,6 @@
 import React from 'react';
 import emojiDataJson from 'unicode-emoji-json/data-by-emoji.json';
 import { useI18n } from '../i18n';
-import type { TextCharacterAnimation } from '../utils/stamp';
 
 interface EmojiMetadata {
     name: string;
@@ -14,13 +13,9 @@ interface EmojiEntry extends EmojiMetadata {
     emoji: string;
 }
 
-export type EmojiAnimationEffect = 'blink' | 'twinkle' | 'pulse';
-
 interface EmojiCatalogProps {
-    animated?: boolean;
     fontFamily: string;
     onSelect: (emoji: string) => void;
-    onSelectAnimated?: (animation: TextCharacterAnimation) => void;
 }
 
 const PAGE_SIZE = 240;
@@ -40,12 +35,6 @@ const SKIN_TONES = [
     { value: '🏿', label: 'Dark skin tone' },
 ] as const;
 
-const ANIMATION_EFFECTS: Array<{ value: EmojiAnimationEffect; label: string }> = [
-    { value: 'blink', label: 'Blink' },
-    { value: 'twinkle', label: 'Twinkle' },
-    { value: 'pulse', label: 'Pulse' },
-];
-
 const EMOJI_MODIFIER_BASE = /\p{Emoji_Modifier_Base}/u;
 
 const applySkinTone = (emoji: string, tone: string, supported: boolean) => {
@@ -57,25 +46,14 @@ const applySkinTone = (emoji: string, tone: string, supported: boolean) => {
     return codePoints.join('');
 };
 
-const createEmojiAnimation = (
-    emoji: string,
-    effect: EmojiAnimationEffect,
-): TextCharacterAnimation => ({
-    frames: [emoji, emoji, emoji, emoji],
-    effect,
-});
-
 export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
-    animated = false,
     fontFamily,
     onSelect,
-    onSelectAnimated,
 }) => {
     const { t } = useI18n();
     const [query, setQuery] = React.useState('');
     const [group, setGroup] = React.useState('');
     const [skinTone, setSkinTone] = React.useState('');
-    const [effect, setEffect] = React.useState<EmojiAnimationEffect>('blink');
     const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
 
     const filteredEntries = React.useMemo(() => {
@@ -95,8 +73,7 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
     const visibleEntries = filteredEntries.slice(0, visibleCount);
     const selectEntry = (entry: EmojiEntry) => {
         const emoji = applySkinTone(entry.emoji, skinTone, entry.skin_tone_support);
-        if (animated && onSelectAnimated) onSelectAnimated(createEmojiAnimation(emoji, effect));
-        else onSelect(emoji);
+        onSelect(emoji);
     };
 
     return (
@@ -126,20 +103,6 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
                 >
                     {SKIN_TONES.map(tone => <option key={tone.value || 'default'} value={tone.value}>{t(tone.label)}</option>)}
                 </select>
-                {animated && (
-                    <label className="col-span-2 flex items-center gap-2 text-[9px] text-gray-500">
-                        <span>{t('Animation effect')}</span>
-                        <select
-                            value={effect}
-                            onChange={event => setEffect(event.target.value as EmojiAnimationEffect)}
-                            className="min-w-0 flex-1 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-gray-200 outline-none"
-                        >
-                            {ANIMATION_EFFECTS.map(animationEffect => (
-                                <option key={animationEffect.value} value={animationEffect.value}>{t(animationEffect.label)}</option>
-                            ))}
-                        </select>
-                    </label>
-                )}
             </div>
 
             {visibleEntries.length ? (
@@ -154,12 +117,12 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
                                 key={`${entry.emoji}-${skinTone || 'default'}`}
                                 type="button"
                                 onClick={() => selectEntry(entry)}
-                                className={`flex aspect-square min-w-0 items-center justify-center overflow-hidden rounded border bg-gray-800 p-0 hover:bg-gray-700 ${animated ? 'border-gray-700 hover:border-fuchsia-500' : 'border-gray-700 hover:border-yellow-500'}`}
+                                className="flex aspect-square min-w-0 items-center justify-center overflow-hidden rounded border border-gray-700 bg-gray-800 p-0 hover:border-yellow-500 hover:bg-gray-700"
                                 aria-label={t(`Insert ${entry.name}`)}
                                 title={`${entry.name} · ${entry.group}`}
                             >
                                 <span
-                                    className={`block text-[22px] leading-none ${animated ? `emoji-preview-${effect}` : ''}`}
+                                    className="block text-[22px] leading-none"
                                     style={{ fontFamily }}
                                 >
                                     {emoji}

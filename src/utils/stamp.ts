@@ -17,6 +17,7 @@ export interface StampBuffer {
     h: number;
     data: Uint32Array;
     animation?: StampAnimation;
+    sourceName?: string;
 }
 
 export interface StampAnimation {

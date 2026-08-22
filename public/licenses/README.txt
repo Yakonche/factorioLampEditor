@@ -17,3 +17,8 @@ Noto Color Emoji is pinned to googlefonts/noto-emoji revision:
 Apple Color Emoji and Segoe UI Emoji are referenced only when the operating
 system provides them. Their font files and glyph artwork are not included in
 Factorio Lamp Editor.
+
+The official Noto Animated Emoji catalog is integrated separately. Animation
+assets are downloaded from Google on demand and attributed in:
+
+- Noto-Animated-Emoji-CC-BY-4.0.txt

@@ -1,0 +1,154 @@
+import React from 'react';
+import { useI18n } from '../i18n';
+import {
+    NOTO_ANIMATED_EMOJI,
+    notoAnimatedEmojiPngUrl,
+    notoAnimatedEmojiWebpUrl,
+    type NotoAnimatedEmojiEntry,
+} from '../utils/notoAnimatedEmoji';
+
+interface NotoAnimatedEmojiCatalogProps {
+    onSelect: (entry: NotoAnimatedEmojiEntry) => Promise<void> | void;
+}
+
+const PAGE_SIZE = 120;
+const CATEGORIES = [...new Set(NOTO_ANIMATED_EMOJI.map(entry => entry.category))];
+
+const AnimatedPreview: React.FC<{ entry: NotoAnimatedEmojiEntry }> = ({ entry }) => {
+    const ref = React.useRef<HTMLImageElement>(null);
+    const [visible, setVisible] = React.useState(false);
+    const [failed, setFailed] = React.useState(false);
+
+    React.useEffect(() => {
+        const element = ref.current;
+        if (!element) return;
+        if (!('IntersectionObserver' in window)) {
+            setVisible(true);
+            return;
+        }
+        const observer = new IntersectionObserver(entries => {
+            if (entries.some(candidate => candidate.isIntersecting)) {
+                setVisible(true);
+                observer.disconnect();
+            }
+        }, { rootMargin: '96px' });
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <img
+            ref={ref}
+            src={visible && !failed
+                ? notoAnimatedEmojiWebpUrl(entry.codepoint)
+                : notoAnimatedEmojiPngUrl(entry.codepoint)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            onError={() => setFailed(true)}
+            className="h-9 w-9 object-contain"
+        />
+    );
+};
+
+export const NotoAnimatedEmojiCatalog: React.FC<NotoAnimatedEmojiCatalogProps> = ({ onSelect }) => {
+    const { t } = useI18n();
+    const [query, setQuery] = React.useState('');
+    const [category, setCategory] = React.useState('');
+    const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
+    const [loadingCodepoint, setLoadingCodepoint] = React.useState('');
+
+    const filteredEntries = React.useMemo(() => {
+        const normalizedQuery = query.trim().toLocaleLowerCase();
+        return NOTO_ANIMATED_EMOJI.filter(entry => {
+            if (category && entry.category !== category) return false;
+            if (!normalizedQuery) return true;
+            return entry.emoji.includes(query)
+                || entry.name.toLocaleLowerCase().includes(normalizedQuery)
+                || entry.category.toLocaleLowerCase().includes(normalizedQuery)
+                || entry.tags.some(tag => tag.toLocaleLowerCase().includes(normalizedQuery));
+        });
+    }, [category, query]);
+
+    React.useEffect(() => setVisibleCount(PAGE_SIZE), [category, query]);
+
+    const selectEntry = async (entry: NotoAnimatedEmojiEntry) => {
+        if (loadingCodepoint) return;
+        setLoadingCodepoint(entry.codepoint);
+        try {
+            await onSelect(entry);
+        } finally {
+            setLoadingCodepoint('');
+        }
+    };
+
+    const visibleEntries = filteredEntries.slice(0, visibleCount);
+    return (
+        <div className="mt-2 space-y-2">
+            <div className="grid grid-cols-2 gap-1">
+                <input
+                    type="search"
+                    value={query}
+                    onChange={event => setQuery(event.target.value)}
+                    placeholder={t('Search animated emoji by name or symbol')}
+                    className="col-span-2 rounded border border-gray-600 bg-gray-800 px-2 py-1.5 text-[10px] text-gray-200 outline-none focus:border-fuchsia-500"
+                />
+                <select
+                    value={category}
+                    onChange={event => setCategory(event.target.value)}
+                    aria-label={t('Animated emoji category')}
+                    className="col-span-2 min-w-0 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-[9px] text-gray-200 outline-none"
+                >
+                    <option value="">{t('All categories')}</option>
+                    {CATEGORIES.map(categoryName => (
+                        <option key={categoryName} value={categoryName}>{t(categoryName)}</option>
+                    ))}
+                </select>
+            </div>
+
+            {visibleEntries.length ? (
+                <div
+                    className="grid max-h-64 w-full gap-1 overflow-x-hidden overflow-y-auto pr-1"
+                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(3rem, 1fr))' }}
+                >
+                    {visibleEntries.map(entry => (
+                        <button
+                            key={entry.codepoint}
+                            type="button"
+                            disabled={Boolean(loadingCodepoint)}
+                            onClick={() => void selectEntry(entry)}
+                            aria-label={`${t('Create animated stamp')}: ${entry.name}`}
+                            title={`${entry.name} · ${entry.category}`}
+                            className="relative flex aspect-square min-w-0 items-center justify-center overflow-hidden rounded border border-gray-700 bg-gray-800 p-0 hover:border-fuchsia-500 hover:bg-gray-700 disabled:cursor-wait disabled:opacity-50"
+                        >
+                            <AnimatedPreview entry={entry} />
+                            {loadingCodepoint === entry.codepoint && (
+                                <span className="absolute inset-0 flex items-center justify-center bg-gray-950/70 text-fuchsia-200">
+                                    <i className="fa-solid fa-spinner animate-spin" aria-hidden="true" />
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            ) : (
+                <p className="rounded border border-gray-700 bg-gray-800/60 px-2 py-3 text-center text-[9px] text-gray-500">
+                    {t('No animated emoji matches this search.')}
+                </p>
+            )}
+
+            <div className="flex items-center justify-between gap-2 text-[9px] text-gray-500">
+                <span>{Math.min(visibleCount, filteredEntries.length).toLocaleString()} / {filteredEntries.length.toLocaleString()}</span>
+                {visibleCount < filteredEntries.length && (
+                    <button
+                        type="button"
+                        onClick={() => setVisibleCount(previous => previous + PAGE_SIZE)}
+                        className="rounded border border-gray-600 bg-gray-800 px-2 py-1 text-gray-300 hover:bg-gray-700"
+                    >
+                        {t('Show more animated emoji')}
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};

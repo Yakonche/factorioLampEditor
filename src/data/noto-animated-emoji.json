@@ -1,0 +1,8110 @@
+{
+  "source": "https://googlefonts.github.io/noto-emoji-animation/",
+  "api": "https://googlefonts.github.io/noto-emoji-animation/data/api.json",
+  "license": "CC BY 4.0",
+  "icons": [
+    {
+      "codepoint": "1f600",
+      "emoji": "😀",
+      "name": "Smile",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":smile:"
+      ]
+    },
+    {
+      "codepoint": "1f603",
+      "emoji": "😃",
+      "name": "Smile With Big Eyes",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":smile-with-big-eyes:"
+      ]
+    },
+    {
+      "codepoint": "1f604",
+      "emoji": "😄",
+      "name": "Grin",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":grin:"
+      ]
+    },
+    {
+      "codepoint": "1f601",
+      "emoji": "😁",
+      "name": "Grinning",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":grinning:"
+      ]
+    },
+    {
+      "codepoint": "1f606",
+      "emoji": "😆",
+      "name": "Laughing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":laughing:"
+      ]
+    },
+    {
+      "codepoint": "1f605",
+      "emoji": "😅",
+      "name": "Grin Sweat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":grin-sweat:"
+      ]
+    },
+    {
+      "codepoint": "1f602",
+      "emoji": "😂",
+      "name": "Joy",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":joy:"
+      ]
+    },
+    {
+      "codepoint": "1f923",
+      "emoji": "🤣",
+      "name": "Rofl",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":rofl:"
+      ]
+    },
+    {
+      "codepoint": "1f62d",
+      "emoji": "😭",
+      "name": "Loudly Crying",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":loudly-crying:"
+      ]
+    },
+    {
+      "codepoint": "1f609",
+      "emoji": "😉",
+      "name": "Wink",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":wink:"
+      ]
+    },
+    {
+      "codepoint": "1f617",
+      "emoji": "😗",
+      "name": "Kissing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":kissing:"
+      ]
+    },
+    {
+      "codepoint": "1f619",
+      "emoji": "😙",
+      "name": "Kissing Smiling Eyes",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":kissing-smiling-eyes:"
+      ]
+    },
+    {
+      "codepoint": "1f61a",
+      "emoji": "😚",
+      "name": "Kissing Closed Eyes",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":kissing-closed-eyes:"
+      ]
+    },
+    {
+      "codepoint": "1f618",
+      "emoji": "😘",
+      "name": "Kissing Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":kissing-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f970",
+      "emoji": "🥰",
+      "name": "Heart Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-face:",
+        ":3-hearts:"
+      ]
+    },
+    {
+      "codepoint": "1f60d",
+      "emoji": "😍",
+      "name": "Heart Eyes",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-eyes:"
+      ]
+    },
+    {
+      "codepoint": "1f929",
+      "emoji": "🤩",
+      "name": "Star Struck",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":star-struck:"
+      ]
+    },
+    {
+      "codepoint": "1f973",
+      "emoji": "🥳",
+      "name": "Partying Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":partying-face:"
+      ]
+    },
+    {
+      "codepoint": "1fae0",
+      "emoji": "🫠",
+      "name": "Melting",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":melting:"
+      ]
+    },
+    {
+      "codepoint": "1f643",
+      "emoji": "🙃",
+      "name": "Upside Down Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":upside-down-face:"
+      ]
+    },
+    {
+      "codepoint": "1f642",
+      "emoji": "🙂",
+      "name": "Slightly Happy",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":slightly-happy:"
+      ]
+    },
+    {
+      "codepoint": "1f972",
+      "emoji": "🥲",
+      "name": "Happy Cry",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":happy-cry:"
+      ]
+    },
+    {
+      "codepoint": "1f979",
+      "emoji": "🥹",
+      "name": "Holding Back Tears",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":holding-back-tears:"
+      ]
+    },
+    {
+      "codepoint": "1f60a",
+      "emoji": "😊",
+      "name": "Blush",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":blush:"
+      ]
+    },
+    {
+      "codepoint": "263a_fe0f",
+      "emoji": "☺️",
+      "name": "Warm Smile",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":warm-smile:"
+      ]
+    },
+    {
+      "codepoint": "1f60c",
+      "emoji": "😌",
+      "name": "Relieved",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":relieved:"
+      ]
+    },
+    {
+      "codepoint": "1f642_200d_2195_fe0f",
+      "emoji": "🙂‍↕️",
+      "name": "Head Nod",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":head-nod:"
+      ]
+    },
+    {
+      "codepoint": "1f642_200d_2194_fe0f",
+      "emoji": "🙂‍↔️",
+      "name": "Head Shake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":head-shake:"
+      ]
+    },
+    {
+      "codepoint": "1f60f",
+      "emoji": "😏",
+      "name": "Smirk",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":smirk:"
+      ]
+    },
+    {
+      "codepoint": "1f924",
+      "emoji": "🤤",
+      "name": "Drool",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":drool:"
+      ]
+    },
+    {
+      "codepoint": "1f60b",
+      "emoji": "😋",
+      "name": "Yum",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":yum:"
+      ]
+    },
+    {
+      "codepoint": "1f61b",
+      "emoji": "😛",
+      "name": "Stuck Out Tongue",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":stuck-out-tongue:"
+      ]
+    },
+    {
+      "codepoint": "1f61d",
+      "emoji": "😝",
+      "name": "Squinting Tongue",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":squinting-tongue:"
+      ]
+    },
+    {
+      "codepoint": "1f61c",
+      "emoji": "😜",
+      "name": "Winky Tongue",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":winky-tongue:"
+      ]
+    },
+    {
+      "codepoint": "1f92a",
+      "emoji": "🤪",
+      "name": "Zany Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":zany-face:"
+      ]
+    },
+    {
+      "codepoint": "1faea",
+      "emoji": "🫪",
+      "name": "Distorted Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":distorted-face:"
+      ]
+    },
+    {
+      "codepoint": "1f614",
+      "emoji": "😔",
+      "name": "Pensive",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pensive:"
+      ]
+    },
+    {
+      "codepoint": "1f97a",
+      "emoji": "🥺",
+      "name": "Pleading",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pleading:"
+      ]
+    },
+    {
+      "codepoint": "1f62c",
+      "emoji": "😬",
+      "name": "Grimacing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":grimacing:"
+      ]
+    },
+    {
+      "codepoint": "1f611",
+      "emoji": "😑",
+      "name": "Expressionless",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":expressionless:"
+      ]
+    },
+    {
+      "codepoint": "1f610",
+      "emoji": "😐",
+      "name": "Neutral Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":neutral-face:"
+      ]
+    },
+    {
+      "codepoint": "1f636",
+      "emoji": "😶",
+      "name": "Mouth None",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":mouth-none:"
+      ]
+    },
+    {
+      "codepoint": "1f636_200d_1f32b_fe0f",
+      "emoji": "😶‍🌫️",
+      "name": "Face In Clouds",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":face-in-clouds:",
+        ":lost:"
+      ]
+    },
+    {
+      "codepoint": "1fae5",
+      "emoji": "🫥",
+      "name": "Dotted Line Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":dotted-line-face:",
+        ":invisible:"
+      ]
+    },
+    {
+      "codepoint": "1f910",
+      "emoji": "🤐",
+      "name": "Zipper Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":zipper-face:"
+      ]
+    },
+    {
+      "codepoint": "1fae1",
+      "emoji": "🫡",
+      "name": "Salute",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":salute:"
+      ]
+    },
+    {
+      "codepoint": "1f914",
+      "emoji": "🤔",
+      "name": "Thinking Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thinking-face:"
+      ]
+    },
+    {
+      "codepoint": "1f92b",
+      "emoji": "🤫",
+      "name": "Shushing Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":shushing-face:"
+      ]
+    },
+    {
+      "codepoint": "1fae2",
+      "emoji": "🫢",
+      "name": "Hand Over Mouth",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hand-over-mouth:"
+      ]
+    },
+    {
+      "codepoint": "1f92d",
+      "emoji": "🤭",
+      "name": "Smiling Eyes With Hand Over Mouth",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":smiling-eyes-with-hand-over-mouth:",
+        ":chuckling:"
+      ]
+    },
+    {
+      "codepoint": "1f971",
+      "emoji": "🥱",
+      "name": "Yawn",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":yawn:"
+      ]
+    },
+    {
+      "codepoint": "1f917",
+      "emoji": "🤗",
+      "name": "Hug Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hug-face:"
+      ]
+    },
+    {
+      "codepoint": "1fae3",
+      "emoji": "🫣",
+      "name": "Peeking",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":peeking:"
+      ]
+    },
+    {
+      "codepoint": "1f631",
+      "emoji": "😱",
+      "name": "Screaming",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":screaming:"
+      ]
+    },
+    {
+      "codepoint": "1f928",
+      "emoji": "🤨",
+      "name": "Raised Eyebrow",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-eyebrow:"
+      ]
+    },
+    {
+      "codepoint": "1f9d0",
+      "emoji": "🧐",
+      "name": "Monocle",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":monocle:"
+      ]
+    },
+    {
+      "codepoint": "1f612",
+      "emoji": "😒",
+      "name": "Unamused",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":unamused:"
+      ]
+    },
+    {
+      "codepoint": "1f644",
+      "emoji": "🙄",
+      "name": "Rolling Eyes",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":rolling-eyes:"
+      ]
+    },
+    {
+      "codepoint": "1f62e_200d_1f4a8",
+      "emoji": "😮‍💨",
+      "name": "Exhale",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":exhale:"
+      ]
+    },
+    {
+      "codepoint": "1f624",
+      "emoji": "😤",
+      "name": "Triumph",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":triumph:"
+      ]
+    },
+    {
+      "codepoint": "1f620",
+      "emoji": "😠",
+      "name": "Angry",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":angry:"
+      ]
+    },
+    {
+      "codepoint": "1f621",
+      "emoji": "😡",
+      "name": "Rage",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":rage:"
+      ]
+    },
+    {
+      "codepoint": "1f92c",
+      "emoji": "🤬",
+      "name": "Cursing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":cursing:"
+      ]
+    },
+    {
+      "codepoint": "1f61e",
+      "emoji": "😞",
+      "name": "Sad",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sad:"
+      ]
+    },
+    {
+      "codepoint": "1f613",
+      "emoji": "😓",
+      "name": "Sweat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sweat:",
+        ":downcast:"
+      ]
+    },
+    {
+      "codepoint": "1f61f",
+      "emoji": "😟",
+      "name": "Worried",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":worried:"
+      ]
+    },
+    {
+      "codepoint": "1f625",
+      "emoji": "😥",
+      "name": "Concerned",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":concerned:"
+      ]
+    },
+    {
+      "codepoint": "1f622",
+      "emoji": "😢",
+      "name": "Cry",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":cry:"
+      ]
+    },
+    {
+      "codepoint": "2639_fe0f",
+      "emoji": "☹️",
+      "name": "Big Frown",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":big-frown:"
+      ]
+    },
+    {
+      "codepoint": "1f641",
+      "emoji": "🙁",
+      "name": "Frown",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":frown:"
+      ]
+    },
+    {
+      "codepoint": "1fae4",
+      "emoji": "🫤",
+      "name": "Diagonal Mouth",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":diagonal-mouth:"
+      ]
+    },
+    {
+      "codepoint": "1f615",
+      "emoji": "😕",
+      "name": "Slightly Frowning",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":slightly-frowning:"
+      ]
+    },
+    {
+      "codepoint": "1f630",
+      "emoji": "😰",
+      "name": "Anxious With Sweat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":anxious-with-sweat:"
+      ]
+    },
+    {
+      "codepoint": "1f628",
+      "emoji": "😨",
+      "name": "Scared",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":scared:"
+      ]
+    },
+    {
+      "codepoint": "1f627",
+      "emoji": "😧",
+      "name": "Anguished",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":anguished:"
+      ]
+    },
+    {
+      "codepoint": "1f626",
+      "emoji": "😦",
+      "name": "Gasp",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":gasp:"
+      ]
+    },
+    {
+      "codepoint": "1f62e",
+      "emoji": "😮",
+      "name": "Mouth Open",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":mouth-open:"
+      ]
+    },
+    {
+      "codepoint": "1f62f",
+      "emoji": "😯",
+      "name": "Surprised",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":surprised:",
+        ":hushed:"
+      ]
+    },
+    {
+      "codepoint": "1f632",
+      "emoji": "😲",
+      "name": "Astonished",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":astonished:"
+      ]
+    },
+    {
+      "codepoint": "1f633",
+      "emoji": "😳",
+      "name": "Flushed",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":flushed:"
+      ]
+    },
+    {
+      "codepoint": "1f92f",
+      "emoji": "🤯",
+      "name": "Mind Blown",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":mind-blown:",
+        ":exploding-head:"
+      ]
+    },
+    {
+      "codepoint": "1f616",
+      "emoji": "😖",
+      "name": "Scrunched Mouth",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":scrunched-mouth:",
+        ":confounded:",
+        ":zigzag-mouth:"
+      ]
+    },
+    {
+      "codepoint": "1f623",
+      "emoji": "😣",
+      "name": "Scrunched Eyes",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":scrunched-eyes:",
+        ":persevering:"
+      ]
+    },
+    {
+      "codepoint": "1f629",
+      "emoji": "😩",
+      "name": "Weary",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":weary:"
+      ]
+    },
+    {
+      "codepoint": "1f62b",
+      "emoji": "😫",
+      "name": "Distraught",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":distraught:"
+      ]
+    },
+    {
+      "codepoint": "1f635",
+      "emoji": "😵",
+      "name": "X Eyes",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":x-eyes:"
+      ]
+    },
+    {
+      "codepoint": "1f635_200d_1f4ab",
+      "emoji": "😵‍💫",
+      "name": "Dizzy Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":dizzy-face:"
+      ]
+    },
+    {
+      "codepoint": "1fae8",
+      "emoji": "🫨",
+      "name": "Shaking Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":shaking-face:"
+      ]
+    },
+    {
+      "codepoint": "1f974",
+      "emoji": "🥴",
+      "name": "Woozy",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":woozy:"
+      ]
+    },
+    {
+      "codepoint": "1f975",
+      "emoji": "🥵",
+      "name": "Hot Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hot-face:",
+        ":sweat-face:"
+      ]
+    },
+    {
+      "codepoint": "1f976",
+      "emoji": "🥶",
+      "name": "Cold Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":cold-face:"
+      ]
+    },
+    {
+      "codepoint": "1f922",
+      "emoji": "🤢",
+      "name": "Sick",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sick:",
+        ":nauseated:"
+      ]
+    },
+    {
+      "codepoint": "1f92e",
+      "emoji": "🤮",
+      "name": "Vomit",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":vomit:"
+      ]
+    },
+    {
+      "codepoint": "1fae9",
+      "emoji": "🫩",
+      "name": "Tired",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":tired:",
+        ":bags-under-eyes:"
+      ]
+    },
+    {
+      "codepoint": "1f634",
+      "emoji": "😴",
+      "name": "Sleep",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sleep:"
+      ]
+    },
+    {
+      "codepoint": "1f62a",
+      "emoji": "😪",
+      "name": "Sleepy",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sleepy:"
+      ]
+    },
+    {
+      "codepoint": "1f927",
+      "emoji": "🤧",
+      "name": "Sneeze",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sneeze:"
+      ]
+    },
+    {
+      "codepoint": "1f912",
+      "emoji": "🤒",
+      "name": "Thermometer Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thermometer-face:"
+      ]
+    },
+    {
+      "codepoint": "1f915",
+      "emoji": "🤕",
+      "name": "Bandage Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":bandage-face:"
+      ]
+    },
+    {
+      "codepoint": "1f637",
+      "emoji": "😷",
+      "name": "Mask",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":mask:"
+      ]
+    },
+    {
+      "codepoint": "1f925",
+      "emoji": "🤥",
+      "name": "Liar",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":liar:"
+      ]
+    },
+    {
+      "codepoint": "1f607",
+      "emoji": "😇",
+      "name": "Halo",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":halo:",
+        ":innocent:"
+      ]
+    },
+    {
+      "codepoint": "1f920",
+      "emoji": "🤠",
+      "name": "Cowboy",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":cowboy:"
+      ]
+    },
+    {
+      "codepoint": "1f911",
+      "emoji": "🤑",
+      "name": "Money Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":money-face:"
+      ]
+    },
+    {
+      "codepoint": "1f913",
+      "emoji": "🤓",
+      "name": "Nerd Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nerd-face:"
+      ]
+    },
+    {
+      "codepoint": "1f60e",
+      "emoji": "😎",
+      "name": "Sunglasses Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sunglasses-face:"
+      ]
+    },
+    {
+      "codepoint": "1f978",
+      "emoji": "🥸",
+      "name": "Disguise",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":disguise:"
+      ]
+    },
+    {
+      "codepoint": "1f921",
+      "emoji": "🤡",
+      "name": "Clown",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":clown:"
+      ]
+    },
+    {
+      "codepoint": "1f4a9",
+      "emoji": "💩",
+      "name": "Poop",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":poop:"
+      ]
+    },
+    {
+      "codepoint": "1f608",
+      "emoji": "😈",
+      "name": "Imp Smile",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":imp-smile:"
+      ]
+    },
+    {
+      "codepoint": "1f47f",
+      "emoji": "👿",
+      "name": "Imp Frown",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":imp-frown:"
+      ]
+    },
+    {
+      "codepoint": "1f47b",
+      "emoji": "👻",
+      "name": "Ghost",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ghost:"
+      ]
+    },
+    {
+      "codepoint": "1f480",
+      "emoji": "💀",
+      "name": "Skull",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":skull:"
+      ]
+    },
+    {
+      "codepoint": "1f916",
+      "emoji": "🤖",
+      "name": "Robot",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":robot:"
+      ]
+    },
+    {
+      "codepoint": "1f479",
+      "emoji": "👹",
+      "name": "Ogre",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ogre:"
+      ]
+    },
+    {
+      "codepoint": "2603_fe0f",
+      "emoji": "☃️",
+      "name": "Snowman With Snow",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":snowman-with-snow:"
+      ]
+    },
+    {
+      "codepoint": "26c4",
+      "emoji": "⛄",
+      "name": "Snowman",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":snowman:"
+      ]
+    },
+    {
+      "codepoint": "1f47d",
+      "emoji": "👽",
+      "name": "Alien",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":alien:"
+      ]
+    },
+    {
+      "codepoint": "1f47e",
+      "emoji": "👾",
+      "name": "Alien Monster",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":alien-monster:"
+      ]
+    },
+    {
+      "codepoint": "1f31a",
+      "emoji": "🌚",
+      "name": "Moon Face New",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":moon-face-new:"
+      ]
+    },
+    {
+      "codepoint": "1f31d",
+      "emoji": "🌝",
+      "name": "Moon Face Full",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":moon-face-full:"
+      ]
+    },
+    {
+      "codepoint": "1f31e",
+      "emoji": "🌞",
+      "name": "Sun With Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sun-with-face:"
+      ]
+    },
+    {
+      "codepoint": "1f31b",
+      "emoji": "🌛",
+      "name": "Moon Face First Quarter",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":moon-face-first-quarter:"
+      ]
+    },
+    {
+      "codepoint": "1f31c",
+      "emoji": "🌜",
+      "name": "Moon Face Last Quarter",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":moon-face-last-quarter:"
+      ]
+    },
+    {
+      "codepoint": "1f63a",
+      "emoji": "😺",
+      "name": "Smiley Cat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":smiley-cat:"
+      ]
+    },
+    {
+      "codepoint": "1f638",
+      "emoji": "😸",
+      "name": "Smile Cat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":smile-cat:"
+      ]
+    },
+    {
+      "codepoint": "1f639",
+      "emoji": "😹",
+      "name": "Joy Cat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":joy-cat:"
+      ]
+    },
+    {
+      "codepoint": "1f63b",
+      "emoji": "😻",
+      "name": "Heart Eyes Cat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-eyes-cat:"
+      ]
+    },
+    {
+      "codepoint": "1f63c",
+      "emoji": "😼",
+      "name": "Smirk Cat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":smirk-cat:"
+      ]
+    },
+    {
+      "codepoint": "1f63d",
+      "emoji": "😽",
+      "name": "Kissing Cat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":kissing-cat:"
+      ]
+    },
+    {
+      "codepoint": "1f640",
+      "emoji": "🙀",
+      "name": "Scream Cat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":scream-cat:"
+      ]
+    },
+    {
+      "codepoint": "1f63f",
+      "emoji": "😿",
+      "name": "Crying Cat Face",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":crying-cat-face:"
+      ]
+    },
+    {
+      "codepoint": "1f63e",
+      "emoji": "😾",
+      "name": "Pouting Cat",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pouting-cat:"
+      ]
+    },
+    {
+      "codepoint": "1f648",
+      "emoji": "🙈",
+      "name": "See No Evil Monkey",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":see-no-evil-monkey:"
+      ]
+    },
+    {
+      "codepoint": "1f649",
+      "emoji": "🙉",
+      "name": "Hear No Evil Monkey",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hear-no-evil-monkey:"
+      ]
+    },
+    {
+      "codepoint": "1f64a",
+      "emoji": "🙊",
+      "name": "Speak No Evil Monkey",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":speak-no-evil-monkey:"
+      ]
+    },
+    {
+      "codepoint": "2b50",
+      "emoji": "⭐",
+      "name": "Star",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":star:"
+      ]
+    },
+    {
+      "codepoint": "1f31f",
+      "emoji": "🌟",
+      "name": "Glowing Star",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":glowing-star:"
+      ]
+    },
+    {
+      "codepoint": "2728",
+      "emoji": "✨",
+      "name": "Sparkles",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sparkles:"
+      ]
+    },
+    {
+      "codepoint": "26a1",
+      "emoji": "⚡",
+      "name": "Electricity",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":electricity:",
+        ":zap:",
+        ":lightning:"
+      ]
+    },
+    {
+      "codepoint": "1f4a5",
+      "emoji": "💥",
+      "name": "Collision",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":collision:"
+      ]
+    },
+    {
+      "codepoint": "1faef",
+      "emoji": "🫯",
+      "name": "Fight",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fight:"
+      ]
+    },
+    {
+      "codepoint": "1f573_fe0f",
+      "emoji": "🕳️",
+      "name": "Hole",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hole:"
+      ]
+    },
+    {
+      "codepoint": "1f525",
+      "emoji": "🔥",
+      "name": "Fire",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fire:",
+        ":burn:",
+        ":lit:"
+      ]
+    },
+    {
+      "codepoint": "1f4af",
+      "emoji": "💯",
+      "name": "100",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":100:",
+        ":one-hundred:",
+        ":hundred:",
+        ":points:"
+      ]
+    },
+    {
+      "codepoint": "1f389",
+      "emoji": "🎉",
+      "name": "Party Popper",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":party-popper:"
+      ]
+    },
+    {
+      "codepoint": "1f38a",
+      "emoji": "🎊",
+      "name": "Confetti Ball",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":confetti-ball:"
+      ]
+    },
+    {
+      "codepoint": "2764_fe0f",
+      "emoji": "❤️",
+      "name": "Red Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":red-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f9e1",
+      "emoji": "🧡",
+      "name": "Orange Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":orange-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f49b",
+      "emoji": "💛",
+      "name": "Yellow Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":yellow-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f49a",
+      "emoji": "💚",
+      "name": "Green Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":green-heart:"
+      ]
+    },
+    {
+      "codepoint": "1fa75",
+      "emoji": "🩵",
+      "name": "Light Blue Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":light-blue-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f499",
+      "emoji": "💙",
+      "name": "Blue Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":blue-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f49c",
+      "emoji": "💜",
+      "name": "Purple Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":purple-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f90e",
+      "emoji": "🤎",
+      "name": "Brown Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":brown-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f5a4",
+      "emoji": "🖤",
+      "name": "Black Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":black-heart:"
+      ]
+    },
+    {
+      "codepoint": "1fa76",
+      "emoji": "🩶",
+      "name": "Grey Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":grey-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f90d",
+      "emoji": "🤍",
+      "name": "White Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":white-heart:"
+      ]
+    },
+    {
+      "codepoint": "1fa77",
+      "emoji": "🩷",
+      "name": "Pink Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pink-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f498",
+      "emoji": "💘",
+      "name": "Cupid",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":cupid:"
+      ]
+    },
+    {
+      "codepoint": "1f49d",
+      "emoji": "💝",
+      "name": "Gift Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":gift-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f496",
+      "emoji": "💖",
+      "name": "Sparkling Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":sparkling-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f497",
+      "emoji": "💗",
+      "name": "Heart Grow",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-grow:"
+      ]
+    },
+    {
+      "codepoint": "1f493",
+      "emoji": "💓",
+      "name": "Beating Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":beating-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f49e",
+      "emoji": "💞",
+      "name": "Revolving Hearts",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":revolving-hearts:"
+      ]
+    },
+    {
+      "codepoint": "1f495",
+      "emoji": "💕",
+      "name": "Two Hearts",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":two-hearts:"
+      ]
+    },
+    {
+      "codepoint": "1f48c",
+      "emoji": "💌",
+      "name": "Love Letter",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":love-letter:"
+      ]
+    },
+    {
+      "codepoint": "1f49f",
+      "emoji": "💟",
+      "name": "Heart Box",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-box:"
+      ]
+    },
+    {
+      "codepoint": "2665_fe0f",
+      "emoji": "♥️",
+      "name": "Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart:"
+      ]
+    },
+    {
+      "codepoint": "2763_fe0f",
+      "emoji": "❣️",
+      "name": "Heart Exclamation Point",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-exclamation-point:"
+      ]
+    },
+    {
+      "codepoint": "2764_fe0f_200d_1fa79",
+      "emoji": "❤️‍🩹",
+      "name": "Bandaged Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":bandaged-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f494",
+      "emoji": "💔",
+      "name": "Broken Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":broken-heart:"
+      ]
+    },
+    {
+      "codepoint": "2764_fe0f_200d_1f525",
+      "emoji": "❤️‍🔥",
+      "name": "Fire Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fire-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f48b",
+      "emoji": "💋",
+      "name": "Kiss",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":kiss:"
+      ]
+    },
+    {
+      "codepoint": "1fac2",
+      "emoji": "🫂",
+      "name": "Hugging",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hugging:"
+      ]
+    },
+    {
+      "codepoint": "1f5e3_fe0f",
+      "emoji": "🗣️",
+      "name": "Speaking Head",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":speaking-head:"
+      ]
+    },
+    {
+      "codepoint": "1f463",
+      "emoji": "👣",
+      "name": "Footprints",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":footprints:"
+      ]
+    },
+    {
+      "codepoint": "1fac6",
+      "emoji": "🫆",
+      "name": "Fingerprint",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fingerprint:"
+      ]
+    },
+    {
+      "codepoint": "1f9e0",
+      "emoji": "🧠",
+      "name": "Brain",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":brain:"
+      ]
+    },
+    {
+      "codepoint": "1fac0",
+      "emoji": "🫀",
+      "name": "Anatomical Heart",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":anatomical-heart:"
+      ]
+    },
+    {
+      "codepoint": "1fa78",
+      "emoji": "🩸",
+      "name": "Blood",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":blood:"
+      ]
+    },
+    {
+      "codepoint": "1f9a0",
+      "emoji": "🦠",
+      "name": "Microbe",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":microbe:",
+        ":virus:"
+      ]
+    },
+    {
+      "codepoint": "1f9b4",
+      "emoji": "🦴",
+      "name": "Bone",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":bone:"
+      ]
+    },
+    {
+      "codepoint": "1f440",
+      "emoji": "👀",
+      "name": "Eyes",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":eyes:"
+      ]
+    },
+    {
+      "codepoint": "1f441_fe0f",
+      "emoji": "👁️",
+      "name": "Eye",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":eye:"
+      ]
+    },
+    {
+      "codepoint": "1fae6",
+      "emoji": "🫦",
+      "name": "Biting Lip",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":biting-lip:"
+      ]
+    },
+    {
+      "codepoint": "1f443",
+      "emoji": "👃",
+      "name": "Nose",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nose:"
+      ]
+    },
+    {
+      "codepoint": "1f443_1f3fb",
+      "emoji": "👃🏻",
+      "name": "Nose",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nose:"
+      ]
+    },
+    {
+      "codepoint": "1f443_1f3fc",
+      "emoji": "👃🏼",
+      "name": "Nose",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nose:"
+      ]
+    },
+    {
+      "codepoint": "1f443_1f3fd",
+      "emoji": "👃🏽",
+      "name": "Nose",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nose:"
+      ]
+    },
+    {
+      "codepoint": "1f443_1f3fe",
+      "emoji": "👃🏾",
+      "name": "Nose",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nose:"
+      ]
+    },
+    {
+      "codepoint": "1f443_1f3ff",
+      "emoji": "👃🏿",
+      "name": "Nose",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nose:"
+      ]
+    },
+    {
+      "codepoint": "1f442",
+      "emoji": "👂",
+      "name": "Ear",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ear:"
+      ]
+    },
+    {
+      "codepoint": "1f442_1f3fb",
+      "emoji": "👂🏻",
+      "name": "Ear",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ear:"
+      ]
+    },
+    {
+      "codepoint": "1f442_1f3fc",
+      "emoji": "👂🏼",
+      "name": "Ear",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ear:"
+      ]
+    },
+    {
+      "codepoint": "1f442_1f3fd",
+      "emoji": "👂🏽",
+      "name": "Ear",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ear:"
+      ]
+    },
+    {
+      "codepoint": "1f442_1f3fe",
+      "emoji": "👂🏾",
+      "name": "Ear",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ear:"
+      ]
+    },
+    {
+      "codepoint": "1f442_1f3ff",
+      "emoji": "👂🏿",
+      "name": "Ear",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ear:"
+      ]
+    },
+    {
+      "codepoint": "1f9bb",
+      "emoji": "🦻",
+      "name": "Hearing Aid",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hearing-aid:"
+      ]
+    },
+    {
+      "codepoint": "1f9bb_1f3fb",
+      "emoji": "🦻🏻",
+      "name": "Hearing Aid",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hearing-aid:"
+      ]
+    },
+    {
+      "codepoint": "1f9bb_1f3fc",
+      "emoji": "🦻🏼",
+      "name": "Hearing Aid",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hearing-aid:"
+      ]
+    },
+    {
+      "codepoint": "1f9bb_1f3fd",
+      "emoji": "🦻🏽",
+      "name": "Hearing Aid",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hearing-aid:"
+      ]
+    },
+    {
+      "codepoint": "1f9bb_1f3fe",
+      "emoji": "🦻🏾",
+      "name": "Hearing Aid",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hearing-aid:"
+      ]
+    },
+    {
+      "codepoint": "1f9bb_1f3ff",
+      "emoji": "🦻🏿",
+      "name": "Hearing Aid",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hearing-aid:"
+      ]
+    },
+    {
+      "codepoint": "1f9b6",
+      "emoji": "🦶",
+      "name": "Foot",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":foot:"
+      ]
+    },
+    {
+      "codepoint": "1f9b6_1f3fb",
+      "emoji": "🦶🏻",
+      "name": "Foot",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":foot:"
+      ]
+    },
+    {
+      "codepoint": "1f9b6_1f3fc",
+      "emoji": "🦶🏼",
+      "name": "Foot",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":foot:"
+      ]
+    },
+    {
+      "codepoint": "1f9b6_1f3fd",
+      "emoji": "🦶🏽",
+      "name": "Foot",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":foot:"
+      ]
+    },
+    {
+      "codepoint": "1f9b6_1f3fe",
+      "emoji": "🦶🏾",
+      "name": "Foot",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":foot:"
+      ]
+    },
+    {
+      "codepoint": "1f9b6_1f3ff",
+      "emoji": "🦶🏿",
+      "name": "Foot",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":foot:"
+      ]
+    },
+    {
+      "codepoint": "1f9b5",
+      "emoji": "🦵",
+      "name": "Leg",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leg:"
+      ]
+    },
+    {
+      "codepoint": "1f9b5_1f3fb",
+      "emoji": "🦵🏻",
+      "name": "Leg",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leg:"
+      ]
+    },
+    {
+      "codepoint": "1f9b5_1f3fc",
+      "emoji": "🦵🏼",
+      "name": "Leg",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leg:"
+      ]
+    },
+    {
+      "codepoint": "1f9b5_1f3fd",
+      "emoji": "🦵🏽",
+      "name": "Leg",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leg:"
+      ]
+    },
+    {
+      "codepoint": "1f9b5_1f3fe",
+      "emoji": "🦵🏾",
+      "name": "Leg",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leg:"
+      ]
+    },
+    {
+      "codepoint": "1f9b5_1f3ff",
+      "emoji": "🦵🏿",
+      "name": "Leg",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leg:"
+      ]
+    },
+    {
+      "codepoint": "1f9bf",
+      "emoji": "🦿",
+      "name": "Leg Mechanical",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leg-mechanical:"
+      ]
+    },
+    {
+      "codepoint": "1f9be",
+      "emoji": "🦾",
+      "name": "Arm Mechanical",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":arm-mechanical:"
+      ]
+    },
+    {
+      "codepoint": "1f4aa",
+      "emoji": "💪",
+      "name": "Muscle",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":muscle:",
+        ":flex:",
+        ":bicep:",
+        ":strong:"
+      ]
+    },
+    {
+      "codepoint": "1f4aa_1f3fb",
+      "emoji": "💪🏻",
+      "name": "Muscle",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":muscle:",
+        ":flex:",
+        ":bicep:",
+        ":strong:"
+      ]
+    },
+    {
+      "codepoint": "1f4aa_1f3fc",
+      "emoji": "💪🏼",
+      "name": "Muscle",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":muscle:",
+        ":flex:",
+        ":bicep:",
+        ":strong:"
+      ]
+    },
+    {
+      "codepoint": "1f4aa_1f3fd",
+      "emoji": "💪🏽",
+      "name": "Muscle",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":muscle:",
+        ":flex:",
+        ":bicep:",
+        ":strong:"
+      ]
+    },
+    {
+      "codepoint": "1f4aa_1f3fe",
+      "emoji": "💪🏾",
+      "name": "Muscle",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":muscle:",
+        ":flex:",
+        ":bicep:",
+        ":strong:"
+      ]
+    },
+    {
+      "codepoint": "1f4aa_1f3ff",
+      "emoji": "💪🏿",
+      "name": "Muscle",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":muscle:",
+        ":flex:",
+        ":bicep:",
+        ":strong:"
+      ]
+    },
+    {
+      "codepoint": "1f44f",
+      "emoji": "👏",
+      "name": "Clap",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":clap:"
+      ]
+    },
+    {
+      "codepoint": "1f44f_1f3fb",
+      "emoji": "👏🏻",
+      "name": "Clap",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":clap:"
+      ]
+    },
+    {
+      "codepoint": "1f44f_1f3fc",
+      "emoji": "👏🏼",
+      "name": "Clap",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":clap:"
+      ]
+    },
+    {
+      "codepoint": "1f44f_1f3fd",
+      "emoji": "👏🏽",
+      "name": "Clap",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":clap:"
+      ]
+    },
+    {
+      "codepoint": "1f44f_1f3fe",
+      "emoji": "👏🏾",
+      "name": "Clap",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":clap:"
+      ]
+    },
+    {
+      "codepoint": "1f44f_1f3ff",
+      "emoji": "👏🏿",
+      "name": "Clap",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":clap:"
+      ]
+    },
+    {
+      "codepoint": "1f44d",
+      "emoji": "👍",
+      "name": "Thumbs Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-up:",
+        ":+1:"
+      ]
+    },
+    {
+      "codepoint": "1f44d_1f3fb",
+      "emoji": "👍🏻",
+      "name": "Thumbs Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-up:",
+        ":+1:"
+      ]
+    },
+    {
+      "codepoint": "1f44d_1f3fc",
+      "emoji": "👍🏼",
+      "name": "Thumbs Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-up:",
+        ":+1:"
+      ]
+    },
+    {
+      "codepoint": "1f44d_1f3fd",
+      "emoji": "👍🏽",
+      "name": "Thumbs Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-up:",
+        ":+1:"
+      ]
+    },
+    {
+      "codepoint": "1f44d_1f3fe",
+      "emoji": "👍🏾",
+      "name": "Thumbs Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-up:",
+        ":+1:"
+      ]
+    },
+    {
+      "codepoint": "1f44d_1f3ff",
+      "emoji": "👍🏿",
+      "name": "Thumbs Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-up:",
+        ":+1:"
+      ]
+    },
+    {
+      "codepoint": "1f44e",
+      "emoji": "👎",
+      "name": "Thumbs Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-down:"
+      ]
+    },
+    {
+      "codepoint": "1f44e_1f3fb",
+      "emoji": "👎🏻",
+      "name": "Thumbs Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-down:"
+      ]
+    },
+    {
+      "codepoint": "1f44e_1f3fc",
+      "emoji": "👎🏼",
+      "name": "Thumbs Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-down:"
+      ]
+    },
+    {
+      "codepoint": "1f44e_1f3fd",
+      "emoji": "👎🏽",
+      "name": "Thumbs Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-down:"
+      ]
+    },
+    {
+      "codepoint": "1f44e_1f3fe",
+      "emoji": "👎🏾",
+      "name": "Thumbs Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-down:"
+      ]
+    },
+    {
+      "codepoint": "1f44e_1f3ff",
+      "emoji": "👎🏿",
+      "name": "Thumbs Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":thumbs-down:"
+      ]
+    },
+    {
+      "codepoint": "1faf6",
+      "emoji": "🫶",
+      "name": "Heart Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-hands:"
+      ]
+    },
+    {
+      "codepoint": "1faf6_1f3fb",
+      "emoji": "🫶🏻",
+      "name": "Heart Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-hands:"
+      ]
+    },
+    {
+      "codepoint": "1faf6_1f3fc",
+      "emoji": "🫶🏼",
+      "name": "Heart Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-hands:"
+      ]
+    },
+    {
+      "codepoint": "1faf6_1f3fd",
+      "emoji": "🫶🏽",
+      "name": "Heart Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-hands:"
+      ]
+    },
+    {
+      "codepoint": "1faf6_1f3fe",
+      "emoji": "🫶🏾",
+      "name": "Heart Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-hands:"
+      ]
+    },
+    {
+      "codepoint": "1faf6_1f3ff",
+      "emoji": "🫶🏿",
+      "name": "Heart Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":heart-hands:"
+      ]
+    },
+    {
+      "codepoint": "1f64c",
+      "emoji": "🙌",
+      "name": "Raising Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raising-hands:",
+        ":hooray:"
+      ]
+    },
+    {
+      "codepoint": "1f64c_1f3fb",
+      "emoji": "🙌🏻",
+      "name": "Raising Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raising-hands:",
+        ":hooray:"
+      ]
+    },
+    {
+      "codepoint": "1f64c_1f3fc",
+      "emoji": "🙌🏼",
+      "name": "Raising Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raising-hands:",
+        ":hooray:"
+      ]
+    },
+    {
+      "codepoint": "1f64c_1f3fd",
+      "emoji": "🙌🏽",
+      "name": "Raising Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raising-hands:",
+        ":hooray:"
+      ]
+    },
+    {
+      "codepoint": "1f64c_1f3fe",
+      "emoji": "🙌🏾",
+      "name": "Raising Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raising-hands:",
+        ":hooray:"
+      ]
+    },
+    {
+      "codepoint": "1f64c_1f3ff",
+      "emoji": "🙌🏿",
+      "name": "Raising Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raising-hands:",
+        ":hooray:"
+      ]
+    },
+    {
+      "codepoint": "1f450",
+      "emoji": "👐",
+      "name": "Open Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":open-hands:"
+      ]
+    },
+    {
+      "codepoint": "1f450_1f3fb",
+      "emoji": "👐🏻",
+      "name": "Open Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":open-hands:"
+      ]
+    },
+    {
+      "codepoint": "1f450_1f3fc",
+      "emoji": "👐🏼",
+      "name": "Open Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":open-hands:"
+      ]
+    },
+    {
+      "codepoint": "1f450_1f3fd",
+      "emoji": "👐🏽",
+      "name": "Open Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":open-hands:"
+      ]
+    },
+    {
+      "codepoint": "1f450_1f3fe",
+      "emoji": "👐🏾",
+      "name": "Open Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":open-hands:"
+      ]
+    },
+    {
+      "codepoint": "1f450_1f3ff",
+      "emoji": "👐🏿",
+      "name": "Open Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":open-hands:"
+      ]
+    },
+    {
+      "codepoint": "1f932",
+      "emoji": "🤲",
+      "name": "Palms Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palms-up:"
+      ]
+    },
+    {
+      "codepoint": "1f932_1f3fb",
+      "emoji": "🤲🏻",
+      "name": "Palms Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palms-up:"
+      ]
+    },
+    {
+      "codepoint": "1f932_1f3fc",
+      "emoji": "🤲🏼",
+      "name": "Palms Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palms-up:"
+      ]
+    },
+    {
+      "codepoint": "1f932_1f3fd",
+      "emoji": "🤲🏽",
+      "name": "Palms Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palms-up:"
+      ]
+    },
+    {
+      "codepoint": "1f932_1f3fe",
+      "emoji": "🤲🏾",
+      "name": "Palms Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palms-up:"
+      ]
+    },
+    {
+      "codepoint": "1f932_1f3ff",
+      "emoji": "🤲🏿",
+      "name": "Palms Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palms-up:"
+      ]
+    },
+    {
+      "codepoint": "1f91c",
+      "emoji": "🤜",
+      "name": "Fist Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91c_1f3fb",
+      "emoji": "🤜🏻",
+      "name": "Fist Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91c_1f3fc",
+      "emoji": "🤜🏼",
+      "name": "Fist Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91c_1f3fd",
+      "emoji": "🤜🏽",
+      "name": "Fist Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91c_1f3fe",
+      "emoji": "🤜🏾",
+      "name": "Fist Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91c_1f3ff",
+      "emoji": "🤜🏿",
+      "name": "Fist Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91b",
+      "emoji": "🤛",
+      "name": "Fist Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91b_1f3fb",
+      "emoji": "🤛🏻",
+      "name": "Fist Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91b_1f3fc",
+      "emoji": "🤛🏼",
+      "name": "Fist Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91b_1f3fd",
+      "emoji": "🤛🏽",
+      "name": "Fist Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91b_1f3fe",
+      "emoji": "🤛🏾",
+      "name": "Fist Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1f91b_1f3ff",
+      "emoji": "🤛🏿",
+      "name": "Fist Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "270a",
+      "emoji": "✊",
+      "name": "Raised Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-fist:"
+      ]
+    },
+    {
+      "codepoint": "270a_1f3fb",
+      "emoji": "✊🏻",
+      "name": "Raised Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-fist:"
+      ]
+    },
+    {
+      "codepoint": "270a_1f3fc",
+      "emoji": "✊🏼",
+      "name": "Raised Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-fist:"
+      ]
+    },
+    {
+      "codepoint": "270a_1f3fd",
+      "emoji": "✊🏽",
+      "name": "Raised Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-fist:"
+      ]
+    },
+    {
+      "codepoint": "270a_1f3fe",
+      "emoji": "✊🏾",
+      "name": "Raised Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-fist:"
+      ]
+    },
+    {
+      "codepoint": "270a_1f3ff",
+      "emoji": "✊🏿",
+      "name": "Raised Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-fist:"
+      ]
+    },
+    {
+      "codepoint": "1f44a",
+      "emoji": "👊",
+      "name": "Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist:",
+        ":bump:"
+      ]
+    },
+    {
+      "codepoint": "1f44a_1f3fb",
+      "emoji": "👊🏻",
+      "name": "Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist:",
+        ":bump:"
+      ]
+    },
+    {
+      "codepoint": "1f44a_1f3fc",
+      "emoji": "👊🏼",
+      "name": "Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist:",
+        ":bump:"
+      ]
+    },
+    {
+      "codepoint": "1f44a_1f3fd",
+      "emoji": "👊🏽",
+      "name": "Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist:",
+        ":bump:"
+      ]
+    },
+    {
+      "codepoint": "1f44a_1f3fe",
+      "emoji": "👊🏾",
+      "name": "Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist:",
+        ":bump:"
+      ]
+    },
+    {
+      "codepoint": "1f44a_1f3ff",
+      "emoji": "👊🏿",
+      "name": "Fist",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":fist:",
+        ":bump:"
+      ]
+    },
+    {
+      "codepoint": "1faf3",
+      "emoji": "🫳",
+      "name": "Palm Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-down:",
+        ":drop:"
+      ]
+    },
+    {
+      "codepoint": "1faf3_1f3fb",
+      "emoji": "🫳🏻",
+      "name": "Palm Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-down:",
+        ":drop:"
+      ]
+    },
+    {
+      "codepoint": "1faf3_1f3fc",
+      "emoji": "🫳🏼",
+      "name": "Palm Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-down:",
+        ":drop:"
+      ]
+    },
+    {
+      "codepoint": "1faf3_1f3fd",
+      "emoji": "🫳🏽",
+      "name": "Palm Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-down:",
+        ":drop:"
+      ]
+    },
+    {
+      "codepoint": "1faf3_1f3fe",
+      "emoji": "🫳🏾",
+      "name": "Palm Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-down:",
+        ":drop:"
+      ]
+    },
+    {
+      "codepoint": "1faf3_1f3ff",
+      "emoji": "🫳🏿",
+      "name": "Palm Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-down:",
+        ":drop:"
+      ]
+    },
+    {
+      "codepoint": "1faf4",
+      "emoji": "🫴",
+      "name": "Palm Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-up:",
+        ":throw:"
+      ]
+    },
+    {
+      "codepoint": "1faf4_1f3fb",
+      "emoji": "🫴🏻",
+      "name": "Palm Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-up:",
+        ":throw:"
+      ]
+    },
+    {
+      "codepoint": "1faf4_1f3fc",
+      "emoji": "🫴🏼",
+      "name": "Palm Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-up:",
+        ":throw:"
+      ]
+    },
+    {
+      "codepoint": "1faf4_1f3fd",
+      "emoji": "🫴🏽",
+      "name": "Palm Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-up:",
+        ":throw:"
+      ]
+    },
+    {
+      "codepoint": "1faf4_1f3fe",
+      "emoji": "🫴🏾",
+      "name": "Palm Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-up:",
+        ":throw:"
+      ]
+    },
+    {
+      "codepoint": "1faf4_1f3ff",
+      "emoji": "🫴🏿",
+      "name": "Palm Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm-up:",
+        ":throw:"
+      ]
+    },
+    {
+      "codepoint": "1faf1",
+      "emoji": "🫱",
+      "name": "Rightwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":rightwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fb",
+      "emoji": "🫱🏻",
+      "name": "Rightwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":rightwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fc",
+      "emoji": "🫱🏼",
+      "name": "Rightwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":rightwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fd",
+      "emoji": "🫱🏽",
+      "name": "Rightwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":rightwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fe",
+      "emoji": "🫱🏾",
+      "name": "Rightwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":rightwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3ff",
+      "emoji": "🫱🏿",
+      "name": "Rightwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":rightwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf2",
+      "emoji": "🫲",
+      "name": "Leftwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leftwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf2_1f3fb",
+      "emoji": "🫲🏻",
+      "name": "Leftwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leftwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf2_1f3fc",
+      "emoji": "🫲🏼",
+      "name": "Leftwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leftwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf2_1f3fd",
+      "emoji": "🫲🏽",
+      "name": "Leftwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leftwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf2_1f3fe",
+      "emoji": "🫲🏾",
+      "name": "Leftwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leftwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf2_1f3ff",
+      "emoji": "🫲🏿",
+      "name": "Leftwards Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":leftwards-hand:"
+      ]
+    },
+    {
+      "codepoint": "1faf8",
+      "emoji": "🫸",
+      "name": "Push Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf8_1f3fb",
+      "emoji": "🫸🏻",
+      "name": "Push Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf8_1f3fc",
+      "emoji": "🫸🏼",
+      "name": "Push Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf8_1f3fd",
+      "emoji": "🫸🏽",
+      "name": "Push Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf8_1f3fe",
+      "emoji": "🫸🏾",
+      "name": "Push Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf8_1f3ff",
+      "emoji": "🫸🏿",
+      "name": "Push Rightwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-rightwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf7",
+      "emoji": "🫷",
+      "name": "Push Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf7_1f3fb",
+      "emoji": "🫷🏻",
+      "name": "Push Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf7_1f3fc",
+      "emoji": "🫷🏼",
+      "name": "Push Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf7_1f3fd",
+      "emoji": "🫷🏽",
+      "name": "Push Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf7_1f3fe",
+      "emoji": "🫷🏾",
+      "name": "Push Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1faf7_1f3ff",
+      "emoji": "🫷🏿",
+      "name": "Push Leftwards",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":push-leftwards:"
+      ]
+    },
+    {
+      "codepoint": "1f44b",
+      "emoji": "👋",
+      "name": "Wave",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":wave:"
+      ]
+    },
+    {
+      "codepoint": "1f44b_1f3fb",
+      "emoji": "👋🏻",
+      "name": "Wave",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":wave:"
+      ]
+    },
+    {
+      "codepoint": "1f44b_1f3fc",
+      "emoji": "👋🏼",
+      "name": "Wave",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":wave:"
+      ]
+    },
+    {
+      "codepoint": "1f44b_1f3fd",
+      "emoji": "👋🏽",
+      "name": "Wave",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":wave:"
+      ]
+    },
+    {
+      "codepoint": "1f44b_1f3fe",
+      "emoji": "👋🏾",
+      "name": "Wave",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":wave:"
+      ]
+    },
+    {
+      "codepoint": "1f44b_1f3ff",
+      "emoji": "👋🏿",
+      "name": "Wave",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":wave:"
+      ]
+    },
+    {
+      "codepoint": "1f91a",
+      "emoji": "🤚",
+      "name": "Back Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":back-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f91a_1f3fb",
+      "emoji": "🤚🏻",
+      "name": "Back Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":back-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f91a_1f3fc",
+      "emoji": "🤚🏼",
+      "name": "Back Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":back-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f91a_1f3fd",
+      "emoji": "🤚🏽",
+      "name": "Back Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":back-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f91a_1f3fe",
+      "emoji": "🤚🏾",
+      "name": "Back Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":back-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f91a_1f3ff",
+      "emoji": "🤚🏿",
+      "name": "Back Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":back-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f590_fe0f",
+      "emoji": "🖐️",
+      "name": "Palm",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm:"
+      ]
+    },
+    {
+      "codepoint": "1f590_1f3fb",
+      "emoji": "🖐🏻",
+      "name": "Palm",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm:"
+      ]
+    },
+    {
+      "codepoint": "1f590_1f3fc",
+      "emoji": "🖐🏼",
+      "name": "Palm",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm:"
+      ]
+    },
+    {
+      "codepoint": "1f590_1f3fd",
+      "emoji": "🖐🏽",
+      "name": "Palm",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm:"
+      ]
+    },
+    {
+      "codepoint": "1f590_1f3fe",
+      "emoji": "🖐🏾",
+      "name": "Palm",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm:"
+      ]
+    },
+    {
+      "codepoint": "1f590_1f3ff",
+      "emoji": "🖐🏿",
+      "name": "Palm",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":palm:"
+      ]
+    },
+    {
+      "codepoint": "270b",
+      "emoji": "✋",
+      "name": "Raised Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-hand:"
+      ]
+    },
+    {
+      "codepoint": "270b_1f3fb",
+      "emoji": "✋🏻",
+      "name": "Raised Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-hand:"
+      ]
+    },
+    {
+      "codepoint": "270b_1f3fc",
+      "emoji": "✋🏼",
+      "name": "Raised Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-hand:"
+      ]
+    },
+    {
+      "codepoint": "270b_1f3fd",
+      "emoji": "✋🏽",
+      "name": "Raised Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-hand:"
+      ]
+    },
+    {
+      "codepoint": "270b_1f3fe",
+      "emoji": "✋🏾",
+      "name": "Raised Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-hand:"
+      ]
+    },
+    {
+      "codepoint": "270b_1f3ff",
+      "emoji": "✋🏿",
+      "name": "Raised Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":raised-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f596",
+      "emoji": "🖖",
+      "name": "Vulcan",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":vulcan:",
+        ":prosper:",
+        ":spock:"
+      ]
+    },
+    {
+      "codepoint": "1f596_1f3fb",
+      "emoji": "🖖🏻",
+      "name": "Vulcan",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":vulcan:",
+        ":prosper:",
+        ":spock:"
+      ]
+    },
+    {
+      "codepoint": "1f596_1f3fc",
+      "emoji": "🖖🏼",
+      "name": "Vulcan",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":vulcan:",
+        ":prosper:",
+        ":spock:"
+      ]
+    },
+    {
+      "codepoint": "1f596_1f3fd",
+      "emoji": "🖖🏽",
+      "name": "Vulcan",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":vulcan:",
+        ":prosper:",
+        ":spock:"
+      ]
+    },
+    {
+      "codepoint": "1f596_1f3fe",
+      "emoji": "🖖🏾",
+      "name": "Vulcan",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":vulcan:",
+        ":prosper:",
+        ":spock:"
+      ]
+    },
+    {
+      "codepoint": "1f596_1f3ff",
+      "emoji": "🖖🏿",
+      "name": "Vulcan",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":vulcan:",
+        ":prosper:",
+        ":spock:"
+      ]
+    },
+    {
+      "codepoint": "1f91f",
+      "emoji": "🤟",
+      "name": "Love You Gesture",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":love-you-gesture:"
+      ]
+    },
+    {
+      "codepoint": "1f91f_1f3fb",
+      "emoji": "🤟🏻",
+      "name": "Love You Gesture",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":love-you-gesture:"
+      ]
+    },
+    {
+      "codepoint": "1f91f_1f3fc",
+      "emoji": "🤟🏼",
+      "name": "Love You Gesture",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":love-you-gesture:"
+      ]
+    },
+    {
+      "codepoint": "1f91f_1f3fd",
+      "emoji": "🤟🏽",
+      "name": "Love You Gesture",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":love-you-gesture:"
+      ]
+    },
+    {
+      "codepoint": "1f91f_1f3fe",
+      "emoji": "🤟🏾",
+      "name": "Love You Gesture",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":love-you-gesture:"
+      ]
+    },
+    {
+      "codepoint": "1f91f_1f3ff",
+      "emoji": "🤟🏿",
+      "name": "Love You Gesture",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":love-you-gesture:"
+      ]
+    },
+    {
+      "codepoint": "1f918",
+      "emoji": "🤘",
+      "name": "Metal",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":metal:",
+        ":horns:"
+      ]
+    },
+    {
+      "codepoint": "1f918_1f3fb",
+      "emoji": "🤘🏻",
+      "name": "Metal",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":metal:",
+        ":horns:"
+      ]
+    },
+    {
+      "codepoint": "1f918_1f3fc",
+      "emoji": "🤘🏼",
+      "name": "Metal",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":metal:",
+        ":horns:"
+      ]
+    },
+    {
+      "codepoint": "1f918_1f3fd",
+      "emoji": "🤘🏽",
+      "name": "Metal",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":metal:",
+        ":horns:"
+      ]
+    },
+    {
+      "codepoint": "1f918_1f3fe",
+      "emoji": "🤘🏾",
+      "name": "Metal",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":metal:",
+        ":horns:"
+      ]
+    },
+    {
+      "codepoint": "1f918_1f3ff",
+      "emoji": "🤘🏿",
+      "name": "Metal",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":metal:",
+        ":horns:"
+      ]
+    },
+    {
+      "codepoint": "270c_fe0f",
+      "emoji": "✌️",
+      "name": "Victory",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":victory:",
+        ":v:",
+        ":peace-hand:"
+      ]
+    },
+    {
+      "codepoint": "270c_1f3fb",
+      "emoji": "✌🏻",
+      "name": "Victory",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":victory:",
+        ":v:",
+        ":peace-hand:"
+      ]
+    },
+    {
+      "codepoint": "270c_1f3fc",
+      "emoji": "✌🏼",
+      "name": "Victory",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":victory:",
+        ":v:",
+        ":peace-hand:"
+      ]
+    },
+    {
+      "codepoint": "270c_1f3fd",
+      "emoji": "✌🏽",
+      "name": "Victory",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":victory:",
+        ":v:",
+        ":peace-hand:"
+      ]
+    },
+    {
+      "codepoint": "270c_1f3fe",
+      "emoji": "✌🏾",
+      "name": "Victory",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":victory:",
+        ":v:",
+        ":peace-hand:"
+      ]
+    },
+    {
+      "codepoint": "270c_1f3ff",
+      "emoji": "✌🏿",
+      "name": "Victory",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":victory:",
+        ":v:",
+        ":peace-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f91e",
+      "emoji": "🤞",
+      "name": "Crossed Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":crossed-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f91e_1f3fb",
+      "emoji": "🤞🏻",
+      "name": "Crossed Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":crossed-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f91e_1f3fc",
+      "emoji": "🤞🏼",
+      "name": "Crossed Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":crossed-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f91e_1f3fd",
+      "emoji": "🤞🏽",
+      "name": "Crossed Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":crossed-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f91e_1f3fe",
+      "emoji": "🤞🏾",
+      "name": "Crossed Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":crossed-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f91e_1f3ff",
+      "emoji": "🤞🏿",
+      "name": "Crossed Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":crossed-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1faf0",
+      "emoji": "🫰",
+      "name": "Hand With Index Finger And Thumb Crossed",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hand-with-index-finger-and-thumb-crossed:",
+        ":snap:",
+        ":finger-heart:"
+      ]
+    },
+    {
+      "codepoint": "1faf0_1f3fb",
+      "emoji": "🫰🏻",
+      "name": "Hand With Index Finger And Thumb Crossed",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hand-with-index-finger-and-thumb-crossed:",
+        ":snap:",
+        ":finger-heart:"
+      ]
+    },
+    {
+      "codepoint": "1faf0_1f3fc",
+      "emoji": "🫰🏼",
+      "name": "Hand With Index Finger And Thumb Crossed",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hand-with-index-finger-and-thumb-crossed:",
+        ":snap:",
+        ":finger-heart:"
+      ]
+    },
+    {
+      "codepoint": "1faf0_1f3fd",
+      "emoji": "🫰🏽",
+      "name": "Hand With Index Finger And Thumb Crossed",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hand-with-index-finger-and-thumb-crossed:",
+        ":snap:",
+        ":finger-heart:"
+      ]
+    },
+    {
+      "codepoint": "1faf0_1f3fe",
+      "emoji": "🫰🏾",
+      "name": "Hand With Index Finger And Thumb Crossed",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hand-with-index-finger-and-thumb-crossed:",
+        ":snap:",
+        ":finger-heart:"
+      ]
+    },
+    {
+      "codepoint": "1faf0_1f3ff",
+      "emoji": "🫰🏿",
+      "name": "Hand With Index Finger And Thumb Crossed",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":hand-with-index-finger-and-thumb-crossed:",
+        ":snap:",
+        ":finger-heart:"
+      ]
+    },
+    {
+      "codepoint": "1f919",
+      "emoji": "🤙",
+      "name": "Call Me Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":call-me-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f919_1f3fb",
+      "emoji": "🤙🏻",
+      "name": "Call Me Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":call-me-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f919_1f3fc",
+      "emoji": "🤙🏼",
+      "name": "Call Me Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":call-me-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f919_1f3fd",
+      "emoji": "🤙🏽",
+      "name": "Call Me Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":call-me-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f919_1f3fe",
+      "emoji": "🤙🏾",
+      "name": "Call Me Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":call-me-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f919_1f3ff",
+      "emoji": "🤙🏿",
+      "name": "Call Me Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":call-me-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f90c",
+      "emoji": "🤌",
+      "name": "Pinched Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinched-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f90c_1f3fb",
+      "emoji": "🤌🏻",
+      "name": "Pinched Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinched-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f90c_1f3fc",
+      "emoji": "🤌🏼",
+      "name": "Pinched Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinched-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f90c_1f3fd",
+      "emoji": "🤌🏽",
+      "name": "Pinched Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinched-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f90c_1f3fe",
+      "emoji": "🤌🏾",
+      "name": "Pinched Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinched-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f90c_1f3ff",
+      "emoji": "🤌🏿",
+      "name": "Pinched Fingers",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinched-fingers:"
+      ]
+    },
+    {
+      "codepoint": "1f90f",
+      "emoji": "🤏",
+      "name": "Pinch",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinch:"
+      ]
+    },
+    {
+      "codepoint": "1f90f_1f3fb",
+      "emoji": "🤏🏻",
+      "name": "Pinch",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinch:"
+      ]
+    },
+    {
+      "codepoint": "1f90f_1f3fc",
+      "emoji": "🤏🏼",
+      "name": "Pinch",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinch:"
+      ]
+    },
+    {
+      "codepoint": "1f90f_1f3fd",
+      "emoji": "🤏🏽",
+      "name": "Pinch",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinch:"
+      ]
+    },
+    {
+      "codepoint": "1f90f_1f3fe",
+      "emoji": "🤏🏾",
+      "name": "Pinch",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinch:"
+      ]
+    },
+    {
+      "codepoint": "1f90f_1f3ff",
+      "emoji": "🤏🏿",
+      "name": "Pinch",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pinch:"
+      ]
+    },
+    {
+      "codepoint": "1f44c",
+      "emoji": "👌",
+      "name": "Ok",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ok:"
+      ]
+    },
+    {
+      "codepoint": "1f44c_1f3fb",
+      "emoji": "👌🏻",
+      "name": "Ok",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ok:"
+      ]
+    },
+    {
+      "codepoint": "1f44c_1f3fc",
+      "emoji": "👌🏼",
+      "name": "Ok",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ok:"
+      ]
+    },
+    {
+      "codepoint": "1f44c_1f3fd",
+      "emoji": "👌🏽",
+      "name": "Ok",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ok:"
+      ]
+    },
+    {
+      "codepoint": "1f44c_1f3fe",
+      "emoji": "👌🏾",
+      "name": "Ok",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ok:"
+      ]
+    },
+    {
+      "codepoint": "1f44c_1f3ff",
+      "emoji": "👌🏿",
+      "name": "Ok",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":ok:"
+      ]
+    },
+    {
+      "codepoint": "1faf5",
+      "emoji": "🫵",
+      "name": "Pointing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pointing:"
+      ]
+    },
+    {
+      "codepoint": "1faf5_1f3fb",
+      "emoji": "🫵🏻",
+      "name": "Pointing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pointing:"
+      ]
+    },
+    {
+      "codepoint": "1faf5_1f3fc",
+      "emoji": "🫵🏼",
+      "name": "Pointing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pointing:"
+      ]
+    },
+    {
+      "codepoint": "1faf5_1f3fd",
+      "emoji": "🫵🏽",
+      "name": "Pointing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pointing:"
+      ]
+    },
+    {
+      "codepoint": "1faf5_1f3fe",
+      "emoji": "🫵🏾",
+      "name": "Pointing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pointing:"
+      ]
+    },
+    {
+      "codepoint": "1faf5_1f3ff",
+      "emoji": "🫵🏿",
+      "name": "Pointing",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":pointing:"
+      ]
+    },
+    {
+      "codepoint": "1f449",
+      "emoji": "👉",
+      "name": "Point Right",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-right:"
+      ]
+    },
+    {
+      "codepoint": "1f449_1f3fb",
+      "emoji": "👉🏻",
+      "name": "Point Right",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-right:"
+      ]
+    },
+    {
+      "codepoint": "1f449_1f3fc",
+      "emoji": "👉🏼",
+      "name": "Point Right",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-right:"
+      ]
+    },
+    {
+      "codepoint": "1f449_1f3fd",
+      "emoji": "👉🏽",
+      "name": "Point Right",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-right:"
+      ]
+    },
+    {
+      "codepoint": "1f449_1f3fe",
+      "emoji": "👉🏾",
+      "name": "Point Right",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-right:"
+      ]
+    },
+    {
+      "codepoint": "1f449_1f3ff",
+      "emoji": "👉🏿",
+      "name": "Point Right",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-right:"
+      ]
+    },
+    {
+      "codepoint": "1f448",
+      "emoji": "👈",
+      "name": "Point Left",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-left:"
+      ]
+    },
+    {
+      "codepoint": "1f448_1f3fb",
+      "emoji": "👈🏻",
+      "name": "Point Left",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-left:"
+      ]
+    },
+    {
+      "codepoint": "1f448_1f3fc",
+      "emoji": "👈🏼",
+      "name": "Point Left",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-left:"
+      ]
+    },
+    {
+      "codepoint": "1f448_1f3fd",
+      "emoji": "👈🏽",
+      "name": "Point Left",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-left:"
+      ]
+    },
+    {
+      "codepoint": "1f448_1f3fe",
+      "emoji": "👈🏾",
+      "name": "Point Left",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-left:"
+      ]
+    },
+    {
+      "codepoint": "1f448_1f3ff",
+      "emoji": "👈🏿",
+      "name": "Point Left",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-left:"
+      ]
+    },
+    {
+      "codepoint": "261d_fe0f",
+      "emoji": "☝️",
+      "name": "Index Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":index-finger:"
+      ]
+    },
+    {
+      "codepoint": "261d_1f3fb",
+      "emoji": "☝🏻",
+      "name": "Index Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":index-finger:"
+      ]
+    },
+    {
+      "codepoint": "261d_1f3fc",
+      "emoji": "☝🏼",
+      "name": "Index Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":index-finger:"
+      ]
+    },
+    {
+      "codepoint": "261d_1f3fd",
+      "emoji": "☝🏽",
+      "name": "Index Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":index-finger:"
+      ]
+    },
+    {
+      "codepoint": "261d_1f3fe",
+      "emoji": "☝🏾",
+      "name": "Index Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":index-finger:"
+      ]
+    },
+    {
+      "codepoint": "261d_1f3ff",
+      "emoji": "☝🏿",
+      "name": "Index Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":index-finger:"
+      ]
+    },
+    {
+      "codepoint": "1f446",
+      "emoji": "👆",
+      "name": "Point Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-up:"
+      ]
+    },
+    {
+      "codepoint": "1f446_1f3fb",
+      "emoji": "👆🏻",
+      "name": "Point Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-up:"
+      ]
+    },
+    {
+      "codepoint": "1f446_1f3fc",
+      "emoji": "👆🏼",
+      "name": "Point Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-up:"
+      ]
+    },
+    {
+      "codepoint": "1f446_1f3fd",
+      "emoji": "👆🏽",
+      "name": "Point Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-up:"
+      ]
+    },
+    {
+      "codepoint": "1f446_1f3fe",
+      "emoji": "👆🏾",
+      "name": "Point Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-up:"
+      ]
+    },
+    {
+      "codepoint": "1f446_1f3ff",
+      "emoji": "👆🏿",
+      "name": "Point Up",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-up:"
+      ]
+    },
+    {
+      "codepoint": "1f447",
+      "emoji": "👇",
+      "name": "Point Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-down:"
+      ]
+    },
+    {
+      "codepoint": "1f447_1f3fb",
+      "emoji": "👇🏻",
+      "name": "Point Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-down:"
+      ]
+    },
+    {
+      "codepoint": "1f447_1f3fc",
+      "emoji": "👇🏼",
+      "name": "Point Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-down:"
+      ]
+    },
+    {
+      "codepoint": "1f447_1f3fd",
+      "emoji": "👇🏽",
+      "name": "Point Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-down:"
+      ]
+    },
+    {
+      "codepoint": "1f447_1f3fe",
+      "emoji": "👇🏾",
+      "name": "Point Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-down:"
+      ]
+    },
+    {
+      "codepoint": "1f447_1f3ff",
+      "emoji": "👇🏿",
+      "name": "Point Down",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":point-down:"
+      ]
+    },
+    {
+      "codepoint": "1f595",
+      "emoji": "🖕",
+      "name": "Middle Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":middle-finger:"
+      ]
+    },
+    {
+      "codepoint": "1f595_1f3fb",
+      "emoji": "🖕🏻",
+      "name": "Middle Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":middle-finger:"
+      ]
+    },
+    {
+      "codepoint": "1f595_1f3fc",
+      "emoji": "🖕🏼",
+      "name": "Middle Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":middle-finger:"
+      ]
+    },
+    {
+      "codepoint": "1f595_1f3fd",
+      "emoji": "🖕🏽",
+      "name": "Middle Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":middle-finger:"
+      ]
+    },
+    {
+      "codepoint": "1f595_1f3fe",
+      "emoji": "🖕🏾",
+      "name": "Middle Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":middle-finger:"
+      ]
+    },
+    {
+      "codepoint": "1f595_1f3ff",
+      "emoji": "🖕🏿",
+      "name": "Middle Finger",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":middle-finger:"
+      ]
+    },
+    {
+      "codepoint": "270d_fe0f",
+      "emoji": "✍️",
+      "name": "Writing Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":writing-hand:"
+      ]
+    },
+    {
+      "codepoint": "270d_1f3fb",
+      "emoji": "✍🏻",
+      "name": "Writing Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":writing-hand:"
+      ]
+    },
+    {
+      "codepoint": "270d_1f3fc",
+      "emoji": "✍🏼",
+      "name": "Writing Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":writing-hand:"
+      ]
+    },
+    {
+      "codepoint": "270d_1f3fd",
+      "emoji": "✍🏽",
+      "name": "Writing Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":writing-hand:"
+      ]
+    },
+    {
+      "codepoint": "270d_1f3fe",
+      "emoji": "✍🏾",
+      "name": "Writing Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":writing-hand:"
+      ]
+    },
+    {
+      "codepoint": "270d_1f3ff",
+      "emoji": "✍🏿",
+      "name": "Writing Hand",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":writing-hand:"
+      ]
+    },
+    {
+      "codepoint": "1f933",
+      "emoji": "🤳",
+      "name": "Selfie",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":selfie:"
+      ]
+    },
+    {
+      "codepoint": "1f933_1f3fb",
+      "emoji": "🤳🏻",
+      "name": "Selfie",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":selfie:"
+      ]
+    },
+    {
+      "codepoint": "1f933_1f3fc",
+      "emoji": "🤳🏼",
+      "name": "Selfie",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":selfie:"
+      ]
+    },
+    {
+      "codepoint": "1f933_1f3fd",
+      "emoji": "🤳🏽",
+      "name": "Selfie",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":selfie:"
+      ]
+    },
+    {
+      "codepoint": "1f933_1f3fe",
+      "emoji": "🤳🏾",
+      "name": "Selfie",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":selfie:"
+      ]
+    },
+    {
+      "codepoint": "1f933_1f3ff",
+      "emoji": "🤳🏿",
+      "name": "Selfie",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":selfie:"
+      ]
+    },
+    {
+      "codepoint": "1f64f",
+      "emoji": "🙏",
+      "name": "Folded Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":folded-hands:",
+        ":please:",
+        ":pray:",
+        ":hope:",
+        ":wish:",
+        ":thank-you:",
+        ":high-five:"
+      ]
+    },
+    {
+      "codepoint": "1f64f_1f3fb",
+      "emoji": "🙏🏻",
+      "name": "Folded Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":folded-hands:",
+        ":please:",
+        ":pray:",
+        ":hope:",
+        ":wish:",
+        ":thank-you:",
+        ":high-five:"
+      ]
+    },
+    {
+      "codepoint": "1f64f_1f3fc",
+      "emoji": "🙏🏼",
+      "name": "Folded Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":folded-hands:",
+        ":please:",
+        ":pray:",
+        ":hope:",
+        ":wish:",
+        ":thank-you:",
+        ":high-five:"
+      ]
+    },
+    {
+      "codepoint": "1f64f_1f3fd",
+      "emoji": "🙏🏽",
+      "name": "Folded Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":folded-hands:",
+        ":please:",
+        ":pray:",
+        ":hope:",
+        ":wish:",
+        ":thank-you:",
+        ":high-five:"
+      ]
+    },
+    {
+      "codepoint": "1f64f_1f3fe",
+      "emoji": "🙏🏾",
+      "name": "Folded Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":folded-hands:",
+        ":please:",
+        ":pray:",
+        ":hope:",
+        ":wish:",
+        ":thank-you:",
+        ":high-five:"
+      ]
+    },
+    {
+      "codepoint": "1f64f_1f3ff",
+      "emoji": "🙏🏿",
+      "name": "Folded Hands",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":folded-hands:",
+        ":please:",
+        ":pray:",
+        ":hope:",
+        ":wish:",
+        ":thank-you:",
+        ":high-five:"
+      ]
+    },
+    {
+      "codepoint": "1f485",
+      "emoji": "💅",
+      "name": "Nail Care",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nail-care:"
+      ]
+    },
+    {
+      "codepoint": "1f485_1f3fb",
+      "emoji": "💅🏻",
+      "name": "Nail Care",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nail-care:"
+      ]
+    },
+    {
+      "codepoint": "1f485_1f3fc",
+      "emoji": "💅🏼",
+      "name": "Nail Care",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nail-care:"
+      ]
+    },
+    {
+      "codepoint": "1f485_1f3fd",
+      "emoji": "💅🏽",
+      "name": "Nail Care",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nail-care:"
+      ]
+    },
+    {
+      "codepoint": "1f485_1f3fe",
+      "emoji": "💅🏾",
+      "name": "Nail Care",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nail-care:"
+      ]
+    },
+    {
+      "codepoint": "1f485_1f3ff",
+      "emoji": "💅🏿",
+      "name": "Nail Care",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":nail-care:"
+      ]
+    },
+    {
+      "codepoint": "1f91d",
+      "emoji": "🤝",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1f91d_1f3fb",
+      "emoji": "🤝🏻",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fb_200d_1faf2_1f3fc",
+      "emoji": "🫱🏻‍🫲🏼",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fb_200d_1faf2_1f3fd",
+      "emoji": "🫱🏻‍🫲🏽",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fb_200d_1faf2_1f3fe",
+      "emoji": "🫱🏻‍🫲🏾",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fb_200d_1faf2_1f3ff",
+      "emoji": "🫱🏻‍🫲🏿",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fc_200d_1faf2_1f3fb",
+      "emoji": "🫱🏼‍🫲🏻",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1f91d_1f3fc",
+      "emoji": "🤝🏼",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fc_200d_1faf2_1f3fd",
+      "emoji": "🫱🏼‍🫲🏽",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fc_200d_1faf2_1f3fe",
+      "emoji": "🫱🏼‍🫲🏾",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fc_200d_1faf2_1f3ff",
+      "emoji": "🫱🏼‍🫲🏿",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fd_200d_1faf2_1f3fb",
+      "emoji": "🫱🏽‍🫲🏻",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fd_200d_1faf2_1f3fc",
+      "emoji": "🫱🏽‍🫲🏼",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1f91d_1f3fd",
+      "emoji": "🤝🏽",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fd_200d_1faf2_1f3fe",
+      "emoji": "🫱🏽‍🫲🏾",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fd_200d_1faf2_1f3ff",
+      "emoji": "🫱🏽‍🫲🏿",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fe_200d_1faf2_1f3fb",
+      "emoji": "🫱🏾‍🫲🏻",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fe_200d_1faf2_1f3fc",
+      "emoji": "🫱🏾‍🫲🏼",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fe_200d_1faf2_1f3fd",
+      "emoji": "🫱🏾‍🫲🏽",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1f91d_1f3fe",
+      "emoji": "🤝🏾",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3fe_200d_1faf2_1f3ff",
+      "emoji": "🫱🏾‍🫲🏿",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3ff_200d_1faf2_1f3fb",
+      "emoji": "🫱🏿‍🫲🏻",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3ff_200d_1faf2_1f3fc",
+      "emoji": "🫱🏿‍🫲🏼",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3ff_200d_1faf2_1f3fd",
+      "emoji": "🫱🏿‍🫲🏽",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1faf1_1f3ff_200d_1faf2_1f3fe",
+      "emoji": "🫱🏿‍🫲🏾",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1f91d_1f3ff",
+      "emoji": "🤝🏿",
+      "name": "Handshake",
+      "category": "Smileys and emotions",
+      "tags": [
+        ":handshake:"
+      ]
+    },
+    {
+      "codepoint": "1fa82",
+      "emoji": "🪂",
+      "name": "Parachute",
+      "category": "People",
+      "tags": [
+        ":parachute:"
+      ]
+    },
+    {
+      "codepoint": "1fac8",
+      "emoji": "🫈",
+      "name": "Hairy Creature",
+      "category": "People",
+      "tags": [
+        ":hairy-creature:"
+      ]
+    },
+    {
+      "codepoint": "1f483",
+      "emoji": "💃",
+      "name": "Dancer Woman",
+      "category": "People",
+      "tags": [
+        ":dancer-woman:"
+      ]
+    },
+    {
+      "codepoint": "1f483_1f3fb",
+      "emoji": "💃🏻",
+      "name": "Dancer Woman",
+      "category": "People",
+      "tags": [
+        ":dancer-woman:"
+      ]
+    },
+    {
+      "codepoint": "1f483_1f3fc",
+      "emoji": "💃🏼",
+      "name": "Dancer Woman",
+      "category": "People",
+      "tags": [
+        ":dancer-woman:"
+      ]
+    },
+    {
+      "codepoint": "1f483_1f3fd",
+      "emoji": "💃🏽",
+      "name": "Dancer Woman",
+      "category": "People",
+      "tags": [
+        ":dancer-woman:"
+      ]
+    },
+    {
+      "codepoint": "1f483_1f3fe",
+      "emoji": "💃🏾",
+      "name": "Dancer Woman",
+      "category": "People",
+      "tags": [
+        ":dancer-woman:"
+      ]
+    },
+    {
+      "codepoint": "1f483_1f3ff",
+      "emoji": "💃🏿",
+      "name": "Dancer Woman",
+      "category": "People",
+      "tags": [
+        ":dancer-woman:"
+      ]
+    },
+    {
+      "codepoint": "1f490",
+      "emoji": "💐",
+      "name": "Bouquet",
+      "category": "Animals and nature",
+      "tags": [
+        ":bouquet:",
+        ":flowers:"
+      ]
+    },
+    {
+      "codepoint": "1f339",
+      "emoji": "🌹",
+      "name": "Rose",
+      "category": "Animals and nature",
+      "tags": [
+        ":rose:"
+      ]
+    },
+    {
+      "codepoint": "1f940",
+      "emoji": "🥀",
+      "name": "Wilted Flower",
+      "category": "Animals and nature",
+      "tags": [
+        ":wilted-flower:"
+      ]
+    },
+    {
+      "codepoint": "1f337",
+      "emoji": "🌷",
+      "name": "Tulip",
+      "category": "Animals and nature",
+      "tags": [
+        ":tulip:"
+      ]
+    },
+    {
+      "codepoint": "1fab7",
+      "emoji": "🪷",
+      "name": "Lotus",
+      "category": "Animals and nature",
+      "tags": [
+        ":lotus:"
+      ]
+    },
+    {
+      "codepoint": "1f338",
+      "emoji": "🌸",
+      "name": "Cherry Blossom",
+      "category": "Animals and nature",
+      "tags": [
+        ":cherry-blossom:"
+      ]
+    },
+    {
+      "codepoint": "1fabb",
+      "emoji": "🪻",
+      "name": "Hyacinth",
+      "category": "Animals and nature",
+      "tags": [
+        ":hyacinth:"
+      ]
+    },
+    {
+      "codepoint": "1f33c",
+      "emoji": "🌼",
+      "name": "Blossom",
+      "category": "Animals and nature",
+      "tags": [
+        ":blossom:"
+      ]
+    },
+    {
+      "codepoint": "1f342",
+      "emoji": "🍂",
+      "name": "Fallen Leaf",
+      "category": "Animals and nature",
+      "tags": [
+        ":fallen-leaf:"
+      ]
+    },
+    {
+      "codepoint": "1f341",
+      "emoji": "🍁",
+      "name": "Maple Leaf",
+      "category": "Animals and nature",
+      "tags": [
+        ":maple-leaf:"
+      ]
+    },
+    {
+      "codepoint": "1f344",
+      "emoji": "🍄",
+      "name": "Mushroom",
+      "category": "Animals and nature",
+      "tags": [
+        ":mushroom:"
+      ]
+    },
+    {
+      "codepoint": "1f33f",
+      "emoji": "🌿",
+      "name": "Herb",
+      "category": "Animals and nature",
+      "tags": [
+        ":herb:"
+      ]
+    },
+    {
+      "codepoint": "1f331",
+      "emoji": "🌱",
+      "name": "Plant",
+      "category": "Animals and nature",
+      "tags": [
+        ":plant:",
+        ":seed:"
+      ]
+    },
+    {
+      "codepoint": "1f343",
+      "emoji": "🍃",
+      "name": "Leaves",
+      "category": "Animals and nature",
+      "tags": [
+        ":leaves:"
+      ]
+    },
+    {
+      "codepoint": "1f340",
+      "emoji": "🍀",
+      "name": "Luck",
+      "category": "Animals and nature",
+      "tags": [
+        ":luck:",
+        ":four-leaf-clover:"
+      ]
+    },
+    {
+      "codepoint": "1f335",
+      "emoji": "🌵",
+      "name": "Cactus",
+      "category": "Animals and nature",
+      "tags": [
+        ":cactus:"
+      ]
+    },
+    {
+      "codepoint": "1fabe",
+      "emoji": "🪾",
+      "name": "Leafless Tree",
+      "category": "Animals and nature",
+      "tags": [
+        ":leafless-tree:"
+      ]
+    },
+    {
+      "codepoint": "1f332",
+      "emoji": "🌲",
+      "name": "Evergreen Tree",
+      "category": "Animals and nature",
+      "tags": [
+        ":evergreen-tree:"
+      ]
+    },
+    {
+      "codepoint": "1faa8",
+      "emoji": "🪨",
+      "name": "Rock",
+      "category": "Animals and nature",
+      "tags": [
+        ":rock:"
+      ]
+    },
+    {
+      "codepoint": "1f6d8",
+      "emoji": "🛘",
+      "name": "Debris",
+      "category": "Animals and nature",
+      "tags": [
+        ":debris:",
+        ":landslide:"
+      ]
+    },
+    {
+      "codepoint": "1f30b",
+      "emoji": "🌋",
+      "name": "Volcano",
+      "category": "Animals and nature",
+      "tags": [
+        ":volcano:"
+      ]
+    },
+    {
+      "codepoint": "1f3de_fe0f",
+      "emoji": "🏞️",
+      "name": "National Park",
+      "category": "Animals and nature",
+      "tags": [
+        ":national-park:"
+      ]
+    },
+    {
+      "codepoint": "1f305",
+      "emoji": "🌅",
+      "name": "Sunrise",
+      "category": "Animals and nature",
+      "tags": [
+        ":sunrise:"
+      ]
+    },
+    {
+      "codepoint": "1f304",
+      "emoji": "🌄",
+      "name": "Sunrise Over Mountains",
+      "category": "Animals and nature",
+      "tags": [
+        ":sunrise-over-mountains:"
+      ]
+    },
+    {
+      "codepoint": "1f30a",
+      "emoji": "🌊",
+      "name": "Ocean",
+      "category": "Animals and nature",
+      "tags": [
+        ":ocean:"
+      ]
+    },
+    {
+      "codepoint": "1f32c_fe0f",
+      "emoji": "🌬️",
+      "name": "Wind Face",
+      "category": "Animals and nature",
+      "tags": [
+        ":wind-face:"
+      ]
+    },
+    {
+      "codepoint": "2744_fe0f",
+      "emoji": "❄️",
+      "name": "Snowflake",
+      "category": "Animals and nature",
+      "tags": [
+        ":snowflake:",
+        ":winter:",
+        ":cold:"
+      ]
+    },
+    {
+      "codepoint": "1f300",
+      "emoji": "🌀",
+      "name": "Cyclone",
+      "category": "Animals and nature",
+      "tags": [
+        ":cyclone:"
+      ]
+    },
+    {
+      "codepoint": "1f32a_fe0f",
+      "emoji": "🌪️",
+      "name": "Tornado",
+      "category": "Animals and nature",
+      "tags": [
+        ":tornado:"
+      ]
+    },
+    {
+      "codepoint": "1f308",
+      "emoji": "🌈",
+      "name": "Rainbow",
+      "category": "Animals and nature",
+      "tags": [
+        ":rainbow:"
+      ]
+    },
+    {
+      "codepoint": "1f4a7",
+      "emoji": "💧",
+      "name": "Droplet",
+      "category": "Animals and nature",
+      "tags": [
+        ":droplet:"
+      ]
+    },
+    {
+      "codepoint": "2601_fe0f",
+      "emoji": "☁️",
+      "name": "Cloud",
+      "category": "Animals and nature",
+      "tags": [
+        ":cloud:"
+      ]
+    },
+    {
+      "codepoint": "1f327_fe0f",
+      "emoji": "🌧️",
+      "name": "Rain Cloud",
+      "category": "Animals and nature",
+      "tags": [
+        ":rain-cloud:"
+      ]
+    },
+    {
+      "codepoint": "1f329_fe0f",
+      "emoji": "🌩️",
+      "name": "Cloud With Lightning",
+      "category": "Animals and nature",
+      "tags": [
+        ":cloud-with-lightning:"
+      ]
+    },
+    {
+      "codepoint": "26c5",
+      "emoji": "⛅",
+      "name": "Partly Sunny",
+      "category": "Animals and nature",
+      "tags": [
+        ":partly-sunny:"
+      ]
+    },
+    {
+      "codepoint": "1fa90",
+      "emoji": "🪐",
+      "name": "Ringed Planet",
+      "category": "Animals and nature",
+      "tags": [
+        ":ringed-planet:"
+      ]
+    },
+    {
+      "codepoint": "1f30d",
+      "emoji": "🌍",
+      "name": "Globe Showing Europe Africa",
+      "category": "Animals and nature",
+      "tags": [
+        ":globe-showing-Europe-Africa:"
+      ]
+    },
+    {
+      "codepoint": "1f30e",
+      "emoji": "🌎",
+      "name": "Globe Showing Americas",
+      "category": "Animals and nature",
+      "tags": [
+        ":globe-showing-Americas:"
+      ]
+    },
+    {
+      "codepoint": "1f30f",
+      "emoji": "🌏",
+      "name": "Globe Showing Asia Australia",
+      "category": "Animals and nature",
+      "tags": [
+        ":globe-showing-Asia-Australia:"
+      ]
+    },
+    {
+      "codepoint": "1f30c",
+      "emoji": "🌌",
+      "name": "Milky Way",
+      "category": "Animals and nature",
+      "tags": [
+        ":milky-way:"
+      ]
+    },
+    {
+      "codepoint": "2604_fe0f",
+      "emoji": "☄️",
+      "name": "Comet",
+      "category": "Animals and nature",
+      "tags": [
+        ":comet:"
+      ]
+    },
+    {
+      "codepoint": "1f981",
+      "emoji": "🦁",
+      "name": "Lion Face",
+      "category": "Animals and nature",
+      "tags": [
+        ":lion-face:"
+      ]
+    },
+    {
+      "codepoint": "1f43a",
+      "emoji": "🐺",
+      "name": "Wolf",
+      "category": "Animals and nature",
+      "tags": [
+        ":wolf:"
+      ]
+    },
+    {
+      "codepoint": "1f43b",
+      "emoji": "🐻",
+      "name": "Bear Face",
+      "category": "Animals and nature",
+      "tags": [
+        ":bear-face:"
+      ]
+    },
+    {
+      "codepoint": "1f43c",
+      "emoji": "🐼",
+      "name": "Panda",
+      "category": "Animals and nature",
+      "tags": [
+        ":panda:"
+      ]
+    },
+    {
+      "codepoint": "1f98a",
+      "emoji": "🦊",
+      "name": "Fox Face",
+      "category": "Animals and nature",
+      "tags": [
+        ":fox-face:"
+      ]
+    },
+    {
+      "codepoint": "1f42e",
+      "emoji": "🐮",
+      "name": "Cow Face",
+      "category": "Animals and nature",
+      "tags": [
+        ":cow-face:"
+      ]
+    },
+    {
+      "codepoint": "1f984",
+      "emoji": "🦄",
+      "name": "Unicorn",
+      "category": "Animals and nature",
+      "tags": [
+        ":unicorn:"
+      ]
+    },
+    {
+      "codepoint": "1f98e",
+      "emoji": "🦎",
+      "name": "Lizard",
+      "category": "Animals and nature",
+      "tags": [
+        ":lizard:"
+      ]
+    },
+    {
+      "codepoint": "1f409",
+      "emoji": "🐉",
+      "name": "Dragon",
+      "category": "Animals and nature",
+      "tags": [
+        ":dragon:"
+      ]
+    },
+    {
+      "codepoint": "1f996",
+      "emoji": "🦖",
+      "name": "T Rex",
+      "category": "Animals and nature",
+      "tags": [
+        ":t-rex:"
+      ]
+    },
+    {
+      "codepoint": "1f995",
+      "emoji": "🦕",
+      "name": "Dinosaur",
+      "category": "Animals and nature",
+      "tags": [
+        ":dinosaur:"
+      ]
+    },
+    {
+      "codepoint": "1f422",
+      "emoji": "🐢",
+      "name": "Turtle",
+      "category": "Animals and nature",
+      "tags": [
+        ":turtle:"
+      ]
+    },
+    {
+      "codepoint": "1f40a",
+      "emoji": "🐊",
+      "name": "Crocodile",
+      "category": "Animals and nature",
+      "tags": [
+        ":crocodile:"
+      ]
+    },
+    {
+      "codepoint": "1f40d",
+      "emoji": "🐍",
+      "name": "Snake",
+      "category": "Animals and nature",
+      "tags": [
+        ":snake:"
+      ]
+    },
+    {
+      "codepoint": "1f438",
+      "emoji": "🐸",
+      "name": "Frog",
+      "category": "Animals and nature",
+      "tags": [
+        ":frog:"
+      ]
+    },
+    {
+      "codepoint": "1f407",
+      "emoji": "🐇",
+      "name": "Rabbit",
+      "category": "Animals and nature",
+      "tags": [
+        ":rabbit:"
+      ]
+    },
+    {
+      "codepoint": "1f400",
+      "emoji": "🐀",
+      "name": "Rat",
+      "category": "Animals and nature",
+      "tags": [
+        ":rat:"
+      ]
+    },
+    {
+      "codepoint": "1f429",
+      "emoji": "🐩",
+      "name": "Poodle",
+      "category": "Animals and nature",
+      "tags": [
+        ":poodle:"
+      ]
+    },
+    {
+      "codepoint": "1f415",
+      "emoji": "🐕",
+      "name": "Dog",
+      "category": "Animals and nature",
+      "tags": [
+        ":dog:"
+      ]
+    },
+    {
+      "codepoint": "1f9ae",
+      "emoji": "🦮",
+      "name": "Guide Dog",
+      "category": "Animals and nature",
+      "tags": [
+        ":guide-dog:"
+      ]
+    },
+    {
+      "codepoint": "1f415_200d_1f9ba",
+      "emoji": "🐕‍🦺",
+      "name": "Service Dog",
+      "category": "Animals and nature",
+      "tags": [
+        ":service-dog:"
+      ]
+    },
+    {
+      "codepoint": "1f416",
+      "emoji": "🐖",
+      "name": "Pig",
+      "category": "Animals and nature",
+      "tags": [
+        ":pig:"
+      ]
+    },
+    {
+      "codepoint": "1f40e",
+      "emoji": "🐎",
+      "name": "Racehorse",
+      "category": "Animals and nature",
+      "tags": [
+        ":racehorse:"
+      ]
+    },
+    {
+      "codepoint": "1facf",
+      "emoji": "🫏",
+      "name": "Donkey",
+      "category": "Animals and nature",
+      "tags": [
+        ":donkey:"
+      ]
+    },
+    {
+      "codepoint": "1f402",
+      "emoji": "🐂",
+      "name": "Ox",
+      "category": "Animals and nature",
+      "tags": [
+        ":ox:"
+      ]
+    },
+    {
+      "codepoint": "1f410",
+      "emoji": "🐐",
+      "name": "Goat",
+      "category": "Animals and nature",
+      "tags": [
+        ":goat:"
+      ]
+    },
+    {
+      "codepoint": "1f9a5",
+      "emoji": "🦥",
+      "name": "Sloth",
+      "category": "Animals and nature",
+      "tags": [
+        ":sloth:"
+      ]
+    },
+    {
+      "codepoint": "1f998",
+      "emoji": "🦘",
+      "name": "Kangaroo",
+      "category": "Animals and nature",
+      "tags": [
+        ":kangaroo:"
+      ]
+    },
+    {
+      "codepoint": "1f405",
+      "emoji": "🐅",
+      "name": "Tiger",
+      "category": "Animals and nature",
+      "tags": [
+        ":tiger:"
+      ]
+    },
+    {
+      "codepoint": "1f412",
+      "emoji": "🐒",
+      "name": "Monkey",
+      "category": "Animals and nature",
+      "tags": [
+        ":monkey:"
+      ]
+    },
+    {
+      "codepoint": "1f98d",
+      "emoji": "🦍",
+      "name": "Gorilla",
+      "category": "Animals and nature",
+      "tags": [
+        ":gorilla:"
+      ]
+    },
+    {
+      "codepoint": "1f9a7",
+      "emoji": "🦧",
+      "name": "Orangutan",
+      "category": "Animals and nature",
+      "tags": [
+        ":orangutan:"
+      ]
+    },
+    {
+      "codepoint": "1f43f_fe0f",
+      "emoji": "🐿️",
+      "name": "Chipmunk",
+      "category": "Animals and nature",
+      "tags": [
+        ":chipmunk:"
+      ]
+    },
+    {
+      "codepoint": "1f99d",
+      "emoji": "🦝",
+      "name": "Raccoon",
+      "category": "Animals and nature",
+      "tags": [
+        ":raccoon:"
+      ]
+    },
+    {
+      "codepoint": "1f994",
+      "emoji": "🦔",
+      "name": "Hedgehog",
+      "category": "Animals and nature",
+      "tags": [
+        ":hedgehog:"
+      ]
+    },
+    {
+      "codepoint": "1f9a6",
+      "emoji": "🦦",
+      "name": "Otter",
+      "category": "Animals and nature",
+      "tags": [
+        ":otter:"
+      ]
+    },
+    {
+      "codepoint": "1f987",
+      "emoji": "🦇",
+      "name": "Bat",
+      "category": "Animals and nature",
+      "tags": [
+        ":bat:"
+      ]
+    },
+    {
+      "codepoint": "1f426",
+      "emoji": "🐦",
+      "name": "Bird",
+      "category": "Animals and nature",
+      "tags": [
+        ":bird:"
+      ]
+    },
+    {
+      "codepoint": "1f426_200d_2b1b",
+      "emoji": "🐦‍⬛",
+      "name": "Black Bird",
+      "category": "Animals and nature",
+      "tags": [
+        ":black-bird:"
+      ]
+    },
+    {
+      "codepoint": "1f413",
+      "emoji": "🐓",
+      "name": "Rooster",
+      "category": "Animals and nature",
+      "tags": [
+        ":rooster:"
+      ]
+    },
+    {
+      "codepoint": "1f423",
+      "emoji": "🐣",
+      "name": "Hatching Chick",
+      "category": "Animals and nature",
+      "tags": [
+        ":hatching-chick:"
+      ]
+    },
+    {
+      "codepoint": "1f424",
+      "emoji": "🐤",
+      "name": "Baby Chick",
+      "category": "Animals and nature",
+      "tags": [
+        ":baby-chick:"
+      ]
+    },
+    {
+      "codepoint": "1f425",
+      "emoji": "🐥",
+      "name": "Hatched Chick",
+      "category": "Animals and nature",
+      "tags": [
+        ":hatched-chick:"
+      ]
+    },
+    {
+      "codepoint": "1f985",
+      "emoji": "🦅",
+      "name": "Eagle",
+      "category": "Animals and nature",
+      "tags": [
+        ":eagle:"
+      ]
+    },
+    {
+      "codepoint": "1f989",
+      "emoji": "🦉",
+      "name": "Owl",
+      "category": "Animals and nature",
+      "tags": [
+        ":owl:"
+      ]
+    },
+    {
+      "codepoint": "1f54a_fe0f",
+      "emoji": "🕊️",
+      "name": "Peace",
+      "category": "Animals and nature",
+      "tags": [
+        ":peace:",
+        ":dove:"
+      ]
+    },
+    {
+      "codepoint": "1fabf",
+      "emoji": "🪿",
+      "name": "Goose",
+      "category": "Animals and nature",
+      "tags": [
+        ":goose:"
+      ]
+    },
+    {
+      "codepoint": "1f9a9",
+      "emoji": "🦩",
+      "name": "Flamingo",
+      "category": "Animals and nature",
+      "tags": [
+        ":flamingo:"
+      ]
+    },
+    {
+      "codepoint": "1f99a",
+      "emoji": "🦚",
+      "name": "Peacock",
+      "category": "Animals and nature",
+      "tags": [
+        ":peacock:"
+      ]
+    },
+    {
+      "codepoint": "1f426_200d_1f525",
+      "emoji": "🐦‍🔥",
+      "name": "Phoenix",
+      "category": "Animals and nature",
+      "tags": [
+        ":phoenix:"
+      ]
+    },
+    {
+      "codepoint": "1f427",
+      "emoji": "🐧",
+      "name": "Penguin",
+      "category": "Animals and nature",
+      "tags": [
+        ":penguin:"
+      ]
+    },
+    {
+      "codepoint": "1f9ad",
+      "emoji": "🦭",
+      "name": "Seal",
+      "category": "Animals and nature",
+      "tags": [
+        ":seal:"
+      ]
+    },
+    {
+      "codepoint": "1f988",
+      "emoji": "🦈",
+      "name": "Shark",
+      "category": "Animals and nature",
+      "tags": [
+        ":shark:"
+      ]
+    },
+    {
+      "codepoint": "1facd",
+      "emoji": "🫍",
+      "name": "Orca",
+      "category": "Animals and nature",
+      "tags": [
+        ":orca:"
+      ]
+    },
+    {
+      "codepoint": "1f42c",
+      "emoji": "🐬",
+      "name": "Dolphin",
+      "category": "Animals and nature",
+      "tags": [
+        ":dolphin:"
+      ]
+    },
+    {
+      "codepoint": "1f433",
+      "emoji": "🐳",
+      "name": "Whale",
+      "category": "Animals and nature",
+      "tags": [
+        ":whale:"
+      ]
+    },
+    {
+      "codepoint": "1f41f",
+      "emoji": "🐟",
+      "name": "Fish",
+      "category": "Animals and nature",
+      "tags": [
+        ":fish:"
+      ]
+    },
+    {
+      "codepoint": "1f421",
+      "emoji": "🐡",
+      "name": "Blowfish",
+      "category": "Animals and nature",
+      "tags": [
+        ":blowfish:"
+      ]
+    },
+    {
+      "codepoint": "1f99e",
+      "emoji": "🦞",
+      "name": "Lobster",
+      "category": "Animals and nature",
+      "tags": [
+        ":lobster:"
+      ]
+    },
+    {
+      "codepoint": "1f980",
+      "emoji": "🦀",
+      "name": "Crab",
+      "category": "Animals and nature",
+      "tags": [
+        ":crab:"
+      ]
+    },
+    {
+      "codepoint": "1f419",
+      "emoji": "🐙",
+      "name": "Octopus",
+      "category": "Animals and nature",
+      "tags": [
+        ":octopus:"
+      ]
+    },
+    {
+      "codepoint": "1fabc",
+      "emoji": "🪼",
+      "name": "Jellyfish",
+      "category": "Animals and nature",
+      "tags": [
+        ":jellyfish:"
+      ]
+    },
+    {
+      "codepoint": "1fae7",
+      "emoji": "🫧",
+      "name": "Bubbles",
+      "category": "Animals and nature",
+      "tags": [
+        ":bubbles:"
+      ]
+    },
+    {
+      "codepoint": "1f982",
+      "emoji": "🦂",
+      "name": "Scorpion",
+      "category": "Animals and nature",
+      "tags": [
+        ":scorpion:"
+      ]
+    },
+    {
+      "codepoint": "1f577_fe0f",
+      "emoji": "🕷️",
+      "name": "Spider",
+      "category": "Animals and nature",
+      "tags": [
+        ":spider:"
+      ]
+    },
+    {
+      "codepoint": "1f40c",
+      "emoji": "🐌",
+      "name": "Snail",
+      "category": "Animals and nature",
+      "tags": [
+        ":snail:"
+      ]
+    },
+    {
+      "codepoint": "1f41c",
+      "emoji": "🐜",
+      "name": "Ant",
+      "category": "Animals and nature",
+      "tags": [
+        ":ant:"
+      ]
+    },
+    {
+      "codepoint": "1f997",
+      "emoji": "🦗",
+      "name": "Cricket",
+      "category": "Animals and nature",
+      "tags": [
+        ":cricket:"
+      ]
+    },
+    {
+      "codepoint": "1f99f",
+      "emoji": "🦟",
+      "name": "Mosquito",
+      "category": "Animals and nature",
+      "tags": [
+        ":mosquito:"
+      ]
+    },
+    {
+      "codepoint": "1fab3",
+      "emoji": "🪳",
+      "name": "Cockroach",
+      "category": "Animals and nature",
+      "tags": [
+        ":cockroach:"
+      ]
+    },
+    {
+      "codepoint": "1fab0",
+      "emoji": "🪰",
+      "name": "Fly",
+      "category": "Animals and nature",
+      "tags": [
+        ":fly:"
+      ]
+    },
+    {
+      "codepoint": "1f41d",
+      "emoji": "🐝",
+      "name": "Bee",
+      "category": "Animals and nature",
+      "tags": [
+        ":bee:"
+      ]
+    },
+    {
+      "codepoint": "1f41e",
+      "emoji": "🐞",
+      "name": "Lady Bug",
+      "category": "Animals and nature",
+      "tags": [
+        ":lady-bug:"
+      ]
+    },
+    {
+      "codepoint": "1f98b",
+      "emoji": "🦋",
+      "name": "Butterfly",
+      "category": "Animals and nature",
+      "tags": [
+        ":butterfly:"
+      ]
+    },
+    {
+      "codepoint": "1f41b",
+      "emoji": "🐛",
+      "name": "Bug",
+      "category": "Animals and nature",
+      "tags": [
+        ":bug:"
+      ]
+    },
+    {
+      "codepoint": "1fab1",
+      "emoji": "🪱",
+      "name": "Worm",
+      "category": "Animals and nature",
+      "tags": [
+        ":worm:"
+      ]
+    },
+    {
+      "codepoint": "1f43e",
+      "emoji": "🐾",
+      "name": "Paw prints",
+      "category": "Animals and nature",
+      "tags": [
+        ":paw prints:"
+      ]
+    },
+    {
+      "codepoint": "1f353",
+      "emoji": "🍓",
+      "name": "Strawberry",
+      "category": "Food and drink",
+      "tags": [
+        ":strawberry:"
+      ]
+    },
+    {
+      "codepoint": "1f352",
+      "emoji": "🍒",
+      "name": "Cherries",
+      "category": "Food and drink",
+      "tags": [
+        ":cherries:"
+      ]
+    },
+    {
+      "codepoint": "1f34e",
+      "emoji": "🍎",
+      "name": "Red Apple",
+      "category": "Food and drink",
+      "tags": [
+        ":red-apple:"
+      ]
+    },
+    {
+      "codepoint": "1f345",
+      "emoji": "🍅",
+      "name": "Tomato",
+      "category": "Food and drink",
+      "tags": [
+        ":tomato:"
+      ]
+    },
+    {
+      "codepoint": "1f349",
+      "emoji": "🍉",
+      "name": "Watermelon",
+      "category": "Food and drink",
+      "tags": [
+        ":watermelon:"
+      ]
+    },
+    {
+      "codepoint": "1f34a",
+      "emoji": "🍊",
+      "name": "Tangerine",
+      "category": "Food and drink",
+      "tags": [
+        ":tangerine:",
+        ":orange:",
+        ":mandarin:"
+      ]
+    },
+    {
+      "codepoint": "1f955",
+      "emoji": "🥕",
+      "name": "Carrot",
+      "category": "Food and drink",
+      "tags": [
+        ":carrot:"
+      ]
+    },
+    {
+      "codepoint": "1f96d",
+      "emoji": "🥭",
+      "name": "Mango",
+      "category": "Food and drink",
+      "tags": [
+        ":mango:"
+      ]
+    },
+    {
+      "codepoint": "1f34d",
+      "emoji": "🍍",
+      "name": "Pineapple",
+      "category": "Food and drink",
+      "tags": [
+        ":pineapple:"
+      ]
+    },
+    {
+      "codepoint": "1f33d",
+      "emoji": "🌽",
+      "name": "Ear Of Corn",
+      "category": "Food and drink",
+      "tags": [
+        ":ear-of-corn:"
+      ]
+    },
+    {
+      "codepoint": "1f34b",
+      "emoji": "🍋",
+      "name": "Lemon",
+      "category": "Food and drink",
+      "tags": [
+        ":lemon:"
+      ]
+    },
+    {
+      "codepoint": "1f348",
+      "emoji": "🍈",
+      "name": "Melon",
+      "category": "Food and drink",
+      "tags": [
+        ":melon:"
+      ]
+    },
+    {
+      "codepoint": "1f350",
+      "emoji": "🍐",
+      "name": "Pear",
+      "category": "Food and drink",
+      "tags": [
+        ":pear:"
+      ]
+    },
+    {
+      "codepoint": "1fadb",
+      "emoji": "🫛",
+      "name": "Pea Pod",
+      "category": "Food and drink",
+      "tags": [
+        ":pea-pod:"
+      ]
+    },
+    {
+      "codepoint": "1f96c",
+      "emoji": "🥬",
+      "name": "Leafy Green",
+      "category": "Food and drink",
+      "tags": [
+        ":leafy-green:"
+      ]
+    },
+    {
+      "codepoint": "1fad1",
+      "emoji": "🫑",
+      "name": "Bell Pepper",
+      "category": "Food and drink",
+      "tags": [
+        ":bell-pepper:"
+      ]
+    },
+    {
+      "codepoint": "1f95d",
+      "emoji": "🥝",
+      "name": "Kiwi Fruit",
+      "category": "Food and drink",
+      "tags": [
+        ":kiwi-fruit:"
+      ]
+    },
+    {
+      "codepoint": "1f951",
+      "emoji": "🥑",
+      "name": "Avocado",
+      "category": "Food and drink",
+      "tags": [
+        ":avocado:"
+      ]
+    },
+    {
+      "codepoint": "1f966",
+      "emoji": "🥦",
+      "name": "Broccoli",
+      "category": "Food and drink",
+      "tags": [
+        ":broccoli:"
+      ]
+    },
+    {
+      "codepoint": "1f952",
+      "emoji": "🥒",
+      "name": "Cucumber",
+      "category": "Food and drink",
+      "tags": [
+        ":cucumber:"
+      ]
+    },
+    {
+      "codepoint": "1fad0",
+      "emoji": "🫐",
+      "name": "Blueberries",
+      "category": "Food and drink",
+      "tags": [
+        ":blueberries:"
+      ]
+    },
+    {
+      "codepoint": "1f347",
+      "emoji": "🍇",
+      "name": "Grapes",
+      "category": "Food and drink",
+      "tags": [
+        ":grapes:"
+      ]
+    },
+    {
+      "codepoint": "1fadc",
+      "emoji": "🫜",
+      "name": "Root Vegetable",
+      "category": "Food and drink",
+      "tags": [
+        ":root-vegetable:",
+        ":beet:",
+        ":turnip:"
+      ]
+    },
+    {
+      "codepoint": "1f954",
+      "emoji": "🥔",
+      "name": "Potato",
+      "category": "Food and drink",
+      "tags": [
+        ":potato:"
+      ]
+    },
+    {
+      "codepoint": "1f9c5",
+      "emoji": "🧅",
+      "name": "Onion",
+      "category": "Food and drink",
+      "tags": [
+        ":onion:"
+      ]
+    },
+    {
+      "codepoint": "1fada",
+      "emoji": "🫚",
+      "name": "Ginger",
+      "category": "Food and drink",
+      "tags": [
+        ":ginger:"
+      ]
+    },
+    {
+      "codepoint": "1f9c4",
+      "emoji": "🧄",
+      "name": "Garlic",
+      "category": "Food and drink",
+      "tags": [
+        ":garlic:"
+      ]
+    },
+    {
+      "codepoint": "1fad8",
+      "emoji": "🫘",
+      "name": "Beans",
+      "category": "Food and drink",
+      "tags": [
+        ":beans:"
+      ]
+    },
+    {
+      "codepoint": "1f35e",
+      "emoji": "🍞",
+      "name": "Bread",
+      "category": "Food and drink",
+      "tags": [
+        ":bread:"
+      ]
+    },
+    {
+      "codepoint": "1f95e",
+      "emoji": "🥞",
+      "name": "Pancakes",
+      "category": "Food and drink",
+      "tags": [
+        ":pancakes:"
+      ]
+    },
+    {
+      "codepoint": "1f373",
+      "emoji": "🍳",
+      "name": "Cooking",
+      "category": "Food and drink",
+      "tags": [
+        ":cooking:"
+      ]
+    },
+    {
+      "codepoint": "1f9c0",
+      "emoji": "🧀",
+      "name": "Cheese Wedge",
+      "category": "Food and drink",
+      "tags": [
+        ":cheese-wedge:"
+      ]
+    },
+    {
+      "codepoint": "1f953",
+      "emoji": "🥓",
+      "name": "Bacon",
+      "category": "Food and drink",
+      "tags": [
+        ":bacon:"
+      ]
+    },
+    {
+      "codepoint": "1f357",
+      "emoji": "🍗",
+      "name": "Poultry Leg",
+      "category": "Food and drink",
+      "tags": [
+        ":poultry-leg:"
+      ]
+    },
+    {
+      "codepoint": "1f354",
+      "emoji": "🍔",
+      "name": "Hamburger",
+      "category": "Food and drink",
+      "tags": [
+        ":hamburger:"
+      ]
+    },
+    {
+      "codepoint": "1f32d",
+      "emoji": "🌭",
+      "name": "Hot Dog",
+      "category": "Food and drink",
+      "tags": [
+        ":hot-dog:"
+      ]
+    },
+    {
+      "codepoint": "1f968",
+      "emoji": "🥨",
+      "name": "Pretzel",
+      "category": "Food and drink",
+      "tags": [
+        ":pretzel:"
+      ]
+    },
+    {
+      "codepoint": "1f355",
+      "emoji": "🍕",
+      "name": "Pizza",
+      "category": "Food and drink",
+      "tags": [
+        ":pizza:"
+      ]
+    },
+    {
+      "codepoint": "1f32e",
+      "emoji": "🌮",
+      "name": "Taco",
+      "category": "Food and drink",
+      "tags": [
+        ":taco:"
+      ]
+    },
+    {
+      "codepoint": "1f32f",
+      "emoji": "🌯",
+      "name": "Burrito",
+      "category": "Food and drink",
+      "tags": [
+        ":burrito:"
+      ]
+    },
+    {
+      "codepoint": "1f35d",
+      "emoji": "🍝",
+      "name": "Spaghetti",
+      "category": "Food and drink",
+      "tags": [
+        ":spaghetti:"
+      ]
+    },
+    {
+      "codepoint": "1f957",
+      "emoji": "🥗",
+      "name": "Green Salad",
+      "category": "Food and drink",
+      "tags": [
+        ":green-salad:"
+      ]
+    },
+    {
+      "codepoint": "1f35c",
+      "emoji": "🍜",
+      "name": "Steaming Bowl",
+      "category": "Food and drink",
+      "tags": [
+        ":steaming-bowl:"
+      ]
+    },
+    {
+      "codepoint": "1f362",
+      "emoji": "🍢",
+      "name": "Oden",
+      "category": "Food and drink",
+      "tags": [
+        ":oden:"
+      ]
+    },
+    {
+      "codepoint": "1f361",
+      "emoji": "🍡",
+      "name": "Dango",
+      "category": "Food and drink",
+      "tags": [
+        ":dango:"
+      ]
+    },
+    {
+      "codepoint": "1f368",
+      "emoji": "🍨",
+      "name": "Ice Cream",
+      "category": "Food and drink",
+      "tags": [
+        ":ice-cream:"
+      ]
+    },
+    {
+      "codepoint": "1f366",
+      "emoji": "🍦",
+      "name": "Soft Ice Cream",
+      "category": "Food and drink",
+      "tags": [
+        ":soft-ice-cream:"
+      ]
+    },
+    {
+      "codepoint": "1f967",
+      "emoji": "🥧",
+      "name": "Pie",
+      "category": "Food and drink",
+      "tags": [
+        ":pie:"
+      ]
+    },
+    {
+      "codepoint": "1f369",
+      "emoji": "🍩",
+      "name": "Doughnut",
+      "category": "Food and drink",
+      "tags": [
+        ":doughnut:"
+      ]
+    },
+    {
+      "codepoint": "1f36a",
+      "emoji": "🍪",
+      "name": "Cookie",
+      "category": "Food and drink",
+      "tags": [
+        ":cookie:"
+      ]
+    },
+    {
+      "codepoint": "1f9c2",
+      "emoji": "🧂",
+      "name": "Salt",
+      "category": "Food and drink",
+      "tags": [
+        ":salt:"
+      ]
+    },
+    {
+      "codepoint": "1f37f",
+      "emoji": "🍿",
+      "name": "Popcorn",
+      "category": "Food and drink",
+      "tags": [
+        ":popcorn:"
+      ]
+    },
+    {
+      "codepoint": "1f9cb",
+      "emoji": "🧋",
+      "name": "Bubble Tea",
+      "category": "Food and drink",
+      "tags": [
+        ":bubble-tea:",
+        ":milk-tea:"
+      ]
+    },
+    {
+      "codepoint": "1f9c3",
+      "emoji": "🧃",
+      "name": "Beverage Box",
+      "category": "Food and drink",
+      "tags": [
+        ":beverage-box:"
+      ]
+    },
+    {
+      "codepoint": "1f37c",
+      "emoji": "🍼",
+      "name": "Baby Bottle",
+      "category": "Food and drink",
+      "tags": [
+        ":baby-bottle:"
+      ]
+    },
+    {
+      "codepoint": "1f375",
+      "emoji": "🍵",
+      "name": "Teacup Without Handle",
+      "category": "Food and drink",
+      "tags": [
+        ":teacup-without-handle:"
+      ]
+    },
+    {
+      "codepoint": "2615",
+      "emoji": "☕",
+      "name": "Hot Beverage",
+      "category": "Food and drink",
+      "tags": [
+        ":hot-beverage:"
+      ]
+    },
+    {
+      "codepoint": "1fad6",
+      "emoji": "🫖",
+      "name": "Teapot",
+      "category": "Food and drink",
+      "tags": [
+        ":teapot:"
+      ]
+    },
+    {
+      "codepoint": "1f9c9",
+      "emoji": "🧉",
+      "name": "Mate",
+      "category": "Food and drink",
+      "tags": [
+        ":mate:"
+      ]
+    },
+    {
+      "codepoint": "1f37b",
+      "emoji": "🍻",
+      "name": "Clinking Beer Mugs",
+      "category": "Food and drink",
+      "tags": [
+        ":clinking-beer-mugs:"
+      ]
+    },
+    {
+      "codepoint": "1f942",
+      "emoji": "🥂",
+      "name": "Clinking Glasses",
+      "category": "Food and drink",
+      "tags": [
+        ":clinking-glasses:"
+      ]
+    },
+    {
+      "codepoint": "1f37e",
+      "emoji": "🍾",
+      "name": "Bottle With Popping Cork",
+      "category": "Food and drink",
+      "tags": [
+        ":bottle-with-popping-cork:"
+      ]
+    },
+    {
+      "codepoint": "1f377",
+      "emoji": "🍷",
+      "name": "Wine Glass",
+      "category": "Food and drink",
+      "tags": [
+        ":wine-glass:"
+      ]
+    },
+    {
+      "codepoint": "1fad7",
+      "emoji": "🫗",
+      "name": "Pour",
+      "category": "Food and drink",
+      "tags": [
+        ":pour:"
+      ]
+    },
+    {
+      "codepoint": "1f379",
+      "emoji": "🍹",
+      "name": "Tropical Drink",
+      "category": "Food and drink",
+      "tags": [
+        ":tropical-drink:"
+      ]
+    },
+    {
+      "codepoint": "1f962",
+      "emoji": "🥢",
+      "name": "Chopsticks",
+      "category": "Food and drink",
+      "tags": [
+        ":chopsticks:"
+      ]
+    },
+    {
+      "codepoint": "1f37d_fe0f",
+      "emoji": "🍽️",
+      "name": "Fork And Knife With Plate",
+      "category": "Food and drink",
+      "tags": [
+        ":fork-and-knife-with-plate:"
+      ]
+    },
+    {
+      "codepoint": "1f6d1",
+      "emoji": "🛑",
+      "name": "Stop Sign",
+      "category": "Travel and places",
+      "tags": [
+        ":stop-sign:"
+      ]
+    },
+    {
+      "codepoint": "1f6a7",
+      "emoji": "🚧",
+      "name": "Construction",
+      "category": "Travel and places",
+      "tags": [
+        ":construction:"
+      ]
+    },
+    {
+      "codepoint": "1f6a8",
+      "emoji": "🚨",
+      "name": "Police Car Light",
+      "category": "Travel and places",
+      "tags": [
+        ":police-car-light:"
+      ]
+    },
+    {
+      "codepoint": "26fd",
+      "emoji": "⛽",
+      "name": "Fuel Pump",
+      "category": "Travel and places",
+      "tags": [
+        ":fuel-pump:"
+      ]
+    },
+    {
+      "codepoint": "1f6df",
+      "emoji": "🛟",
+      "name": "Ring Buoy",
+      "category": "Travel and places",
+      "tags": [
+        ":ring-buoy:"
+      ]
+    },
+    {
+      "codepoint": "2693",
+      "emoji": "⚓",
+      "name": "Anchor",
+      "category": "Travel and places",
+      "tags": [
+        ":anchor:"
+      ]
+    },
+    {
+      "codepoint": "1f6a6",
+      "emoji": "🚦",
+      "name": "Vertical Traffic Light",
+      "category": "Travel and places",
+      "tags": [
+        ":vertical-traffic-light:"
+      ]
+    },
+    {
+      "codepoint": "1f6b2",
+      "emoji": "🚲",
+      "name": "Bicycle",
+      "category": "Travel and places",
+      "tags": [
+        ":bicycle:"
+      ]
+    },
+    {
+      "codepoint": "1f3cd_fe0f",
+      "emoji": "🏍️",
+      "name": "Motorcycle",
+      "category": "Travel and places",
+      "tags": [
+        ":motorcycle:"
+      ]
+    },
+    {
+      "codepoint": "1f697",
+      "emoji": "🚗",
+      "name": "Automobile",
+      "category": "Travel and places",
+      "tags": [
+        ":automobile:"
+      ]
+    },
+    {
+      "codepoint": "1f69a",
+      "emoji": "🚚",
+      "name": "Delivery Truck",
+      "category": "Travel and places",
+      "tags": [
+        ":delivery-truck:"
+      ]
+    },
+    {
+      "codepoint": "1f69c",
+      "emoji": "🚜",
+      "name": "Tractor",
+      "category": "Travel and places",
+      "tags": [
+        ":tractor:"
+      ]
+    },
+    {
+      "codepoint": "1f3ce_fe0f",
+      "emoji": "🏎️",
+      "name": "Racing Car",
+      "category": "Travel and places",
+      "tags": [
+        ":racing-car:"
+      ]
+    },
+    {
+      "codepoint": "1f695",
+      "emoji": "🚕",
+      "name": "Taxi",
+      "category": "Travel and places",
+      "tags": [
+        ":taxi:"
+      ]
+    },
+    {
+      "codepoint": "1f68c",
+      "emoji": "🚌",
+      "name": "Bus",
+      "category": "Travel and places",
+      "tags": [
+        ":bus:"
+      ]
+    },
+    {
+      "codepoint": "1f682",
+      "emoji": "🚂",
+      "name": "Locomotive",
+      "category": "Travel and places",
+      "tags": [
+        ":locomotive:"
+      ]
+    },
+    {
+      "codepoint": "26f5",
+      "emoji": "⛵",
+      "name": "Sailboat",
+      "category": "Travel and places",
+      "tags": [
+        ":sailboat:"
+      ]
+    },
+    {
+      "codepoint": "1f6f6",
+      "emoji": "🛶",
+      "name": "Canoe",
+      "category": "Travel and places",
+      "tags": [
+        ":canoe:"
+      ]
+    },
+    {
+      "codepoint": "1f6f8",
+      "emoji": "🛸",
+      "name": "Flying Saucer",
+      "category": "Travel and places",
+      "tags": [
+        ":flying-saucer:"
+      ]
+    },
+    {
+      "codepoint": "1f680",
+      "emoji": "🚀",
+      "name": "Rocket",
+      "category": "Travel and places",
+      "tags": [
+        ":rocket:"
+      ]
+    },
+    {
+      "codepoint": "2708_fe0f",
+      "emoji": "✈️",
+      "name": "Airplane",
+      "category": "Travel and places",
+      "tags": [
+        ":airplane:"
+      ]
+    },
+    {
+      "codepoint": "1f6eb",
+      "emoji": "🛫",
+      "name": "Airplane Departure",
+      "category": "Travel and places",
+      "tags": [
+        ":airplane-departure:"
+      ]
+    },
+    {
+      "codepoint": "1f6ec",
+      "emoji": "🛬",
+      "name": "Airplane Arrival",
+      "category": "Travel and places",
+      "tags": [
+        ":airplane-arrival:"
+      ]
+    },
+    {
+      "codepoint": "1f3a2",
+      "emoji": "🎢",
+      "name": "Roller Coaster",
+      "category": "Travel and places",
+      "tags": [
+        ":roller-coaster:"
+      ]
+    },
+    {
+      "codepoint": "1f3a1",
+      "emoji": "🎡",
+      "name": "Ferris Wheel",
+      "category": "Travel and places",
+      "tags": [
+        ":ferris-wheel:"
+      ]
+    },
+    {
+      "codepoint": "1f3a0",
+      "emoji": "🎠",
+      "name": "Carousel Horse",
+      "category": "Travel and places",
+      "tags": [
+        ":carousel-horse:"
+      ]
+    },
+    {
+      "codepoint": "1f5ff",
+      "emoji": "🗿",
+      "name": "Moai",
+      "category": "Travel and places",
+      "tags": [
+        ":moai:"
+      ]
+    },
+    {
+      "codepoint": "1f3da_fe0f",
+      "emoji": "🏚️",
+      "name": "Derelict House",
+      "category": "Travel and places",
+      "tags": [
+        ":derelict-house:"
+      ]
+    },
+    {
+      "codepoint": "1f3e0",
+      "emoji": "🏠",
+      "name": "House",
+      "category": "Travel and places",
+      "tags": [
+        ":house:"
+      ]
+    },
+    {
+      "codepoint": "1f3d5_fe0f",
+      "emoji": "🏕️",
+      "name": "Camping",
+      "category": "Travel and places",
+      "tags": [
+        ":camping:"
+      ]
+    },
+    {
+      "codepoint": "1f307",
+      "emoji": "🌇",
+      "name": "Sunset",
+      "category": "Travel and places",
+      "tags": [
+        ":sunset:"
+      ]
+    },
+    {
+      "codepoint": "1f388",
+      "emoji": "🎈",
+      "name": "Balloon",
+      "category": "Activities and events",
+      "tags": [
+        ":balloon:"
+      ]
+    },
+    {
+      "codepoint": "1f382",
+      "emoji": "🎂",
+      "name": "Birthday Cake",
+      "category": "Activities and events",
+      "tags": [
+        ":birthday-cake:"
+      ]
+    },
+    {
+      "codepoint": "1f381",
+      "emoji": "🎁",
+      "name": "Wrapped Gift",
+      "category": "Activities and events",
+      "tags": [
+        ":wrapped-gift:"
+      ]
+    },
+    {
+      "codepoint": "1f386",
+      "emoji": "🎆",
+      "name": "Fireworks",
+      "category": "Activities and events",
+      "tags": [
+        ":fireworks:"
+      ]
+    },
+    {
+      "codepoint": "1fa94",
+      "emoji": "🪔",
+      "name": "Diya Lamp",
+      "category": "Activities and events",
+      "tags": [
+        ":diya-lamp:"
+      ]
+    },
+    {
+      "codepoint": "1fa85",
+      "emoji": "🪅",
+      "name": "Piñata",
+      "category": "Activities and events",
+      "tags": [
+        ":piñata:"
+      ]
+    },
+    {
+      "codepoint": "1faa9",
+      "emoji": "🪩",
+      "name": "Mirror Ball",
+      "category": "Activities and events",
+      "tags": [
+        ":mirror-ball:",
+        ":disco-ball:"
+      ]
+    },
+    {
+      "codepoint": "1f947",
+      "emoji": "🥇",
+      "name": "Gold Medal",
+      "category": "Activities and events",
+      "tags": [
+        ":gold-medal:",
+        ":1st-place-medal:"
+      ]
+    },
+    {
+      "codepoint": "1f948",
+      "emoji": "🥈",
+      "name": "Silver Medal",
+      "category": "Activities and events",
+      "tags": [
+        ":silver-medal:",
+        ":2nd-place-medal:"
+      ]
+    },
+    {
+      "codepoint": "1f949",
+      "emoji": "🥉",
+      "name": "Bronze Medal",
+      "category": "Activities and events",
+      "tags": [
+        ":bronze-medal:",
+        ":3rd-place-medal:"
+      ]
+    },
+    {
+      "codepoint": "1f3c6",
+      "emoji": "🏆",
+      "name": "Trophy",
+      "category": "Activities and events",
+      "tags": [
+        ":trophy:"
+      ]
+    },
+    {
+      "codepoint": "26bd",
+      "emoji": "⚽",
+      "name": "Soccer Ball",
+      "category": "Activities and events",
+      "tags": [
+        ":soccer-ball:"
+      ]
+    },
+    {
+      "codepoint": "26be",
+      "emoji": "⚾",
+      "name": "Baseball",
+      "category": "Activities and events",
+      "tags": [
+        ":baseball:"
+      ]
+    },
+    {
+      "codepoint": "1f94e",
+      "emoji": "🥎",
+      "name": "Softball",
+      "category": "Activities and events",
+      "tags": [
+        ":softball:"
+      ]
+    },
+    {
+      "codepoint": "1f3c0",
+      "emoji": "🏀",
+      "name": "Basketball",
+      "category": "Activities and events",
+      "tags": [
+        ":basketball:"
+      ]
+    },
+    {
+      "codepoint": "1f3c9",
+      "emoji": "🏉",
+      "name": "Rugby Football",
+      "category": "Activities and events",
+      "tags": [
+        ":rugby-football:"
+      ]
+    },
+    {
+      "codepoint": "1f3be",
+      "emoji": "🎾",
+      "name": "Tennis",
+      "category": "Activities and events",
+      "tags": [
+        ":tennis:"
+      ]
+    },
+    {
+      "codepoint": "1f3f8",
+      "emoji": "🏸",
+      "name": "Badminton",
+      "category": "Activities and events",
+      "tags": [
+        ":badminton:"
+      ]
+    },
+    {
+      "codepoint": "1f94d",
+      "emoji": "🥍",
+      "name": "Lacrosse",
+      "category": "Activities and events",
+      "tags": [
+        ":lacrosse:"
+      ]
+    },
+    {
+      "codepoint": "1f3cf",
+      "emoji": "🏏",
+      "name": "Cricket Game",
+      "category": "Activities and events",
+      "tags": [
+        ":cricket-game:"
+      ]
+    },
+    {
+      "codepoint": "1f3d1",
+      "emoji": "🏑",
+      "name": "Field Hockey",
+      "category": "Activities and events",
+      "tags": [
+        ":field-hockey:"
+      ]
+    },
+    {
+      "codepoint": "1f3d2",
+      "emoji": "🏒",
+      "name": "Ice Hockey",
+      "category": "Activities and events",
+      "tags": [
+        ":ice-hockey:"
+      ]
+    },
+    {
+      "codepoint": "1f3bf",
+      "emoji": "🎿",
+      "name": "Skis",
+      "category": "Activities and events",
+      "tags": [
+        ":skis:"
+      ]
+    },
+    {
+      "codepoint": "26f8_fe0f",
+      "emoji": "⛸️",
+      "name": "Ice Skate",
+      "category": "Activities and events",
+      "tags": [
+        ":ice-skate:"
+      ]
+    },
+    {
+      "codepoint": "1f6fc",
+      "emoji": "🛼",
+      "name": "Roller Skates",
+      "category": "Activities and events",
+      "tags": [
+        ":roller-skates:"
+      ]
+    },
+    {
+      "codepoint": "1fa70",
+      "emoji": "🩰",
+      "name": "Ballet Shoes",
+      "category": "Activities and events",
+      "tags": [
+        ":ballet-shoes:"
+      ]
+    },
+    {
+      "codepoint": "1f6f9",
+      "emoji": "🛹",
+      "name": "Skateboard",
+      "category": "Activities and events",
+      "tags": [
+        ":skateboard:"
+      ]
+    },
+    {
+      "codepoint": "26f3",
+      "emoji": "⛳",
+      "name": "Flag In Hole",
+      "category": "Activities and events",
+      "tags": [
+        ":flag-in-hole:"
+      ]
+    },
+    {
+      "codepoint": "1f3af",
+      "emoji": "🎯",
+      "name": "Direct Hit",
+      "category": "Activities and events",
+      "tags": [
+        ":direct-hit:",
+        ":target:"
+      ]
+    },
+    {
+      "codepoint": "1f94f",
+      "emoji": "🥏",
+      "name": "Flying Disc",
+      "category": "Activities and events",
+      "tags": [
+        ":flying-disc:"
+      ]
+    },
+    {
+      "codepoint": "1fa83",
+      "emoji": "🪃",
+      "name": "Boomerang",
+      "category": "Activities and events",
+      "tags": [
+        ":boomerang:"
+      ]
+    },
+    {
+      "codepoint": "1fa81",
+      "emoji": "🪁",
+      "name": "Kite",
+      "category": "Activities and events",
+      "tags": [
+        ":kite:"
+      ]
+    },
+    {
+      "codepoint": "1f3a3",
+      "emoji": "🎣",
+      "name": "Fishing Pole",
+      "category": "Activities and events",
+      "tags": [
+        ":fishing-pole:"
+      ]
+    },
+    {
+      "codepoint": "1f94b",
+      "emoji": "🥋",
+      "name": "Martial Arts Uniform",
+      "category": "Activities and events",
+      "tags": [
+        ":martial-arts-uniform:"
+      ]
+    },
+    {
+      "codepoint": "1f3b1",
+      "emoji": "🎱",
+      "name": "8 Ball",
+      "category": "Activities and events",
+      "tags": [
+        ":8-ball:"
+      ]
+    },
+    {
+      "codepoint": "1f3d3",
+      "emoji": "🏓",
+      "name": "Ping Pong",
+      "category": "Activities and events",
+      "tags": [
+        ":ping-pong:"
+      ]
+    },
+    {
+      "codepoint": "1f3b3",
+      "emoji": "🎳",
+      "name": "Bowling",
+      "category": "Activities and events",
+      "tags": [
+        ":bowling:"
+      ]
+    },
+    {
+      "codepoint": "265f_fe0f",
+      "emoji": "♟️",
+      "name": "Chess Pawn",
+      "category": "Activities and events",
+      "tags": [
+        ":chess-pawn:"
+      ]
+    },
+    {
+      "codepoint": "1f3b2",
+      "emoji": "🎲",
+      "name": "Die",
+      "category": "Activities and events",
+      "tags": [
+        ":die:"
+      ]
+    },
+    {
+      "codepoint": "1f3b0",
+      "emoji": "🎰",
+      "name": "Slot Machine",
+      "category": "Activities and events",
+      "tags": [
+        ":slot-machine:"
+      ]
+    },
+    {
+      "codepoint": "1fa84",
+      "emoji": "🪄",
+      "name": "Wand",
+      "category": "Activities and events",
+      "tags": [
+        ":wand:"
+      ]
+    },
+    {
+      "codepoint": "1f4f7",
+      "emoji": "📷",
+      "name": "Camera",
+      "category": "Activities and events",
+      "tags": [
+        ":camera:"
+      ]
+    },
+    {
+      "codepoint": "1f4f8",
+      "emoji": "📸",
+      "name": "Camera Flash",
+      "category": "Activities and events",
+      "tags": [
+        ":camera-flash:"
+      ]
+    },
+    {
+      "codepoint": "1fadf",
+      "emoji": "🫟",
+      "name": "Splatter",
+      "category": "Activities and events",
+      "tags": [
+        ":splatter:"
+      ]
+    },
+    {
+      "codepoint": "1f3b7",
+      "emoji": "🎷",
+      "name": "Saxophone",
+      "category": "Activities and events",
+      "tags": [
+        ":saxophone:"
+      ]
+    },
+    {
+      "codepoint": "1f3ba",
+      "emoji": "🎺",
+      "name": "Trumpet",
+      "category": "Activities and events",
+      "tags": [
+        ":trumpet:"
+      ]
+    },
+    {
+      "codepoint": "1fa8a",
+      "emoji": "🪊",
+      "name": "Trombone",
+      "category": "Activities and events",
+      "tags": [
+        ":trombone:"
+      ]
+    },
+    {
+      "codepoint": "1f3b8",
+      "emoji": "🎸",
+      "name": "Guitar",
+      "category": "Activities and events",
+      "tags": [
+        ":guitar:"
+      ]
+    },
+    {
+      "codepoint": "1fa95",
+      "emoji": "🪕",
+      "name": "Banjo",
+      "category": "Activities and events",
+      "tags": [
+        ":banjo:"
+      ]
+    },
+    {
+      "codepoint": "1f3bb",
+      "emoji": "🎻",
+      "name": "Violin",
+      "category": "Activities and events",
+      "tags": [
+        ":violin:"
+      ]
+    },
+    {
+      "codepoint": "1fa89",
+      "emoji": "🪉",
+      "name": "Harp",
+      "category": "Activities and events",
+      "tags": [
+        ":harp:"
+      ]
+    },
+    {
+      "codepoint": "1f941",
+      "emoji": "🥁",
+      "name": "Drum",
+      "category": "Activities and events",
+      "tags": [
+        ":drum:"
+      ]
+    },
+    {
+      "codepoint": "1fa87",
+      "emoji": "🪇",
+      "name": "Maracas",
+      "category": "Activities and events",
+      "tags": [
+        ":maracas:"
+      ]
+    },
+    {
+      "codepoint": "1f4fa",
+      "emoji": "📺",
+      "name": "Television",
+      "category": "Activities and events",
+      "tags": [
+        ":television:"
+      ]
+    },
+    {
+      "codepoint": "1f39e_fe0f",
+      "emoji": "🎞️",
+      "name": "Film",
+      "category": "Activities and events",
+      "tags": [
+        ":film:"
+      ]
+    },
+    {
+      "codepoint": "1f3ac",
+      "emoji": "🎬",
+      "name": "Clapper",
+      "category": "Activities and events",
+      "tags": [
+        ":clapper:"
+      ]
+    },
+    {
+      "codepoint": "1f3ad",
+      "emoji": "🎭",
+      "name": "Performing Arts",
+      "category": "Activities and events",
+      "tags": [
+        ":performing-arts:"
+      ]
+    },
+    {
+      "codepoint": "1f39f_fe0f",
+      "emoji": "🎟️",
+      "name": "Admission Tickets",
+      "category": "Activities and events",
+      "tags": [
+        ":admission-tickets:"
+      ]
+    },
+    {
+      "codepoint": "1f4df",
+      "emoji": "📟",
+      "name": "Pager",
+      "category": "Objects",
+      "tags": [
+        ":pager:"
+      ]
+    },
+    {
+      "codepoint": "1f50c",
+      "emoji": "🔌",
+      "name": "Electric Plug",
+      "category": "Objects",
+      "tags": [
+        ":electric-plug:"
+      ]
+    },
+    {
+      "codepoint": "1f50b",
+      "emoji": "🔋",
+      "name": "Battery Full",
+      "category": "Objects",
+      "tags": [
+        ":battery-full:"
+      ]
+    },
+    {
+      "codepoint": "1faab",
+      "emoji": "🪫",
+      "name": "Battery Low",
+      "category": "Objects",
+      "tags": [
+        ":battery-low:"
+      ]
+    },
+    {
+      "codepoint": "1f4bf",
+      "emoji": "💿",
+      "name": "Optical Disk",
+      "category": "Objects",
+      "tags": [
+        ":optical-disk:"
+      ]
+    },
+    {
+      "codepoint": "1f4bb",
+      "emoji": "💻",
+      "name": "Laptop Computer",
+      "category": "Objects",
+      "tags": [
+        ":laptop-computer:"
+      ]
+    },
+    {
+      "codepoint": "1f5a8_fe0f",
+      "emoji": "🖨️",
+      "name": "Printer",
+      "category": "Objects",
+      "tags": [
+        ":printer:"
+      ]
+    },
+    {
+      "codepoint": "1fa8e",
+      "emoji": "🪎",
+      "name": "Treasure",
+      "category": "Objects",
+      "tags": [
+        ":treasure:"
+      ]
+    },
+    {
+      "codepoint": "1fa99",
+      "emoji": "🪙",
+      "name": "Coin",
+      "category": "Objects",
+      "tags": [
+        ":coin:"
+      ]
+    },
+    {
+      "codepoint": "1f48e",
+      "emoji": "💎",
+      "name": "Gem Stone",
+      "category": "Objects",
+      "tags": [
+        ":gem-stone:"
+      ]
+    },
+    {
+      "codepoint": "1f4b8",
+      "emoji": "💸",
+      "name": "Money With Wings",
+      "category": "Objects",
+      "tags": [
+        ":money-with-wings:"
+      ]
+    },
+    {
+      "codepoint": "2696_fe0f",
+      "emoji": "⚖️",
+      "name": "Balance Scale",
+      "category": "Objects",
+      "tags": [
+        ":balance-scale:"
+      ]
+    },
+    {
+      "codepoint": "1f6d2",
+      "emoji": "🛒",
+      "name": "Shopping Cart",
+      "category": "Objects",
+      "tags": [
+        ":shopping-cart:"
+      ]
+    },
+    {
+      "codepoint": "1f4a1",
+      "emoji": "💡",
+      "name": "Light Bulb",
+      "category": "Objects",
+      "tags": [
+        ":light-bulb:"
+      ]
+    },
+    {
+      "codepoint": "1f9f9",
+      "emoji": "🧹",
+      "name": "Broom",
+      "category": "Objects",
+      "tags": [
+        ":broom:"
+      ]
+    },
+    {
+      "codepoint": "1f9e6",
+      "emoji": "🧦",
+      "name": "Socks",
+      "category": "Objects",
+      "tags": [
+        ":socks:"
+      ]
+    },
+    {
+      "codepoint": "1f393",
+      "emoji": "🎓",
+      "name": "Graduation Cap",
+      "category": "Objects",
+      "tags": [
+        ":graduation-cap:"
+      ]
+    },
+    {
+      "codepoint": "1f451",
+      "emoji": "👑",
+      "name": "Crown",
+      "category": "Objects",
+      "tags": [
+        ":crown:"
+      ]
+    },
+    {
+      "codepoint": "1f48d",
+      "emoji": "💍",
+      "name": "Ring",
+      "category": "Objects",
+      "tags": [
+        ":ring:"
+      ]
+    },
+    {
+      "codepoint": "1faad",
+      "emoji": "🪭",
+      "name": "Fan",
+      "category": "Objects",
+      "tags": [
+        ":fan:"
+      ]
+    },
+    {
+      "codepoint": "2602_fe0f",
+      "emoji": "☂️",
+      "name": "Umbrella",
+      "category": "Objects",
+      "tags": [
+        ":umbrella:"
+      ]
+    },
+    {
+      "codepoint": "1f460",
+      "emoji": "👠",
+      "name": "High Heeled Shoe",
+      "category": "Objects",
+      "tags": [
+        ":high-heeled-shoe:"
+      ]
+    },
+    {
+      "codepoint": "1f45f",
+      "emoji": "👟",
+      "name": "Running Shoe",
+      "category": "Objects",
+      "tags": [
+        ":running-shoe:"
+      ]
+    },
+    {
+      "codepoint": "1f321_fe0f",
+      "emoji": "🌡️",
+      "name": "Thermometer",
+      "category": "Objects",
+      "tags": [
+        ":thermometer:"
+      ]
+    },
+    {
+      "codepoint": "1fa7a",
+      "emoji": "🩺",
+      "name": "Stethoscope",
+      "category": "Objects",
+      "tags": [
+        ":stethoscope:"
+      ]
+    },
+    {
+      "codepoint": "1f6e0_fe0f",
+      "emoji": "🛠️",
+      "name": "Hammer And Wrench",
+      "category": "Objects",
+      "tags": [
+        ":hammer-and-wrench:"
+      ]
+    },
+    {
+      "codepoint": "1fa8f",
+      "emoji": "🪏",
+      "name": "Shovel",
+      "category": "Objects",
+      "tags": [
+        ":shovel:",
+        ":dig:"
+      ]
+    },
+    {
+      "codepoint": "2699_fe0f",
+      "emoji": "⚙️",
+      "name": "Gear",
+      "category": "Objects",
+      "tags": [
+        ":gear:"
+      ]
+    },
+    {
+      "codepoint": "26d3_fe0f_200d_1f4a5",
+      "emoji": "⛓️‍💥",
+      "name": "Broken Chain",
+      "category": "Objects",
+      "tags": [
+        ":broken-chain:"
+      ]
+    },
+    {
+      "codepoint": "26d3_fe0f",
+      "emoji": "⛓️",
+      "name": "Chains",
+      "category": "Objects",
+      "tags": [
+        ":chains:"
+      ]
+    },
+    {
+      "codepoint": "1f587_fe0f",
+      "emoji": "🖇️",
+      "name": "Linked Paperclips",
+      "category": "Objects",
+      "tags": [
+        ":linked-paperclips:"
+      ]
+    },
+    {
+      "codepoint": "2702_fe0f",
+      "emoji": "✂️",
+      "name": "Scissors",
+      "category": "Objects",
+      "tags": [
+        ":scissors:"
+      ]
+    },
+    {
+      "codepoint": "270f_fe0f",
+      "emoji": "✏️",
+      "name": "Pencil",
+      "category": "Objects",
+      "tags": [
+        ":pencil:"
+      ]
+    },
+    {
+      "codepoint": "1f4da",
+      "emoji": "📚",
+      "name": "Books",
+      "category": "Objects",
+      "tags": [
+        ":books:"
+      ]
+    },
+    {
+      "codepoint": "1f4ca",
+      "emoji": "📊",
+      "name": "Bar Chart",
+      "category": "Objects",
+      "tags": [
+        ":bar-chart:"
+      ]
+    },
+    {
+      "codepoint": "1f4c8",
+      "emoji": "📈",
+      "name": "Chart Increasing",
+      "category": "Objects",
+      "tags": [
+        ":chart-increasing:"
+      ]
+    },
+    {
+      "codepoint": "1f4c9",
+      "emoji": "📉",
+      "name": "Chart Decreasing",
+      "category": "Objects",
+      "tags": [
+        ":chart-decreasing:"
+      ]
+    },
+    {
+      "codepoint": "1f5d1_fe0f",
+      "emoji": "🗑️",
+      "name": "Wastebasket",
+      "category": "Objects",
+      "tags": [
+        ":wastebasket:"
+      ]
+    },
+    {
+      "codepoint": "1f4e6",
+      "emoji": "📦",
+      "name": "Package",
+      "category": "Objects",
+      "tags": [
+        ":package:"
+      ]
+    },
+    {
+      "codepoint": "1f5f3_fe0f",
+      "emoji": "🗳️",
+      "name": "Ballot Box",
+      "category": "Objects",
+      "tags": [
+        ":ballot-box:"
+      ]
+    },
+    {
+      "codepoint": "23f0",
+      "emoji": "⏰",
+      "name": "Alarm Clock",
+      "category": "Objects",
+      "tags": [
+        ":alarm-clock:"
+      ]
+    },
+    {
+      "codepoint": "231b",
+      "emoji": "⌛",
+      "name": "Hourglass Done",
+      "category": "Objects",
+      "tags": [
+        ":hourglass-done:"
+      ]
+    },
+    {
+      "codepoint": "23f3",
+      "emoji": "⏳",
+      "name": "Hourglass Not Done",
+      "category": "Objects",
+      "tags": [
+        ":hourglass-not-done:"
+      ]
+    },
+    {
+      "codepoint": "1f6ce_fe0f",
+      "emoji": "🛎️",
+      "name": "Bellhop Bell",
+      "category": "Objects",
+      "tags": [
+        ":bellhop-bell:"
+      ]
+    },
+    {
+      "codepoint": "1f514",
+      "emoji": "🔔",
+      "name": "Bell",
+      "category": "Objects",
+      "tags": [
+        ":bell:"
+      ]
+    },
+    {
+      "codepoint": "1f4e3",
+      "emoji": "📣",
+      "name": "Megaphone",
+      "category": "Objects",
+      "tags": [
+        ":megaphone:"
+      ]
+    },
+    {
+      "codepoint": "1f50e",
+      "emoji": "🔎",
+      "name": "Magnifying Glass Tilted Right",
+      "category": "Objects",
+      "tags": [
+        ":magnifying-glass-tilted-right:"
+      ]
+    },
+    {
+      "codepoint": "1f52e",
+      "emoji": "🔮",
+      "name": "Crystal Ball",
+      "category": "Objects",
+      "tags": [
+        ":crystal-ball:"
+      ]
+    },
+    {
+      "codepoint": "1f4a3",
+      "emoji": "💣",
+      "name": "Bomb",
+      "category": "Objects",
+      "tags": [
+        ":bomb:"
+      ]
+    },
+    {
+      "codepoint": "1faa4",
+      "emoji": "🪤",
+      "name": "Mouse Trap",
+      "category": "Objects",
+      "tags": [
+        ":mouse-trap:"
+      ]
+    },
+    {
+      "codepoint": "1f512",
+      "emoji": "🔒",
+      "name": "Locked",
+      "category": "Objects",
+      "tags": [
+        ":locked:"
+      ]
+    },
+    {
+      "codepoint": "2660_fe0f",
+      "emoji": "♠️",
+      "name": "Spade",
+      "category": "Symbols",
+      "tags": [
+        ":spade:"
+      ]
+    },
+    {
+      "codepoint": "2648",
+      "emoji": "♈",
+      "name": "Aries",
+      "category": "Symbols",
+      "tags": [
+        ":Aries:"
+      ]
+    },
+    {
+      "codepoint": "2649",
+      "emoji": "♉",
+      "name": "Taurus",
+      "category": "Symbols",
+      "tags": [
+        ":Taurus:"
+      ]
+    },
+    {
+      "codepoint": "264a",
+      "emoji": "♊",
+      "name": "Gemini",
+      "category": "Symbols",
+      "tags": [
+        ":Gemini:"
+      ]
+    },
+    {
+      "codepoint": "264b",
+      "emoji": "♋",
+      "name": "Cancer",
+      "category": "Symbols",
+      "tags": [
+        ":Cancer:"
+      ]
+    },
+    {
+      "codepoint": "264c",
+      "emoji": "♌",
+      "name": "Leo",
+      "category": "Symbols",
+      "tags": [
+        ":Leo:"
+      ]
+    },
+    {
+      "codepoint": "264d",
+      "emoji": "♍",
+      "name": "Virgo",
+      "category": "Symbols",
+      "tags": [
+        ":Virgo:"
+      ]
+    },
+    {
+      "codepoint": "264e",
+      "emoji": "♎",
+      "name": "Libra",
+      "category": "Symbols",
+      "tags": [
+        ":Libra:"
+      ]
+    },
+    {
+      "codepoint": "264f",
+      "emoji": "♏",
+      "name": "Scorpio",
+      "category": "Symbols",
+      "tags": [
+        ":Scorpio:"
+      ]
+    },
+    {
+      "codepoint": "2650",
+      "emoji": "♐",
+      "name": "Sagittarius",
+      "category": "Symbols",
+      "tags": [
+        ":Sagittarius:"
+      ]
+    },
+    {
+      "codepoint": "2651",
+      "emoji": "♑",
+      "name": "Capricorn",
+      "category": "Symbols",
+      "tags": [
+        ":Capricorn:"
+      ]
+    },
+    {
+      "codepoint": "2652",
+      "emoji": "♒",
+      "name": "Aquarius",
+      "category": "Symbols",
+      "tags": [
+        ":Aquarius:"
+      ]
+    },
+    {
+      "codepoint": "2653",
+      "emoji": "♓",
+      "name": "Pisces",
+      "category": "Symbols",
+      "tags": [
+        ":Pisces:"
+      ]
+    },
+    {
+      "codepoint": "26ce",
+      "emoji": "⛎",
+      "name": "Ophiuchus",
+      "category": "Symbols",
+      "tags": [
+        ":Ophiuchus:"
+      ]
+    },
+    {
+      "codepoint": "1f5ef_fe0f",
+      "emoji": "🗯️",
+      "name": "Anger Bubble",
+      "category": "Symbols",
+      "tags": [
+        ":anger-bubble:"
+      ]
+    },
+    {
+      "codepoint": "1f4ac",
+      "emoji": "💬",
+      "name": "Speech Bubble",
+      "category": "Symbols",
+      "tags": [
+        ":speech-bubble:"
+      ]
+    },
+    {
+      "codepoint": "2757",
+      "emoji": "❗",
+      "name": "Exclamation",
+      "category": "Symbols",
+      "tags": [
+        ":exclamation:",
+        ":exclamation-mark:"
+      ]
+    },
+    {
+      "codepoint": "2753",
+      "emoji": "❓",
+      "name": "Question",
+      "category": "Symbols",
+      "tags": [
+        ":question:",
+        ":question-mark:",
+        ":?:"
+      ]
+    },
+    {
+      "codepoint": "2049_fe0f",
+      "emoji": "⁉️",
+      "name": "Exclamation Question Mark",
+      "category": "Symbols",
+      "tags": [
+        ":exclamation-question-mark:",
+        ":!?:"
+      ]
+    },
+    {
+      "codepoint": "203c_fe0f",
+      "emoji": "‼️",
+      "name": "Exclamation Double",
+      "category": "Symbols",
+      "tags": [
+        ":exclamation-double:",
+        ":!!:"
+      ]
+    },
+    {
+      "codepoint": "274c",
+      "emoji": "❌",
+      "name": "Cross Mark",
+      "category": "Symbols",
+      "tags": [
+        ":cross-mark:",
+        ":x:"
+      ]
+    },
+    {
+      "codepoint": "1f198",
+      "emoji": "🆘",
+      "name": "Sos",
+      "category": "Symbols",
+      "tags": [
+        ":sos:"
+      ]
+    },
+    {
+      "codepoint": "2668_fe0f",
+      "emoji": "♨️",
+      "name": "Hot Springs",
+      "category": "Symbols",
+      "tags": [
+        ":hot-springs:"
+      ]
+    },
+    {
+      "codepoint": "1f4f4",
+      "emoji": "📴",
+      "name": "Phone Off",
+      "category": "Symbols",
+      "tags": [
+        ":phone-off:"
+      ]
+    },
+    {
+      "codepoint": "2622_fe0f",
+      "emoji": "☢️",
+      "name": "Radioactive",
+      "category": "Symbols",
+      "tags": [
+        ":radioactive:"
+      ]
+    },
+    {
+      "codepoint": "2623_fe0f",
+      "emoji": "☣️",
+      "name": "Biohazard",
+      "category": "Symbols",
+      "tags": [
+        ":biohazard:"
+      ]
+    },
+    {
+      "codepoint": "26a0_fe0f",
+      "emoji": "⚠️",
+      "name": "Warning",
+      "category": "Symbols",
+      "tags": [
+        ":warning:"
+      ]
+    },
+    {
+      "codepoint": "2705",
+      "emoji": "✅",
+      "name": "Check Mark",
+      "category": "Symbols",
+      "tags": [
+        ":check-mark:",
+        ":check-mark-green:"
+      ]
+    },
+    {
+      "codepoint": "1f195",
+      "emoji": "🆕",
+      "name": "New",
+      "category": "Symbols",
+      "tags": [
+        ":new:"
+      ]
+    },
+    {
+      "codepoint": "1f193",
+      "emoji": "🆓",
+      "name": "Free",
+      "category": "Symbols",
+      "tags": [
+        ":free:"
+      ]
+    },
+    {
+      "codepoint": "1f199",
+      "emoji": "🆙",
+      "name": "Up!",
+      "category": "Symbols",
+      "tags": [
+        ":up!:"
+      ]
+    },
+    {
+      "codepoint": "1f197",
+      "emoji": "🆗",
+      "name": "Ok Button",
+      "category": "Symbols",
+      "tags": [
+        ":ok-button:"
+      ]
+    },
+    {
+      "codepoint": "1f192",
+      "emoji": "🆒",
+      "name": "Cool",
+      "category": "Symbols",
+      "tags": [
+        ":cool:"
+      ]
+    },
+    {
+      "codepoint": "1f6ae",
+      "emoji": "🚮",
+      "name": "Litter",
+      "category": "Symbols",
+      "tags": [
+        ":litter:"
+      ]
+    },
+    {
+      "codepoint": "262e_fe0f",
+      "emoji": "☮️",
+      "name": "Peace Symbol",
+      "category": "Symbols",
+      "tags": [
+        ":peace-symbol:"
+      ]
+    },
+    {
+      "codepoint": "262f_fe0f",
+      "emoji": "☯️",
+      "name": "Yin Yang",
+      "category": "Symbols",
+      "tags": [
+        ":yin-yang:"
+      ]
+    },
+    {
+      "codepoint": "267e_fe0f",
+      "emoji": "♾️",
+      "name": "Infinity",
+      "category": "Symbols",
+      "tags": [
+        ":infinity:"
+      ]
+    },
+    {
+      "codepoint": "1f3b6",
+      "emoji": "🎶",
+      "name": "Musical Notes",
+      "category": "Symbols",
+      "tags": [
+        ":musical-notes:"
+      ]
+    },
+    {
+      "codepoint": "2795",
+      "emoji": "➕",
+      "name": "Plus Sign",
+      "category": "Symbols",
+      "tags": [
+        ":plus-sign:",
+        ":+:"
+      ]
+    },
+    {
+      "codepoint": "a9_fe0f",
+      "emoji": "©️",
+      "name": "Copyright",
+      "category": "Symbols",
+      "tags": [
+        ":copyright:"
+      ]
+    },
+    {
+      "codepoint": "ae_fe0f",
+      "emoji": "®️",
+      "name": "Registered",
+      "category": "Symbols",
+      "tags": [
+        ":registered:"
+      ]
+    },
+    {
+      "codepoint": "2122_fe0f",
+      "emoji": "™️",
+      "name": "Trade Mark",
+      "category": "Symbols",
+      "tags": [
+        ":trade-mark:"
+      ]
+    },
+    {
+      "codepoint": "1f3c1",
+      "emoji": "🏁",
+      "name": "Chequered Flag",
+      "category": "Flags",
+      "tags": [
+        ":chequered-flag:"
+      ]
+    },
+    {
+      "codepoint": "1f6a9",
+      "emoji": "🚩",
+      "name": "Triangular Flag",
+      "category": "Flags",
+      "tags": [
+        ":triangular-flag:"
+      ]
+    },
+    {
+      "codepoint": "1f3f4",
+      "emoji": "🏴",
+      "name": "Black Flag",
+      "category": "Flags",
+      "tags": [
+        ":black-flag:"
+      ]
+    },
+    {
+      "codepoint": "1f3f3_fe0f",
+      "emoji": "🏳️",
+      "name": "White Flag",
+      "category": "Flags",
+      "tags": [
+        ":white-flag:"
+      ]
+    }
+  ]
+}
