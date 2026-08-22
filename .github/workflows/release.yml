@@ -20,25 +20,32 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out release automation
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: automation
 
       - name: Check out tagged source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag }}
           path: source
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: source/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        shell: pwsh
+        run: |
+          npm ci
+          node node_modules/electron/install.js
+
+          if (-not (Test-Path -LiteralPath "node_modules/electron/dist/electron.exe")) {
+            throw "The Electron runtime was not installed."
+          }
         working-directory: source
 
       - name: Validate source
@@ -48,7 +55,9 @@ jobs:
         working-directory: source
 
       - name: Build portable application
-        run: npm run desktop:portable
+        run: |
+          npm run build
+          npm exec electron-builder -- --win portable --publish never
         working-directory: source
 
       - name: Prepare release metadata

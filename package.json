@@ -30,8 +30,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "desktop:dev": "npm run build && electron .",
-    "desktop:pack": "npm run build && electron-builder --win portable",
-    "desktop:portable": "npm run build && electron-builder --win portable"
+    "desktop:pack": "npm run build && electron-builder --win portable --publish never",
+    "desktop:portable": "npm run build && electron-builder --win portable --publish never"
   },
   "build": {
     "appId": "com.jojkos.factoriolampeditor",
