@@ -4,6 +4,17 @@ import {
     type TextCharacterStyle,
     type TextStampOptions,
 } from '../utils/stamp';
+import {
+    BUNDLED_FONT_OPTIONS,
+    EMOJI_FONT_STYLES,
+    SYSTEM_FONT_OPTIONS,
+    emojiFontFamily,
+    emojiStyleAvailable,
+    type EmojiFontStyle,
+    type FontCategory,
+    type FontOption,
+    type FontSource,
+} from '../utils/fonts';
 import { useI18n } from '../i18n';
 
 const EmojiCatalog = React.lazy(() => import('./EmojiCatalog').then(module => ({ default: module.EmojiCatalog })));
@@ -12,35 +23,6 @@ interface TextStampPanelProps {
     initialColor: string;
     onCreate: (options: TextStampOptions) => void;
 }
-
-type FontCategory = 'monospace' | 'proportional';
-
-interface FontOption {
-    family: string;
-    label: string;
-    category: FontCategory;
-}
-
-const FONT_OPTIONS: FontOption[] = [
-    { family: 'Cascadia Mono', label: 'Cascadia Mono', category: 'monospace' },
-    { family: 'Consolas', label: 'Consolas', category: 'monospace' },
-    { family: 'Courier New', label: 'Courier New', category: 'monospace' },
-    { family: 'Lucida Console', label: 'Lucida Console', category: 'monospace' },
-    { family: 'Menlo', label: 'Menlo', category: 'monospace' },
-    { family: 'Monaco', label: 'Monaco', category: 'monospace' },
-    { family: 'Noto Sans JP', label: 'Noto Sans JP', category: 'proportional' },
-    { family: 'Arial', label: 'Arial', category: 'proportional' },
-    { family: 'Arial Black', label: 'Arial Black', category: 'proportional' },
-    { family: 'Comic Sans MS', label: 'Comic Sans MS', category: 'proportional' },
-    { family: 'Georgia', label: 'Georgia', category: 'proportional' },
-    { family: 'Impact', label: 'Impact', category: 'proportional' },
-    { family: 'Times New Roman', label: 'Times New Roman', category: 'proportional' },
-    { family: 'Trebuchet MS', label: 'Trebuchet MS', category: 'proportional' },
-    { family: 'Verdana', label: 'Verdana', category: 'proportional' },
-    { family: 'Segoe UI Emoji', label: 'Segoe UI Emoji', category: 'proportional' },
-];
-
-const EMOJI_FONT_FAMILY = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
 
 const ANIMATED_EMOJIS = [
     { label: 'Blink', frames: ['😐', '😑', '😐', '🙂'] },
@@ -62,6 +44,36 @@ const ANIMATED_EMOJIS = [
     { label: 'Dice', frames: ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'] },
 ] as const;
 
+const fontFingerprintCache = new Map<string, string>();
+
+const fontFingerprint = (fontDeclaration: string): string => {
+    const cached = fontFingerprintCache.get(fontDeclaration);
+    if (cached) return cached;
+    const canvas = document.createElement('canvas');
+    canvas.width = 420;
+    canvas.height = 80;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return '';
+    context.font = `48px ${fontDeclaration}`;
+    context.fillText('BESbswy 0123 @#MWil', 2, 58);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let hash = 2166136261;
+    for (let index = 3; index < pixels.length; index += 4) {
+        hash ^= pixels[index];
+        hash = Math.imul(hash, 16777619);
+    }
+    const fingerprint = (hash >>> 0).toString(16);
+    fontFingerprintCache.set(fontDeclaration, fingerprint);
+    return fingerprint;
+};
+
+const systemFontAvailable = (family: string): boolean => (
+    ['monospace', 'serif', 'sans-serif'].some(fallback => (
+        fontFingerprint(`"${family.replace(/["\\]/g, '')}", ${fallback}`)
+        !== fontFingerprint(fallback)
+    ))
+);
+
 const detectFontCategory = (family: string): FontCategory => {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -76,7 +88,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
     const { t } = useI18n();
     const [text, setText] = React.useState('');
     const [globalStyle, setGlobalStyle] = React.useState<TextCharacterStyle>({
-        fontSize: 14,
+        fontSize: 18,
         fontFamily: 'Noto Sans JP',
         color: initialColor,
     });
@@ -89,11 +101,21 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
     const [scrollEnabled, setScrollEnabled] = React.useState(true);
     const [frameSeconds, setFrameSeconds] = React.useState(0.1);
     const [fontStatus, setFontStatus] = React.useState('');
+    const [emojiStyle, setEmojiStyle] = React.useState<EmojiFontStyle>('automatic');
     const [nativeEmojiOpen, setNativeEmojiOpen] = React.useState(false);
     const [animatedEmojiOpen, setAnimatedEmojiOpen] = React.useState(false);
 
     const graphemes = React.useMemo(() => splitTextGraphemes(text), [text]);
-    const availableFonts = [...FONT_OPTIONS, ...importedFonts];
+    const systemFonts = React.useMemo(() => SYSTEM_FONT_OPTIONS.filter(font => (
+        systemFontAvailable(font.family)
+    )), []);
+    const availableFonts = React.useMemo(() => [
+        ...BUNDLED_FONT_OPTIONS,
+        ...systemFonts,
+        ...importedFonts,
+    ], [importedFonts, systemFonts]);
+    const selectedEmojiFontFamily = emojiFontFamily(emojiStyle);
+    const platform = navigator.platform ?? navigator.userAgent ?? '';
     const selectedOverride = selectedCharacter === null ? undefined : characterStyles[selectedCharacter];
     const selectedStyle: TextCharacterStyle = {
         ...globalStyle,
@@ -126,7 +148,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
         event.target.value = '';
         if (!file) return;
         try {
-            setFontStatus('Loading font…');
+            setFontStatus(t('Loading font…'));
             const cleanName = file.name.replace(/\.(?:ttf|otf)$/i, '').replace(/[^a-z0-9 _-]/gi, '').trim() || 'Custom font';
             const family = `${cleanName} ${Date.now().toString(36)}`;
             const fontFace = new FontFace(family, await file.arrayBuffer());
@@ -136,12 +158,13 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                 family,
                 label: cleanName,
                 category: detectFontCategory(family),
+                source: 'imported',
             }]);
             setGlobalStyle(previous => ({ ...previous, fontFamily: family }));
-            setFontStatus(`${file.name} loaded`);
+            setFontStatus(`${file.name} · ${t('Font loaded')}`);
         } catch (error) {
             console.error('Unable to load font.', error);
-            setFontStatus('Unsupported or invalid font');
+            setFontStatus(t('Unsupported or invalid font'));
         }
     };
 
@@ -150,21 +173,37 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
         defaultStyle: globalStyle,
         characterStyles,
         animatedCharacters,
+        emojiFontFamily: selectedEmojiFontFamily,
         viewportWidth: viewportEnabled ? Math.max(3, viewportWidth) : undefined,
         scroll: viewportEnabled && scrollEnabled,
         frameDurationTicks: Math.max(2, Math.round(frameSeconds * 60)),
     });
 
-    const renderFontOptions = () => (['monospace', 'proportional'] as const).map(category => (
-        <optgroup
-            key={category}
-            label={t(category === 'monospace' ? 'Monospaced fonts' : 'Proportional fonts')}
-        >
-            {availableFonts
-                .filter(font => font.category === category)
-                .map(font => <option key={font.family} value={font.family}>{font.label}</option>)}
-        </optgroup>
-    ));
+    const renderFontOptions = () => (
+        (['bundled', 'system', 'imported'] as FontSource[]).flatMap(source => (
+            (['monospace', 'proportional'] as FontCategory[]).map(category => {
+                const fonts = availableFonts.filter(font => (
+                    font.source === source && font.category === category
+                ));
+                if (!fonts.length) return null;
+                const sourceLabel = t(source === 'bundled'
+                    ? 'Bundled fonts'
+                    : source === 'system'
+                        ? 'System fonts'
+                        : 'Imported fonts');
+                const categoryLabel = t(category === 'monospace'
+                    ? 'Monospaced fonts'
+                    : 'Proportional fonts');
+                return (
+                    <optgroup key={`${source}-${category}`} label={`${sourceLabel} · ${categoryLabel}`}>
+                        {fonts.map(font => (
+                            <option key={font.family} value={font.family}>{font.label}</option>
+                        ))}
+                    </optgroup>
+                );
+            })
+        ))
+    );
 
     return (
         <div className="space-y-3">
@@ -179,7 +218,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                     placeholder={'Text\n日本語も対応'}
                     rows={3}
                     className="min-w-0 flex-1 resize-y rounded border border-gray-600 bg-gray-900 px-3 py-2 text-xs text-yellow-400 outline-none transition-colors focus:border-yellow-500"
-                    style={{ fontFamily: EMOJI_FONT_FAMILY }}
+                    style={{ fontFamily: selectedEmojiFontFamily }}
                     onKeyDown={(event) => {
                         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
                             event.preventDefault();
@@ -220,6 +259,23 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                         {renderFontOptions()}
                     </select>
                 </label>
+                <label className="col-span-3 text-[9px] font-bold text-gray-500">
+                    {t('EMOJI STYLE')}
+                    <select
+                        value={emojiStyle}
+                        onChange={event => setEmojiStyle(event.target.value as EmojiFontStyle)}
+                        className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none"
+                    >
+                        {EMOJI_FONT_STYLES.map(style => {
+                            const available = emojiStyleAvailable(style, platform);
+                            return (
+                                <option key={style.id} value={style.id} disabled={!available}>
+                                    {t(style.label)}{available ? '' : ` — ${t('not available on this OS')}`}
+                                </option>
+                            );
+                        })}
+                    </select>
+                </label>
                 <label className="flex items-center gap-2 text-[9px] font-bold text-gray-500">
                     COLOR
                     <input
@@ -230,12 +286,15 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                     />
                 </label>
                 <label className="col-span-2 flex cursor-pointer items-center justify-center gap-2 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-[9px] font-bold text-gray-300 hover:bg-gray-700">
-                    <i className="fa-solid fa-font" /> Import .ttf / .otf
+                    <i className="fa-solid fa-font" /> {t('Import .ttf / .otf')}
                     <input type="file" accept=".ttf,.otf,font/ttf,font/otf" className="hidden" onChange={importFont} />
                 </label>
                 {fontStatus && <p className="col-span-3 truncate text-[9px] text-blue-300" title={fontStatus}>{fontStatus}</p>}
                 <p className="col-span-3 text-[9px] leading-4 text-gray-500">
-                    Monospaced fonts keep the same width for every character and are commonly used in IDEs and terminals. Proportional fonts use a width adapted to each character.
+                    {t('Bundled fonts render identically on every OS. Only detected system fonts are listed; imported fonts remain available for this session.')}
+                </p>
+                <p className="col-span-3 text-[9px] leading-4 text-gray-500">
+                    {t('Monospaced fonts keep the same width for every character and are commonly used in IDEs and terminals. Proportional fonts use a width adapted to each character.')}
                 </p>
                 <button
                     type="button"
@@ -256,6 +315,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                                 type="button"
                                 onClick={() => setSelectedCharacter(index)}
                                 className={`relative min-w-8 rounded border px-2 py-1 text-sm ${selectedCharacter === index ? 'border-fuchsia-400 bg-fuchsia-900 text-white' : 'border-gray-600 bg-gray-800 text-gray-200 hover:bg-gray-700'}`}
+                                style={{ fontFamily: selectedEmojiFontFamily }}
                                 title={`Character ${index + 1}`}
                             >
                                 {grapheme}
@@ -320,7 +380,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                             Every Unicode RGI emoji is available here. Skin-tone variants are generated when the selected emoji supports them.
                         </p>
                         <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
-                            <EmojiCatalog onSelect={appendEmoji} />
+                            <EmojiCatalog fontFamily={selectedEmojiFontFamily} onSelect={appendEmoji} />
                         </React.Suspense>
                     </>
                 )}
@@ -341,14 +401,19 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({ initialColor, on
                         <div className="mt-2 grid grid-cols-2 gap-1">
                             {ANIMATED_EMOJIS.map(animation => (
                                 <button key={animation.label} type="button" onClick={() => appendAnimatedEmoji(animation.frames)} className="flex min-w-0 items-center gap-2 overflow-hidden rounded border border-gray-700 bg-gray-800 px-2 py-1 text-left text-[9px] text-gray-300 hover:border-fuchsia-500 hover:bg-gray-700">
-                                    <span className="shrink-0 text-xl leading-none" style={{ fontFamily: EMOJI_FONT_FAMILY }}>{animation.frames[0]}</span>
+                                    <span className="shrink-0 text-xl leading-none" style={{ fontFamily: selectedEmojiFontFamily }}>{animation.frames[0]}</span>
                                     <span className="truncate">{animation.label}</span>
                                 </button>
                             ))}
                         </div>
                         <p className="mt-3 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">All animated emoji</p>
                         <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
-                            <EmojiCatalog animated onSelect={appendEmoji} onSelectAnimated={appendAnimatedEmoji} />
+                            <EmojiCatalog
+                                animated
+                                fontFamily={selectedEmojiFontFamily}
+                                onSelect={appendEmoji}
+                                onSelectAnimated={appendAnimatedEmoji}
+                            />
                         </React.Suspense>
                     </>
                 )}

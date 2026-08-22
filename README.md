@@ -17,8 +17,8 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 
 - Draw on the grid, erase cells, import a static image, or reset the complete canvas.
 - Create text stamps with global defaults and per-character size, color, and font overrides.
-- Choose built-in fonts from separate monospaced (equal-width) and proportional (variable-width) groups, and import local TTF or OTF fonts; imported fonts are classified automatically.
-- Search and filter the complete Unicode RGI emoji catalog, including supported skin-tone variants. Every catalog emoji can also become a Factorio animation, alongside the curated animated presets.
+- Choose consistently rendered bundled fonts, detected system fonts, or imported TTF/OTF files. Every source remains split into monospaced and proportional groups.
+- Search and filter the complete Unicode RGI emoji catalog, including supported skin-tone variants. Select the OS-native Apple or Segoe style when available, or use the bundled Noto Color Emoji style on every platform. The same style is used by static and animated emoji.
 - Switch the complete interface between English and French with the flag buttons; Factorio item names remain in English.
 - Give a text stamp a bounded display area. Oversized text becomes a scrolling animation and keeps a one-cell empty margin.
 - Resize the tool sidebar by dragging its right edge; double-click the handle to restore its default width.
@@ -131,7 +131,7 @@ npm ci
 npm run desktop:portable
 ```
 
-The output for this version is `release/Factorio Lamp Editor-1.2.0-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
+The output for this version is `release/Factorio Lamp Editor-1.3.0-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
 
 ## Project structure
 

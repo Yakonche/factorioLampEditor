@@ -12,8 +12,10 @@ This project uses third-party packages and assets that remain subject to their o
 ## Fonts and icons
 
 - [Noto Sans Japanese](https://github.com/notofonts/noto-cjk) through `@fontsource/noto-sans-jp` — SIL Open Font License 1.1.
+- [Noto Color Emoji](https://github.com/googlefonts/noto-emoji) revision `8998f5dd683424a73e2314a8c1f1e359c19e8742` — SIL Open Font License 1.1. This is the cross-platform bundled emoji renderer.
+- Iceberg, Jersey 10, MedievalSharp, Quantico, and Space Grotesk are bundled under the SIL Open Font License 1.1. Their original `OFL.txt` files are distributed in `public/licenses/fonts/` and beside the packaged desktop resources.
 - [Font Awesome Free](https://fontawesome.com/license/free) — icons under CC BY 4.0, fonts under SIL OFL 1.1, and code under MIT, according to the upstream license terms.
-- Operating-system emoji fonts such as Segoe UI Emoji and Apple Color Emoji are referenced as local fallbacks and are not redistributed by this repository.
+- Segoe UI Emoji and Apple Color Emoji are referenced only as operating-system fonts. Their files and glyph artwork are not redistributed by this repository; those style choices are enabled only on the platforms that provide them.
 
 ## FFmpeg
 

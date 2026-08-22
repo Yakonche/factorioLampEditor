@@ -1,3 +1,5 @@
+import { emojiFontFamily } from './fonts';
+
 export interface StampBuffer {
     w: number;
     h: number;
@@ -21,6 +23,7 @@ export interface TextStampOptions {
     defaultStyle: TextCharacterStyle;
     characterStyles?: Record<number, Partial<TextCharacterStyle>>;
     animatedCharacters?: Record<number, string[]>;
+    emojiFontFamily?: string;
     /** Total display width, including the mandatory one-cell border. */
     viewportWidth?: number;
     scroll?: boolean;
@@ -34,12 +37,16 @@ type RenderedText = {
 };
 
 const quoteFontFamily = (family: string) => `"${family.replace(/["\\]/g, '')}"`;
-const EMOJI_FONT_STACK = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"';
+const DEFAULT_EMOJI_FONT_STACK = emojiFontFamily('automatic');
 const EMOJI_GRAPHEME = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20e3)/u;
-const fontDeclaration = (style: TextCharacterStyle, grapheme = '') => (
+const fontDeclaration = (
+    style: TextCharacterStyle,
+    grapheme = '',
+    selectedEmojiFontFamily = DEFAULT_EMOJI_FONT_STACK,
+) => (
     EMOJI_GRAPHEME.test(grapheme)
-        ? `${style.fontSize}px ${EMOJI_FONT_STACK}, ${quoteFontFamily(style.fontFamily)}, sans-serif`
-        : `${style.fontSize}px ${quoteFontFamily(style.fontFamily)}, ${EMOJI_FONT_STACK}, sans-serif`
+        ? `${style.fontSize}px ${selectedEmojiFontFamily}, ${quoteFontFamily(style.fontFamily)}, sans-serif`
+        : `${style.fontSize}px ${quoteFontFamily(style.fontFamily)}, ${selectedEmojiFontFamily}, sans-serif`
 );
 
 export function splitTextGraphemes(text: string): string[] {
@@ -92,7 +99,7 @@ const renderStyledText = (
             : originalGrapheme;
         const style = resolveStyle(options, graphemeIndex);
         const variantMetrics = variants.map(variant => {
-            measurementContext.font = fontDeclaration(style, variant);
+            measurementContext.font = fontDeclaration(style, variant, options.emojiFontFamily);
             const metrics = measurementContext.measureText(variant);
             const leftBearing = Math.max(0, Math.ceil(metrics.actualBoundingBoxLeft || 0));
             const rightBearing = Math.max(0, Math.ceil(metrics.actualBoundingBoxRight || 0));
@@ -148,7 +155,7 @@ const renderStyledText = (
         const metrics = lineMetrics[lineIndex];
         const baseline = y + 2 + metrics.ascent;
         line.forEach((item) => {
-            context.font = fontDeclaration(item.style, item.grapheme);
+            context.font = fontDeclaration(item.style, item.grapheme, options.emojiFontFamily);
             context.fillStyle = item.style.color;
             const centeredOffset = Math.max(0, (item.width - item.glyphWidth) / 2);
             context.fillText(item.grapheme, x + centeredOffset + item.leftBearing, baseline);
@@ -198,10 +205,14 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
     graphemes.forEach((grapheme, graphemeIndex) => {
         if (grapheme === '\n') return;
         const style = resolveStyle(options, graphemeIndex);
-        const descriptor = fontDeclaration(style, grapheme);
-        if (!fontLoads.has(descriptor)) {
-            fontLoads.set(descriptor, document.fonts.load(descriptor, grapheme));
-        }
+        const variants = options.animatedCharacters?.[graphemeIndex] ?? [grapheme];
+        variants.forEach(variant => {
+            const descriptor = fontDeclaration(style, variant, options.emojiFontFamily);
+            const loadKey = `${descriptor}\n${variant}`;
+            if (!fontLoads.has(loadKey)) {
+                fontLoads.set(loadKey, document.fonts.load(descriptor, variant));
+            }
+        });
     });
     await Promise.all(fontLoads.values());
 

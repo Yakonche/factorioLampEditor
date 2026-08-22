@@ -1,0 +1,47 @@
+@font-face {
+  font-family: 'Noto Color Emoji';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Noto_Color_Emoji/NotoColorEmoji.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Iceberg';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Iceberg/Iceberg-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Jersey 10';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Jersey/Jersey10-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'MedievalSharp';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/MedievalSharp/MedievalSharp-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Quantico';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Quantico/Quantico-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Space_Grotesk/SpaceGrotesk-Regular.ttf') format('truetype');
+}

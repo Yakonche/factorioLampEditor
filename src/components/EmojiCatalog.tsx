@@ -17,11 +17,11 @@ export type EmojiAnimationEffect = 'blink' | 'twinkle' | 'pulse';
 
 interface EmojiCatalogProps {
     animated?: boolean;
+    fontFamily: string;
     onSelect: (emoji: string) => void;
     onSelectAnimated?: (frames: readonly string[]) => void;
 }
 
-const EMOJI_FONT_FAMILY = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
 const PAGE_SIZE = 240;
 const EMOJI_DATA = emojiDataJson as Record<string, EmojiMetadata>;
 const EMOJI_ENTRIES: EmojiEntry[] = Object.entries(EMOJI_DATA).map(([emoji, metadata]) => ({
@@ -62,7 +62,12 @@ const createEmojiAnimationFrames = (emoji: string, effect: EmojiAnimationEffect)
     return [emoji, '\u00a0', emoji, '\u00a0'];
 };
 
-export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({ animated = false, onSelect, onSelectAnimated }) => {
+export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
+    animated = false,
+    fontFamily,
+    onSelect,
+    onSelectAnimated,
+}) => {
     const { t } = useI18n();
     const [query, setQuery] = React.useState('');
     const [group, setGroup] = React.useState('');
@@ -150,7 +155,7 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({ animated = false, on
                                 aria-label={t(`Insert ${entry.name}`)}
                                 title={`${entry.name} · ${entry.group}`}
                             >
-                                <span className="block text-[22px] leading-none" style={{ fontFamily: EMOJI_FONT_FAMILY }}>{emoji}</span>
+                                <span className="block text-[22px] leading-none" style={{ fontFamily }}>{emoji}</span>
                             </button>
                         );
                     })}

@@ -6,11 +6,11 @@ on:
       tag:
         description: Existing version tag to publish
         required: true
-        default: v1.2.0
+        default: v1.3.0
       title:
         description: Public release title
         required: true
-        default: Factorio Lamp Editor 1.2.0 - Bad Apple Preview & Leaner Controllers
+        default: Factorio Lamp Editor 1.3.0 - Portable Fonts & Cross-Platform Emoji Styles
 
 permissions:
   contents: write
