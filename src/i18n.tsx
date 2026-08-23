@@ -319,7 +319,6 @@ const FRENCH_TRANSLATIONS: Record<string, string> = {
     'Scroll when the text exceeds the zone': 'Faire défiler le texte lorsqu’il dépasse la zone',
     'Height follows the largest characters automatically. A one-cell empty border is kept on all four sides.': 'La hauteur suit automatiquement les plus grands caractères. Une bordure vide d’une case est conservée sur les quatre côtés.',
     'Width follows the largest characters automatically. A one-cell empty border is kept on all four sides.': 'La largeur suit automatiquement les plus grands caractères. Une bordure vide d’une case est conservée sur les quatre côtés.',
-    'recommended min.': 'minimum conseillé',
     'Selected text formatting': 'Mise en forme du texte sélectionné',
     Selection: 'Sélection',
     Bold: 'Gras',
@@ -413,10 +412,15 @@ const DYNAMIC_TRANSLATIONS: DynamicTranslation[] = [
 const translateCore = (text: string, language: InterfaceLanguage) => {
     if (!text) return text;
     if (language === 'fr') {
-        const exact = FRENCH_TRANSLATIONS[text];
+        // The observer may already have applied the global space before a
+        // colon. Translation keys remain canonical English punctuation.
+        const canonicalEnglish = text.replace(/\s+:/g, ':');
+        const exact = FRENCH_TRANSLATIONS[canonicalEnglish];
         if (exact) return exact;
         for (const translation of DYNAMIC_TRANSLATIONS) {
-            if (translation.english.test(text)) return text.replace(translation.english, translation.toFrench);
+            if (translation.english.test(canonicalEnglish)) {
+                return canonicalEnglish.replace(translation.english, translation.toFrench);
+            }
         }
         return text;
     }
@@ -428,12 +432,39 @@ const translateCore = (text: string, language: InterfaceLanguage) => {
     return text;
 };
 
+export const formatUiColons = (value: string): string => value.replace(
+    /(\S):/g,
+    (match, precedingCharacter: string, offset: number) => {
+        const followingCharacter = value[offset + match.length] ?? '';
+        const tokenStart = Math.max(
+            value.lastIndexOf(' ', offset),
+            value.lastIndexOf('\n', offset),
+            value.lastIndexOf('\t', offset),
+        ) + 1;
+        const remainingToken = value.slice(offset + match.length);
+        const tokenTailLength = remainingToken.search(/\s/);
+        const tokenEnd = tokenTailLength === -1
+            ? value.length
+            : offset + match.length + tokenTailLength;
+        const token = value.slice(tokenStart, tokenEnd);
+        const technicalColon = followingCharacter === '/'
+            || followingCharacter === '\\'
+            || (/\d/.test(precedingCharacter) && /\d/.test(followingCharacter))
+            || /^[a-z][a-z\d+.-]*:\/\//i.test(token);
+        return technicalColon ? match : `${precedingCharacter} :`;
+    },
+);
+
 export const translateUiString = (value: string, language: InterfaceLanguage): string => {
     if (!value) return value;
     if (value.includes('\n')) return value.split('\n').map(line => translateUiString(line, language)).join('\n');
     const match = value.match(/^(\s*)([\s\S]*?)(\s*)$/);
-    if (!match) return translateCore(value, language);
-    return `${match[1]}${translateCore(match[2], language)}${match[3]}`;
+    const translated = match
+        ? `${match[1]}${translateCore(match[2], language)}${match[3]}`
+        : translateCore(value, language);
+    // French-style spacing is intentionally used in both interface languages.
+    // Protocols, Windows/Unix paths, and clock values keep their technical colon.
+    return formatUiColons(translated);
 };
 
 interface I18nValue {

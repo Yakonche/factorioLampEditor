@@ -11,6 +11,7 @@ import {
     emojiStyleAvailable,
     fontFamilyCss,
     normalizeFontFamilies,
+    readLowestRecommendedPpem,
     resolveAutomaticEmojiStyle,
 } from '../src/utils/fonts';
 
@@ -28,6 +29,14 @@ for (const [directory, fileName] of bundledFiles) {
     assert.ok(statSync(fontPath).size > 10_000, `${fontPath} should contain a real TTF font.`);
     assert.match(readFileSync(licensePath, 'utf8'), /SIL OPEN FONT LICENSE Version 1\.1/);
 }
+
+const icebergFont = readFileSync(resolve('src/assets/fonts/Iceberg/Iceberg-Regular.ttf'));
+const icebergBuffer = icebergFont.buffer.slice(
+    icebergFont.byteOffset,
+    icebergFont.byteOffset + icebergFont.byteLength,
+) as ArrayBuffer;
+assert.ok((readLowestRecommendedPpem(icebergBuffer) ?? 0) > 0);
+assert.equal(readLowestRecommendedPpem(new ArrayBuffer(4)), null);
 
 for (const directory of ['Noto-Sans-JP', 'Noto-Color-Emoji']) {
     const licensePath = resolve('public/licenses/fonts', directory, 'OFL.txt');

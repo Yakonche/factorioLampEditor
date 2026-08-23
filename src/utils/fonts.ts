@@ -6,9 +6,33 @@ export interface FontOption {
     label: string;
     category: FontCategory;
     source: FontSource;
-    /** Runtime raster-legibility estimate; vector fonts do not expose a true minimum size. */
+    /** Conservative full-fidelity raster estimate in CSS pixels. */
     recommendedMinSize?: number;
 }
+
+/** Reads the font designer's lowest recommended pixels-per-em from an SFNT font. */
+export const readLowestRecommendedPpem = (fontBytes: ArrayBuffer): number | null => {
+    const view = new DataView(fontBytes);
+    if (view.byteLength < 12) return null;
+    const tableCount = view.getUint16(4, false);
+    for (let tableIndex = 0; tableIndex < tableCount; tableIndex++) {
+        const recordOffset = 12 + tableIndex * 16;
+        if (recordOffset + 16 > view.byteLength) return null;
+        const tag = String.fromCharCode(
+            view.getUint8(recordOffset),
+            view.getUint8(recordOffset + 1),
+            view.getUint8(recordOffset + 2),
+            view.getUint8(recordOffset + 3),
+        );
+        if (tag !== 'head') continue;
+        const tableOffset = view.getUint32(recordOffset + 8, false);
+        const tableLength = view.getUint32(recordOffset + 12, false);
+        if (tableLength < 48 || tableOffset + 48 > view.byteLength) return null;
+        const pixelsPerEm = view.getUint16(tableOffset + 46, false);
+        return pixelsPerEm > 0 && pixelsPerEm <= 512 ? pixelsPerEm : null;
+    }
+    return null;
+};
 
 export const BUNDLED_FONT_OPTIONS: readonly FontOption[] = [
     { family: 'Noto Sans JP', label: 'Noto Sans JP', category: 'proportional', source: 'bundled' },

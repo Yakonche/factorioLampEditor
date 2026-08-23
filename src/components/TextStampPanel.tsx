@@ -18,6 +18,7 @@ import {
     emojiStyleLabel,
     fontFamilyCss,
     normalizeFontFamilies,
+    readLowestRecommendedPpem,
     resolveAutomaticEmojiStyle,
     type EmojiFontAvailability,
     type EmojiFontStyle,
@@ -225,39 +226,103 @@ const detectFontCategory = (family: string): FontCategory => {
     return Math.abs(narrowWidth - wideWidth) < 0.5 ? 'monospace' : 'proportional';
 };
 
+type FontQualityProbe = {
+    text: string;
+    minimumHeight: number;
+    minimumWidth: number;
+};
+
+const FONT_QUALITY_PROBES: readonly FontQualityProbe[] = [
+    { text: 'HMW', minimumHeight: 14, minimumWidth: 26 },
+    { text: 'xsea', minimumHeight: 10, minimumWidth: 24 },
+    { text: '.:', minimumHeight: 3, minimumWidth: 4 },
+    { text: 'il1', minimumHeight: 10, minimumWidth: 7 },
+    { text: '0O8B', minimumHeight: 14, minimumWidth: 28 },
+    { text: 'Égç', minimumHeight: 16, minimumWidth: 18 },
+];
+const CJK_FONT_QUALITY_PROBE: FontQualityProbe = {
+    text: '漢字かなカナ',
+    minimumHeight: 18,
+    minimumWidth: 72,
+};
+const FONT_QUALITY_REFERENCE_SIZE = 192;
+const FONT_QUALITY_MAXIMUM_SIZE = 96;
+const FONT_QUALITY_GEOMETRY_TOLERANCE = 0.12;
+
+const measureFontProbe = (context: CanvasRenderingContext2D, text: string, size: number) => {
+    const metrics = context.measureText(text);
+    return {
+        height: (metrics.actualBoundingBoxAscent || 0) + (metrics.actualBoundingBoxDescent || 0),
+        inkWidth: (metrics.actualBoundingBoxLeft || 0) + (metrics.actualBoundingBoxRight || 0),
+        advanceWidth: metrics.width,
+        size,
+    };
+};
+
+const metricDeviation = (value: number, reference: number) => (
+    Math.abs(value - reference) / Math.max(0.01, Math.abs(reference))
+);
+
 /**
- * OpenType/TrueType fonts are vector based and do not contain an authoritative
- * minimum size. This conservative runtime estimate finds the first pixel size
- * where capitals, x-height, punctuation, and narrow glyphs all keep a useful
- * raster footprint in the browser's actual font renderer.
+ * Finds the first size whose glyph geometry is stable against a 192 px
+ * reference and which keeps a conservative pixel budget for capitals,
+ * x-height, punctuation, narrow strokes, counters, and accents. Three
+ * consecutive sizes must pass so a lucky hinting step cannot lower the result.
  */
-const detectRecommendedMinimumFontSize = (family: string): number => {
+const detectRecommendedMinimumFontSize = (
+    family: string,
+    designerMinimum = 0,
+    inspectExtendedScripts = false,
+): number => {
     const cached = recommendedFontSizeCache.get(family);
-    if (cached) return cached;
+    if (cached) return Math.max(cached, designerMinimum);
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-    if (!context) return 12;
-    for (let size = 6; size <= 32; size++) {
+    const context = canvas.getContext('2d');
+    if (!context) return Math.max(18, designerMinimum);
+
+    const supportsCjk = inspectExtendedScripts && (
+        fontFingerprint(fontFamilyCss(family), CJK_FONT_QUALITY_PROBE.text)
+        !== fontFingerprint('sans-serif', CJK_FONT_QUALITY_PROBE.text)
+    );
+    const probes = supportsCjk
+        ? [...FONT_QUALITY_PROBES, CJK_FONT_QUALITY_PROBE]
+        : FONT_QUALITY_PROBES;
+    context.font = `${FONT_QUALITY_REFERENCE_SIZE}px ${fontFamilyCss(family)}`;
+    const references = probes.map(probe => (
+        measureFontProbe(context, probe.text, FONT_QUALITY_REFERENCE_SIZE)
+    ));
+    let firstPassingSize: number | null = null;
+    let consecutivePassingSizes = 0;
+    for (let size = Math.max(8, designerMinimum); size <= FONT_QUALITY_MAXIMUM_SIZE; size++) {
         context.font = `${size}px ${fontFamilyCss(family)}`;
-        const capital = context.measureText('HMW');
-        const lowercase = context.measureText('xsea');
-        const punctuation = context.measureText('.:');
-        const narrow = context.measureText('il1');
-        const capitalHeight = (capital.actualBoundingBoxAscent || 0) + (capital.actualBoundingBoxDescent || 0);
-        const lowercaseHeight = (lowercase.actualBoundingBoxAscent || 0) + (lowercase.actualBoundingBoxDescent || 0);
-        const punctuationHeight = (punctuation.actualBoundingBoxAscent || 0) + (punctuation.actualBoundingBoxDescent || 0);
-        if (
-            capitalHeight >= 7
-            && lowercaseHeight >= 5
-            && punctuationHeight >= 1
-            && narrow.width >= 3
-        ) {
-            recommendedFontSizeCache.set(family, size);
-            return size;
+        const passes = probes.every((probe, probeIndex) => {
+            const measured = measureFontProbe(context, probe.text, size);
+            const reference = references[probeIndex];
+            const geometryStable = [
+                [measured.height / size, reference.height / reference.size],
+                [measured.inkWidth / size, reference.inkWidth / reference.size],
+                [measured.advanceWidth / size, reference.advanceWidth / reference.size],
+            ].every(([value, referenceValue]) => (
+                metricDeviation(value, referenceValue) <= FONT_QUALITY_GEOMETRY_TOLERANCE
+            ));
+            return geometryStable
+                && measured.height >= probe.minimumHeight
+                && measured.inkWidth >= probe.minimumWidth;
+        });
+        if (passes) {
+            firstPassingSize ??= size;
+            consecutivePassingSizes++;
+            if (consecutivePassingSizes >= 3) {
+                recommendedFontSizeCache.set(family, firstPassingSize);
+                return firstPassingSize;
+            }
+        } else {
+            firstPassingSize = null;
+            consecutivePassingSizes = 0;
         }
     }
-    recommendedFontSizeCache.set(family, 32);
-    return 32;
+    recommendedFontSizeCache.set(family, FONT_QUALITY_MAXIMUM_SIZE);
+    return FONT_QUALITY_MAXIMUM_SIZE;
 };
 
 const selectionGraphemeIndices = (value: string, start: number, end: number): number[] => {
@@ -321,7 +386,11 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
             ...importedFonts,
         ].map(font => ({
             ...font,
-            recommendedMinSize: font.recommendedMinSize ?? detectRecommendedMinimumFontSize(font.family),
+            recommendedMinSize: font.recommendedMinSize ?? detectRecommendedMinimumFontSize(
+                font.family,
+                0,
+                font.family === 'Noto Sans JP',
+            ),
         }))
     ), [importedFonts, systemFonts]);
     const automaticEmojiStyle = resolveAutomaticEmojiStyle(emojiAvailability, platform);
@@ -427,7 +496,9 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
             setFontStatus(t('Loading font…'));
             const cleanName = file.name.replace(/\.(?:ttf|otf)$/i, '').replace(/[^a-z0-9 _-]/gi, '').trim() || 'Custom font';
             const family = `${cleanName} ${Date.now().toString(36)}`;
-            const fontFace = new FontFace(family, await file.arrayBuffer());
+            const fontBytes = await file.arrayBuffer();
+            const designerMinimum = readLowestRecommendedPpem(fontBytes) ?? 0;
+            const fontFace = new FontFace(family, fontBytes);
             await fontFace.load();
             document.fonts.add(fontFace);
             setImportedFonts(previous => [...previous, {
@@ -435,7 +506,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                 label: cleanName,
                 category: detectFontCategory(family),
                 source: 'imported',
-                recommendedMinSize: detectRecommendedMinimumFontSize(family),
+                recommendedMinSize: detectRecommendedMinimumFontSize(family, designerMinimum, true),
             }]);
             setGlobalStyle(previous => ({ ...previous, fontFamily: family }));
             setFontStatus(`${file.name} · ${t('Font loaded')}`);
@@ -586,7 +657,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                                 value={font.family}
                                 style={{ fontFamily: fontFamilyCss(font.family) }}
                             >
-                                {font.label} ({t('recommended min.')} {font.recommendedMinSize ?? 12} px)
+                                {font.label} ({font.recommendedMinSize ?? 18} px)
                             </option>
                         ))}
                     </optgroup>
