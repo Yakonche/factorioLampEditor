@@ -29,6 +29,11 @@ export function uint32ToCss(color: number): string {
     return `rgb(${r} ${g} ${b})`;
 }
 
+export function uint32ToHex(color: number): string {
+    const { r, g, b } = uint32ToRgb(color);
+    return `#${[r, g, b].map(channel => channel.toString(16).padStart(2, '0')).join('')}`;
+}
+
 export function createEmptyGrid(width: number, height: number): GridData {
     return { width, height, cells: new Uint32Array(width * height) };
 }

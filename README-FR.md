@@ -16,6 +16,7 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 ### Édition et mise en page
 
 - Dessiner sur la grille, effacer des cellules, importer une image fixe ou réinitialiser complètement le canevas.
+- Cliquer sur une lamp visible pour ouvrir un inspecteur RGB/hex en direct. Les valeurs animées suivent l’image courante de l’aperçu à la vitesse de Factorio ; mettez la lecture en pause depuis l’inspecteur pour modifier cette image avec les champs RGB, une valeur hexadécimale ou le sélecteur de couleur natif.
 - Créer des tampons de texte avec une taille, une couleur et une police globales, des polices TTF/OTF importées et des emojis statiques. Une sélection peut être mise en gras, en italique ou soulignée, et le champ texte dispose d’un menu contextuel complet. Les véritables emojis animés sont créés depuis le catalogue officiel Noto séparé. Chaque style d’emoji affiche une taille minimale prudente pour préserver ses détails fins sur la grille de lampes.
 - Choisir entre des polices intégrées au rendu identique partout, l’inventaire complet des polices exposé par l’OS dans l’application de bureau et des fichiers TTF/OTF importés. Les polices importées utilisent leur nom complet OpenType interne plutôt que leur nom de fichier. Chaque source reste divisée entre polices à chasse fixe et proportionnelles, chaque entrée prévisualise sa propre police et affiche une estimation raster conservatrice sans perte perceptible sous la forme `(X px)`.
 - Rechercher et filtrer le catalogue complet des emojis Unicode RGI statiques, avec les variantes de couleur de peau prises en charge. Choisir Apple ou Segoe natifs, Noto Color Emoji ou Toss Face intégrés, ou les illustrations téléchargeables Twemoji 17, OpenMoji 17, Blobmoji et Microsoft Fluent Flat, Color ou 3D.
@@ -139,7 +140,7 @@ npm ci
 npm run desktop:portable
 ```
 
-Le résultat Windows est `release/Factorio Lamp Editor-1.6.5-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
+Le résultat Windows est `release/Factorio Lamp Editor-1.6.7-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
 
 ## Compiler l’application Linux portable
 

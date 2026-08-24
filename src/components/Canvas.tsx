@@ -47,6 +47,7 @@ interface CanvasProps {
     onInteractStart: (e: React.MouseEvent | React.TouchEvent, x: number, y: number) => void;
     onInteractMove: (e: React.MouseEvent | React.TouchEvent, x: number, y: number) => void;
     onInteractEnd: (e: React.MouseEvent | React.TouchEvent) => void;
+    onLampClick?: (x: number, y: number) => void;
 
     // Visuals
     stampMode: 'text' | 'image' | null;
@@ -80,7 +81,7 @@ interface CanvasProps {
 
 export const Canvas: React.FC<CanvasProps> = ({
     gridData, gridVersion, camera, setCamera,
-    onInteractStart, onInteractMove, onInteractEnd,
+    onInteractStart, onInteractMove, onInteractEnd, onLampClick,
     stampMode, stampBuffer, stampScale, fitView,
     autoPole, activePoles, poleType, qualityIdx, autoRoboport, activeRoboports,
     previewEntities = [], hasAlternateFrameLamp, lampPresenceGrid,
@@ -93,6 +94,7 @@ export const Canvas: React.FC<CanvasProps> = ({
     const frameRef = useRef<number | null>(null);
     const renderCallbackRef = useRef<() => void>(() => undefined);
     const lastMousePos = useRef<{ x: number, y: number } | null>(null);
+    const clickStartRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
     const [hoverTooltip, setHoverTooltip] = useState<HoverTooltip | null>(null);
     const previewSpatialIndex = useMemo(
         () => buildPreviewSpatialIndex(previewEntities),
@@ -519,6 +521,10 @@ export const Canvas: React.FC<CanvasProps> = ({
 
     const onMouseMove = (e: React.MouseEvent) => {
         lastMousePos.current = { x: e.clientX, y: e.clientY };
+        const clickStart = clickStartRef.current;
+        if (clickStart && Math.hypot(e.clientX - clickStart.x, e.clientY - clickStart.y) > 4) {
+            clickStart.moved = true;
+        }
 
         const rect = canvasRef.current?.getBoundingClientRect();
         if (rect) {
@@ -599,6 +605,9 @@ export const Canvas: React.FC<CanvasProps> = ({
     };
 
     const onMouseDown = (e: React.MouseEvent) => {
+        clickStartRef.current = e.button === 0
+            ? { x: e.clientX, y: e.clientY, moved: false }
+            : null;
         const rect = canvasRef.current!.getBoundingClientRect();
         const world = getWorldCoords(e.clientX, e.clientY, rect, camera, canvasRef.current!.width, canvasRef.current!.height);
         onInteractStart(e, Math.floor(world.x / PIXEL_SIZE), Math.floor(world.y / PIXEL_SIZE));
@@ -606,8 +615,47 @@ export const Canvas: React.FC<CanvasProps> = ({
         requestRender();
     };
 
-    const handleInteractEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    const handleInteractEnd = (e: React.MouseEvent | React.TouchEvent, inspectClick = true) => {
         onInteractEnd(e);
+        const clickStart = clickStartRef.current;
+        clickStartRef.current = null;
+        if (inspectClick && clickStart && !clickStart.moved && onLampClick && canvasRef.current) {
+            const point = 'changedTouches' in e ? e.changedTouches[0] : e;
+            if (point) {
+                const rect = canvasRef.current.getBoundingClientRect();
+                const world = getWorldCoords(
+                    point.clientX,
+                    point.clientY,
+                    rect,
+                    camera,
+                    canvasRef.current.width,
+                    canvasRef.current.height,
+                );
+                const gridX = Math.floor(world.x / PIXEL_SIZE);
+                const gridY = Math.floor(world.y / PIXEL_SIZE);
+                const isGridTile = gridX >= 0 && gridX < gridData.width
+                    && gridY >= 0 && gridY < gridData.height;
+                const gridIndex = gridY * gridData.width + gridX;
+                const previewEntity = previewSpatialIndex.byTile.get(`${gridX},${gridY}`);
+                const roboport = !previewEntity && autoRoboport
+                    ? activeRoboports?.some(candidate => (
+                        gridX >= candidate.x && gridX < candidate.x + ROBOPORT_SIZE
+                        && gridY >= candidate.y && gridY < candidate.y + ROBOPORT_SIZE
+                    ))
+                    : false;
+                const poleSize = POLE_DATA[poleType]?.size ?? 1;
+                const pole = !previewEntity && !roboport && autoPole
+                    ? activePoles?.some(candidate => (
+                        gridX >= candidate.x && gridX < candidate.x + poleSize
+                        && gridY >= candidate.y && gridY < candidate.y + poleSize
+                    ))
+                    : false;
+                const lamp = !previewEntity && !roboport && !pole && isGridTile && Boolean(
+                    gridData.cells[gridIndex] || hasAlternateFrameLamp?.(gridX, gridY),
+                );
+                if (lamp) onLampClick(gridX, gridY);
+            }
+        }
         rebuildGridCache();
         requestRender();
     };
@@ -681,12 +729,13 @@ export const Canvas: React.FC<CanvasProps> = ({
                 onMouseUp={handleInteractEnd}
                 onMouseLeave={(event) => {
                     setHoverTooltip(null);
-                    handleInteractEnd(event);
+                    handleInteractEnd(event, false);
                 }}
                 onWheel={handleWheel}
                 // Touch
                 onTouchStart={(e) => {
                     const t = e.touches[0];
+                    clickStartRef.current = { x: t.clientX, y: t.clientY, moved: false };
                     const rect = canvasRef.current!.getBoundingClientRect();
                     const world = getWorldCoords(t.clientX, t.clientY, rect, camera, canvasRef.current!.width, canvasRef.current!.height);
                     onInteractStart(e, Math.floor(world.x / PIXEL_SIZE), Math.floor(world.y / PIXEL_SIZE));
@@ -695,6 +744,10 @@ export const Canvas: React.FC<CanvasProps> = ({
                 }}
                 onTouchMove={(e) => {
                     const t = e.touches[0];
+                    const clickStart = clickStartRef.current;
+                    if (clickStart && Math.hypot(t.clientX - clickStart.x, t.clientY - clickStart.y) > 4) {
+                        clickStart.moved = true;
+                    }
                     lastMousePos.current = { x: t.clientX, y: t.clientY };
                     const rect = canvasRef.current!.getBoundingClientRect();
                     const world = getWorldCoords(t.clientX, t.clientY, rect, camera, canvasRef.current!.width, canvasRef.current!.height);

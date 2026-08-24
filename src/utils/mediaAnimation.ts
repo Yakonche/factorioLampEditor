@@ -1,4 +1,4 @@
-import { createEmptyGrid, type GridData } from './grid';
+import { cloneGrid, createEmptyGrid, type GridData } from './grid';
 
 export interface MediaFrameTransition {
     indices: Uint32Array;
@@ -396,6 +396,90 @@ export function renderGridAnimationAtTick(
         width: animation.firstFrame.width,
         height: animation.firstFrame.height,
         cells,
+    };
+}
+
+/**
+ * Changes one lamp in the frame visible at `tick` without flattening
+ * independently clocked tracks. The following transition is rebuilt as well,
+ * so a one-frame edit cannot leak into the rest of the loop.
+ */
+export function updateGridAnimationCellAtTick(
+    animation: GridAnimationData,
+    cellIndex: number,
+    tick: number,
+    color: number,
+): GridAnimationData {
+    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= animation.firstFrame.cells.length) {
+        throw new Error('Animation cell index is outside the grid.');
+    }
+
+    const firstFrame = cloneGrid(animation.firstFrame);
+    const tracks = getGridAnimationTracks(animation).map(track => ({
+        firstDurationTicks: track.firstDurationTicks,
+        transitions: track.transitions.map(transition => ({
+            indices: transition.indices.slice(),
+            colors: transition.colors.slice(),
+            durationTicks: transition.durationTicks,
+        })),
+    }));
+
+    // Composed overlays remove their rectangle from older tracks. Selecting
+    // the last track that touches the lamp therefore also selects the visible,
+    // topmost owner if legacy data happens to overlap.
+    let ownerTrackIndex = -1;
+    tracks.forEach((track, trackIndex) => {
+        if (track.transitions.some(transition => transition.indices.includes(cellIndex))) {
+            ownerTrackIndex = trackIndex;
+        }
+    });
+
+    // A constant lamp has no transition owner yet. Assigning it to the primary
+    // clock lets the inspector change only the visible frame, just like any
+    // already-animated lamp, and creates the minimum two boundary patches.
+    if (ownerTrackIndex === -1) ownerTrackIndex = 0;
+
+    const normalizedColor = color >>> 0;
+    {
+        const track = tracks[ownerTrackIndex];
+        const values = [firstFrame.cells[cellIndex]];
+        for (const transition of track.transitions) {
+            const patchIndex = transition.indices.indexOf(cellIndex);
+            values.push(patchIndex === -1 ? values.at(-1)! : transition.colors[patchIndex]);
+        }
+
+        const targetFrame = animationFrameAtTick(createAnimationTrackTimeline(track), tick);
+        values[targetFrame] = normalizedColor;
+        if (targetFrame === 0) firstFrame.cells[cellIndex] = normalizedColor;
+
+        track.transitions = track.transitions.map((transition, transitionIndex) => {
+            const indices: number[] = [];
+            const colors: number[] = [];
+            for (let patchIndex = 0; patchIndex < transition.indices.length; patchIndex++) {
+                const index = transition.indices[patchIndex];
+                if (index === cellIndex) continue;
+                indices.push(index);
+                colors.push(transition.colors[patchIndex]);
+            }
+            if (values[transitionIndex + 1] !== values[transitionIndex]) {
+                indices.push(cellIndex);
+                colors.push(values[transitionIndex + 1]);
+            }
+            return {
+                indices: Uint32Array.from(indices),
+                colors: Uint32Array.from(colors),
+                durationTicks: transition.durationTicks,
+            };
+        });
+    }
+
+    const primaryTrack = tracks[0];
+    return {
+        ...animation,
+        firstFrame,
+        firstDurationTicks: primaryTrack.firstDurationTicks,
+        transitions: primaryTrack.transitions,
+        ...(animation.tracks ? { tracks } : {}),
     };
 }
 

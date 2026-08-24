@@ -18,7 +18,10 @@ import {
     createAnimationUnionGrid,
     createGridAnimationFromFrames,
     evenlySpacedFrameIndices,
+    renderAnimationFrame,
+    renderGridAnimationAtTick,
     selectAnimationFrames,
+    updateGridAnimationCellAtTick,
     type GridAnimationData,
 } from '../src/utils/mediaAnimation';
 import { buildPreviewSpatialIndex, previewEntitiesInBounds } from '../src/utils/previewSpatialIndex';
@@ -391,6 +394,11 @@ const optimizedFrames: GridData[] = [
     { width: 3, height: 1, cells: Uint32Array.from([0xff3366ff, 0, 0]) },
 ];
 const optimizedAnimation = createGridAnimationFromFrames(optimizedFrames, [5, 7, 11]);
+const editedConstantColor = 0xff11cc88;
+const editedConstantFrame = updateGridAnimationCellAtTick(optimizedAnimation, 0, 5, editedConstantColor);
+assert.equal(renderAnimationFrame(editedConstantFrame, 0).cells[0], optimizedFrames[0].cells[0]);
+assert.equal(renderAnimationFrame(editedConstantFrame, 1).cells[0], editedConstantColor);
+assert.equal(renderAnimationFrame(editedConstantFrame, 2).cells[0], optimizedFrames[2].cells[0]);
 const optimizedResult = generateMediaAnimationBlueprintData(optimizedAnimation, 3, 1, {
     poleType,
     qualityIdx,
@@ -446,6 +454,21 @@ const independentAnimation: GridAnimationData = {
         }],
     }],
 };
+const editedCellIndex = 3 * width + 4;
+const editedSingleFrameColor = 0xff563412;
+const editedSingleFrame = updateGridAnimationCellAtTick(animation, editedCellIndex, timeline.frameStartTicks[1], editedSingleFrameColor);
+assert.equal(renderAnimationFrame(editedSingleFrame, 0).cells[editedCellIndex], frames[0].cells[editedCellIndex]);
+assert.equal(renderAnimationFrame(editedSingleFrame, 1).cells[editedCellIndex], editedSingleFrameColor);
+assert.equal(renderAnimationFrame(editedSingleFrame, 2).cells[editedCellIndex], frames[2].cells[editedCellIndex]);
+
+const editedIndependentColor = 0xffccbbaa;
+const editedIndependent = updateGridAnimationCellAtTick(independentAnimation, 1, 7, editedIndependentColor);
+assert.equal(renderGridAnimationAtTick(editedIndependent, 0).cells[1], independentAnimation.firstFrame.cells[1]);
+assert.equal(renderGridAnimationAtTick(editedIndependent, 7).cells[1], editedIndependentColor);
+assert.equal(renderGridAnimationAtTick(editedIndependent, 13).cells[1], independentAnimation.firstFrame.cells[1]);
+assert.equal(editedIndependent.tracks?.length, 2);
+assert.equal(editedIndependent.tracks?.[0].transitions.length, independentAnimation.tracks?.[0].transitions.length);
+
 const independentResult = generateMediaAnimationBlueprintData(independentAnimation, 2, 1, {
     poleType,
     qualityIdx,

@@ -12,6 +12,7 @@ import { HelpModal } from './components/HelpModal';
 import { ImportSizeModal } from './components/ImportSizeModal';
 import { FrameSelectionTray, type FrameSelectionItem } from './components/FrameSelectionTray';
 import { SequenceFrameTray } from './components/SequenceFrameTray';
+import { LampInspector } from './components/LampInspector';
 import {
   DEFAULT_MAX_DEFINITION,
   DEFAULT_MAX_FRAME_COUNT,
@@ -62,6 +63,7 @@ import {
   placeDecodedAnimation,
   renderGridAnimationAtTick,
   selectDecodedMediaFrames,
+  updateGridAnimationCellAtTick,
   type DecodedMediaAnimation,
   type GridAnimationData,
   type MediaFrameThumbnail,
@@ -237,6 +239,7 @@ function App() {
   const mediaUnionGridRef = useRef<GridData>(createEmptyGrid(GRID_W, GRID_H));
   const mediaPreviewGridRef = useRef<GridData>(createEmptyGrid(GRID_W, GRID_H));
   const mediaPreviewFrameRef = useRef(0);
+  const mediaPreviewTickRef = useRef(0);
   const mediaSourceFileRef = useRef<File | null>(null);
   const mediaDecodeRequestRef = useRef(0);
   const audioTrackRef = useRef<DecodedAudioTrack | null>(null);
@@ -329,6 +332,7 @@ function App() {
   const [mediaPreviewFrame, setMediaPreviewFrame] = useState(0);
   const [previewPlaying, setPreviewPlaying] = useState(true);
   const [previewSeekVersion, setPreviewSeekVersion] = useState(0);
+  const [inspectedLamp, setInspectedLamp] = useState<{ x: number; y: number } | null>(null);
   const [audioNotesPerSecond, setAudioNotesPerSecond] = useState(4);
   const [audioTrackInfo, setAudioTrackInfo] = useState<DecodedAudioTrack | null>(null);
   const [audioImporting, setAudioImporting] = useState(false);
@@ -369,6 +373,7 @@ function App() {
 
   const resetPreviewPlayback = useCallback((autoplay = true) => {
     mediaPreviewFrameRef.current = 0;
+    mediaPreviewTickRef.current = 0;
     setMediaPreviewFrame(0);
     setPreviewPlaying(autoplay);
     setPreviewSeekVersion(value => value + 1);
@@ -1280,6 +1285,7 @@ function App() {
       const trackTimelines = tracks.map(createAnimationTrackTimeline);
       let renderedSignature = '';
       const renderTick = (requestedTick: number, force = false) => {
+        mediaPreviewTickRef.current = requestedTick;
         const signature = trackTimelines
           .map(trackTimeline => animationFrameAtTick(trackTimeline, requestedTick))
           .join(',');
@@ -1319,6 +1325,7 @@ function App() {
 
     const renderFrame = (requestedFrame: number) => {
       const targetFrame = Math.max(0, Math.min(timeline.frameStartTicks.length - 1, requestedFrame));
+      mediaPreviewTickRef.current = timeline.frameStartTicks[targetFrame];
       if (targetFrame < renderedFrame) {
         cells.set(animation.firstFrame.cells);
         renderedFrame = 0;
@@ -1675,6 +1682,73 @@ function App() {
     if (!manualAnimation || x < 0 || x >= GRID_W || y < 0 || y >= GRID_H) return false;
     return Boolean(manualUnionGrid.cells[y * GRID_W + x]);
   }, [manualAnimation, manualUnionGrid, mediaAnimationInfo]);
+
+  const handleLampClick = useCallback((x: number, y: number) => {
+    if (stampMode || x < 0 || x >= GRID_W || y < 0 || y >= GRID_H) return;
+    const index = y * GRID_W + x;
+    const visibleGrid = viewingMediaFrame || viewingSequenceFrame
+      ? mediaPreviewGridRef.current
+      : gridRef.current;
+    if (!visibleGrid.cells[index] && !hasAlternateFrameLamp(x, y)) return;
+    setInspectedLamp({ x, y });
+  }, [hasAlternateFrameLamp, stampMode, viewingMediaFrame, viewingSequenceFrame]);
+
+  const handleInspectedLampColorChange = useCallback((nextColor: number) => {
+    if (!inspectedLamp || (activePreviewAnimation && previewPlaying)) return;
+    const index = inspectedLamp.y * GRID_W + inspectedLamp.x;
+    if (index < 0 || index >= GRID_W * GRID_H) return;
+
+    if (mediaAnimationInfo && mediaAnimationRef.current) {
+      const updatedAnimation = updateGridAnimationCellAtTick(
+        mediaAnimationRef.current,
+        index,
+        mediaPreviewTickRef.current,
+        nextColor,
+      );
+      mediaAnimationRef.current = updatedAnimation;
+      mediaUnionGridRef.current = createAnimationUnionGrid(updatedAnimation);
+      mediaPreviewGridRef.current = renderGridAnimationAtTick(updatedAnimation, mediaPreviewTickRef.current);
+      gridRef.current = updatedAnimation.firstFrame;
+      committedGridRef.current = cloneGrid(gridRef.current);
+      setMediaFrameTick(value => value + 1);
+      setTick(value => value + 1);
+      setPreviewSeekVersion(value => value + 1);
+      return;
+    }
+
+    if (manualAnimation) {
+      const frameIndex = Math.max(0, Math.min(sequenceFrames.length - 1, mediaPreviewFrameRef.current));
+      const previewGrid = cloneGrid(mediaPreviewGridRef.current);
+      previewGrid.cells[index] = nextColor >>> 0;
+      mediaPreviewGridRef.current = previewGrid;
+      setSequenceFrames(previous => previous.map((frame, candidateIndex) => {
+        if (candidateIndex !== frameIndex) return frame;
+        const editedGrid = cloneGrid(frame.grid);
+        editedGrid.cells[index] = nextColor >>> 0;
+        return { ...frame, grid: editedGrid };
+      }));
+      if (frameIndex === 0) {
+        gridRef.current = cloneGrid(previewGrid);
+        committedGridRef.current = cloneGrid(gridRef.current);
+        setTick(value => value + 1);
+      }
+      setSequenceVersion(value => value + 1);
+      setMediaFrameTick(value => value + 1);
+      setPreviewSeekVersion(value => value + 1);
+      return;
+    }
+
+    if (gridRef.current.cells[index] === (nextColor >>> 0)) return;
+    gridRef.current.cells[index] = nextColor >>> 0;
+    setPlacedImage(null);
+    saveHistory();
+    setTick(value => value + 1);
+  }, [activePreviewAnimation, inspectedLamp, manualAnimation, mediaAnimationInfo, previewPlaying, saveHistory, sequenceFrames.length]);
+
+  const inspectedLampColor = inspectedLamp
+    ? (viewingMediaFrame || viewingSequenceFrame ? mediaPreviewGridRef.current : gridRef.current)
+      .cells[inspectedLamp.y * GRID_W + inspectedLamp.x] ?? 0
+    : 0;
   const [isPanning, setIsPanning] = useState(false);
   const panStart = useRef({ x: 0, y: 0 });
   const camStart = useRef({ x: 0, y: 0 });
@@ -1697,6 +1771,25 @@ function App() {
       lastGridPos.current = null;
       void commitStamp(x, y);
       return;
+    }
+
+    if (button !== 2 && tool !== 'erase' && x >= 0 && x < GRID_W && y >= 0 && y < GRID_H) {
+      const index = y * GRID_W + x;
+      const visibleGrid = viewingMediaFrame || viewingSequenceFrame
+        ? mediaPreviewGridRef.current
+        : gridRef.current;
+      if (visibleGrid.cells[index] || hasAlternateFrameLamp(x, y)) {
+        // A simple click is reserved for the lamp inspector. Erase keeps its
+        // direct manipulation behavior, while all colors remain editable from
+        // the inspector without an accidental brush stroke first.
+        lastGridPos.current = null;
+        if (tool === 'pan' || viewingMediaFrame || viewingSequenceFrame) {
+          setIsPanning(true);
+          panStart.current = { x: clientX, y: clientY };
+          camStart.current = { ...camera };
+        }
+        return;
+      }
     }
 
     if (button === 2 || tool === 'pan' || viewingSequenceFrame || viewingMediaFrame) {
@@ -2268,6 +2361,7 @@ function App() {
     setStampMode(null);
     setStampBuffer(null);
     setStampScale(1);
+    setInspectedLamp(null);
     lastGeneratedBlueprintRef.current = null;
     lastGeneratedBlueprintLabelRef.current = 'Factorio Art';
     setHasGeneratedBlueprint(false);
@@ -2354,6 +2448,21 @@ function App() {
               </div>
             )}
 
+            {inspectedLamp && (
+              <LampInspector
+                x={inspectedLamp.x}
+                y={inspectedLamp.y}
+                color={inspectedLampColor}
+                hasAnimation={hasActiveAnimation}
+                isPlaying={previewPlaying}
+                frame={mediaPreviewFrame}
+                frameCount={Math.max(1, activePreviewFrameCount)}
+                onTogglePlayback={() => setPreviewPlaying(playing => !playing)}
+                onChangeColor={handleInspectedLampColorChange}
+                onClose={() => setInspectedLamp(null)}
+              />
+            )}
+
             <Canvas
               gridData={viewingMediaFrame || viewingSequenceFrame ? mediaPreviewGridRef.current : gridRef.current}
               gridVersion={viewingMediaFrame || viewingSequenceFrame ? mediaFrameTick : tick}
@@ -2362,6 +2471,7 @@ function App() {
               onInteractStart={onInteractStart}
               onInteractMove={onInteractMove}
               onInteractEnd={onInteractEnd}
+              onLampClick={handleLampClick}
               stampMode={stampMode}
               stampBuffer={stampBuffer}
               stampScale={stampScale}
