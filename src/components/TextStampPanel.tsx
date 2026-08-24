@@ -39,6 +39,7 @@ import {
 } from '../utils/scrollTiming';
 import { useI18n } from '../i18n';
 import type { NotoAnimatedEmojiEntry } from '../utils/notoAnimatedEmoji';
+import { emojiArtworkProviderForStyle } from '../utils/emojiAssets';
 
 const EmojiCatalog = React.lazy(() => import('./EmojiCatalog').then(module => ({ default: module.EmojiCatalog })));
 const NotoAnimatedEmojiCatalog = React.lazy(() => import('./NotoAnimatedEmojiCatalog').then(module => ({ default: module.NotoAnimatedEmojiCatalog })));
@@ -492,7 +493,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
         defaultStyle: globalStyle,
         characterStyles,
         emojiFontFamily: selectedEmojiFontFamily,
-        emojiArtworkStyle: resolvedEmojiStyle === 'twemoji' ? 'twemoji' : 'font',
+        emojiArtworkStyle: emojiArtworkProviderForStyle(resolvedEmojiStyle) ?? 'font',
         viewportWidth: viewportEnabled && !verticalScroll ? Math.max(3, viewportWidth) : undefined,
         viewportHeight: viewportEnabled && verticalScroll ? Math.max(3, viewportHeight) : undefined,
         scroll: viewportEnabled && scrollEnabled,
@@ -779,7 +780,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                         })}
                     </select>
                     <span className="mt-1 block font-normal leading-4 text-gray-500">
-                        {t('Twemoji uses downloadable static artwork saved in the persistent emoji cache. The official animated catalog uses Google Noto animations.')}
+                        {t('Downloaded emoji artwork is saved in the persistent cache for offline reuse. Toss Face and Noto are bundled; the official animated catalog uses Google Noto animations.')}
                     </span>
                 </label>
                 <label className="flex items-center gap-2 text-[9px] font-bold text-gray-500">

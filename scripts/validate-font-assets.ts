@@ -15,7 +15,7 @@ import {
     readOpenTypeFontNames,
     resolveAutomaticEmojiStyle,
 } from '../src/utils/fonts';
-import { emojiAssetUrl, twemojiCodepoint } from '../src/utils/emojiAssets';
+import { emojiAssetKey, emojiAssetUrl, twemojiCodepoint } from '../src/utils/emojiAssets';
 
 const makeNamedTestFont = (records: ReadonlyArray<readonly [number, string]>): ArrayBuffer => {
     const encodedRecords = records.map(([nameId, value]) => {
@@ -112,12 +112,19 @@ assert.equal(
     '72a635cb3d2f3524c51620cdde406b217204e8a6a06c6a096ff8ed4b5fd6e27b',
 );
 
+const tossfaceBytes = readFileSync(resolve('src/assets/fonts/Tossface/TossFaceFontWeb.otf'));
+assert.ok(tossfaceBytes.length > 5_000_000);
+assert.match(readFileSync(resolve('public/licenses/Tossface-LICENSE.txt'), 'utf8'), /https:\/\/toss\.im\/tossface\/copyright/);
+
 assert.deepEqual(
     BUNDLED_FONT_OPTIONS.map(font => font.family),
     ['Noto Sans JP', 'Iceberg', 'Jersey 10', 'MedievalSharp', 'Quantico', 'Space Grotesk'],
 );
 assert.ok(SYSTEM_FONT_OPTIONS.every(font => font.source === 'system'));
-assert.deepEqual(EMOJI_FONT_STYLES.map(style => style.id), ['automatic', 'apple', 'segoe', 'noto', 'twemoji']);
+assert.deepEqual(EMOJI_FONT_STYLES.map(style => style.id), [
+    'automatic', 'apple', 'segoe', 'noto', 'tossface', 'twemoji', 'openmoji',
+    'fluent-flat', 'fluent-color', 'fluent-3d', 'blobmoji',
+]);
 assert.match(emojiFontFamily('noto'), /^"Noto Color Emoji"/);
 const windowsEmojiAvailability = { apple: false, segoe: true, noto: true };
 const bundledOnlyEmojiAvailability = { apple: false, segoe: false, noto: true };
@@ -134,6 +141,9 @@ assert.equal(
     emojiAssetUrl('twemoji-static', '1f600'),
     'https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/72x72/1f600.png',
 );
+assert.equal(emojiAssetKey('openmoji-static', '😀'), '1F600');
+assert.equal(emojiAssetKey('blobmoji-static', '😀'), '1f600');
+assert.ok(emojiAssetKey('fluent-color-static', '😀'));
 assert.equal(fontFamilyCss('Space "Grotesk'), '"Space Grotesk", sans-serif');
 assert.deepEqual(normalizeFontFamilies([' Verdana ', 'arial', 'Arial', '']), ['arial', 'Verdana']);
 

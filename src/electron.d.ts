@@ -18,6 +18,15 @@ interface Window {
       monochromeThreshold?: number;
       differenceThreshold?: number;
     }) => Promise<import('./utils/mediaAnimation').DecodedMediaAnimation>;
+    inspectMedia: (request: {
+      sourceName: string;
+      bytes: ArrayBuffer;
+    }) => Promise<{
+      sourceName: string;
+      sourceWidth: number;
+      sourceHeight: number;
+      sourceFps: number;
+    }>;
     decodeAudioNotes: (request: {
       sourceName: string;
       bytes: ArrayBuffer;

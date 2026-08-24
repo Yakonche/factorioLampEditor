@@ -27,3 +27,15 @@ The optional Twemoji static style downloads official Twemoji artwork on demand
 and stores used assets in the persistent user-data cache. Attribution is in:
 
 - Twemoji-CC-BY-4.0.txt
+
+Additional selectable emoji styles are either bundled or downloaded on demand
+and kept in the same persistent cache:
+
+- Toss Face is bundled as its original unmodified web font; its license is in
+  Tossface-LICENSE.txt.
+- OpenMoji color SVG artwork is licensed under CC BY-SA 4.0; the license is in
+  OpenMoji-CC-BY-SA-4.0.txt.
+- Microsoft Fluent Emoji Flat, Color, and 3D artwork is licensed under MIT; the
+  license is in Microsoft-Fluent-Emoji-MIT.txt.
+- Blobmoji artwork is licensed under Apache 2.0; the license is in
+  Blobmoji-LICENSE.txt.

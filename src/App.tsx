@@ -74,7 +74,14 @@ import type {
 import {
   type NotoAnimatedEmojiEntry,
 } from './utils/notoAnimatedEmoji';
-import { loadEmojiAsset, loadTwemojiImage } from './utils/emojiAssets';
+import { loadEmojiAsset, loadEmojiImage } from './utils/emojiAssets';
+import { decodeTgsAnimation, inspectTgs } from './utils/tgsAnimation';
+import {
+  browserImageMimeType,
+  decodeBrowserImageAnimation,
+  inspectBrowserImage,
+} from './utils/browserImageAnimation';
+import { useI18n } from './i18n';
 
 type CalculationWorkerResponse = {
   id: number;
@@ -99,6 +106,30 @@ const EMPTY_ANIMATION_STATS: AnimationEntityStats = {
   controllerRoboportCount: 0,
   relayPoleCount: 0,
   programmableSpeakerCount: 0,
+};
+
+const fileExtension = (file: File): string => file.name.split('.').pop()?.toLocaleLowerCase() ?? '';
+const isTgsFile = (file: File): boolean => fileExtension(file) === 'tgs'
+  || file.type === 'application/x-tgsticker';
+
+const containsApngAnimationChunk = async (file: File): Promise<boolean> => {
+  if (file.type !== 'image/png' && fileExtension(file) !== 'png' && fileExtension(file) !== 'apng') return false;
+  const bytes = new Uint8Array(await file.slice(0, Math.min(file.size, 1024 * 1024)).arrayBuffer());
+  for (let index = 8; index + 8 <= bytes.length;) {
+    const length = (bytes[index] * 0x1000000) + (bytes[index + 1] << 16) + (bytes[index + 2] << 8) + bytes[index + 3];
+    const type = String.fromCharCode(bytes[index + 4], bytes[index + 5], bytes[index + 6], bytes[index + 7]);
+    if (type === 'acTL') return true;
+    if (!Number.isFinite(length) || length < 0) break;
+    index += 12 + length;
+  }
+  return false;
+};
+
+const isMediaImportFile = async (file: File): Promise<boolean> => {
+  const extension = fileExtension(file);
+  if (['gif', 'apng', 'webp', 'webm', 'mp4', 'mov', 'mkv', 'avi', 'm4v', 'tgs'].includes(extension)) return true;
+  if (file.type.startsWith('video/') || file.type === 'image/gif' || file.type === 'image/webp') return true;
+  return containsApngAnimationChunk(file);
 };
 
 type ImportedFrame = {
@@ -155,6 +186,7 @@ const formatBlueprintLabel = (filename: string, width: number, height: number) =
 };
 
 function App() {
+  const { t } = useI18n();
 
   // --- State ---
   // const [gridData] = useState<GridData>(() => createEmptyGrid(GRID_W, GRID_H));
@@ -450,26 +482,64 @@ function App() {
     definitionLimit: number,
     frameLimit: number,
     targetSize: MediaTargetSize | null,
+    confirmReduction = false,
   ) => {
-    if (!window.factorioLampEditor?.decodeMedia) {
-      alert('GIF/video import is available in the installed desktop application.');
-      return;
+    const browserImageType = browserImageMimeType(file.name, file.type);
+    if (!isTgsFile(file) && !browserImageType && !window.factorioLampEditor?.decodeMedia) {
+      alert(t('Animated media import is available in the installed desktop application.'));
+      return false;
     }
     const requestId = ++mediaDecodeRequestRef.current;
     setMediaImporting(true);
-    setStatusMsg('Decoding GIF/video with FFmpeg...');
+    setStatusMsg(isTgsFile(file) ? t('Reading TGS animation…') : t('Inspecting animated media…'));
     try {
       const bytes = await file.arrayBuffer();
-      const decoded = await window.factorioLampEditor.decodeMedia({
+      const normalizedFpsLimit = Math.max(0.1, Math.min(30, fpsLimit));
+      const normalizedDefinition = Math.max(1, Math.min(MAX_DEFINITION_LIMIT, definitionLimit));
+      if (confirmReduction) {
+        const inspection = isTgsFile(file)
+          ? inspectTgs(bytes)
+          : browserImageType
+            ? await inspectBrowserImage(bytes, browserImageType)
+            : await window.factorioLampEditor!.inspectMedia({ sourceName: file.name, bytes });
+        const scale = Math.min(1, normalizedDefinition / inspection.sourceWidth, normalizedDefinition / inspection.sourceHeight);
+        const targetWidth = Math.max(1, Math.round(inspection.sourceWidth * scale));
+        const targetHeight = Math.max(1, Math.round(inspection.sourceHeight * scale));
+        const targetFps = Math.max(0.1, Math.min(normalizedFpsLimit, inspection.sourceFps));
+        const reducesDefinition = targetWidth < inspection.sourceWidth || targetHeight < inspection.sourceHeight;
+        const reducesFps = targetFps + 0.001 < inspection.sourceFps;
+        if ((reducesDefinition || reducesFps) && !window.confirm([
+          t('This media exceeds the selected Factorio import limits.'),
+          `${inspection.sourceWidth} × ${inspection.sourceHeight} px @ ${inspection.sourceFps.toFixed(2)} FPS`,
+          `→ ${targetWidth} × ${targetHeight} px @ ${targetFps.toFixed(2)} FPS`,
+          '',
+          t('Convert it with these reduced dimensions and/or FPS?'),
+        ].join('\n'))) {
+          setStatusMsg(t('Media import cancelled.'));
+          setTimeout(() => setStatusMsg(''), 2500);
+          return false;
+        }
+      }
+
+      setStatusMsg(isTgsFile(file)
+        ? t('Rendering TGS animation…')
+        : browserImageType
+          ? t('Decoding APNG/WebP with Chromium…')
+          : t('Decoding animated media with FFmpeg…'));
+      const decodeOptions = {
         sourceName: file.name,
-        bytes,
-        fpsLimit: Math.max(0.1, Math.min(30, fpsLimit)),
-        maxDimension: Math.max(1, Math.min(MAX_DEFINITION_LIMIT, definitionLimit)),
+        fpsLimit: normalizedFpsLimit,
+        maxDimension: normalizedDefinition,
         ...(targetSize ? { targetWidth: targetSize.width, targetHeight: targetSize.height } : {}),
         colorMode: mediaColorMode,
         monochromeThreshold: mediaMonochromeThreshold,
         differenceThreshold: mediaDifferenceThreshold,
-      }) as DecodedMediaAnimation;
+      };
+      const decoded = isTgsFile(file)
+        ? await decodeTgsAnimation(bytes, decodeOptions)
+        : browserImageType
+          ? await decodeBrowserImageAnimation(bytes, { ...decodeOptions, mimeType: browserImageType })
+          : await window.factorioLampEditor!.decodeMedia({ ...decodeOptions, bytes }) as DecodedMediaAnimation;
       if (requestId !== mediaDecodeRequestRef.current) return;
       lastDecodedFpsLimitRef.current = fpsLimit;
       lastDecodedMaxDefinitionRef.current = definitionLimit;
@@ -486,26 +556,31 @@ function App() {
           removals: new Set(),
         });
         setStatusMsg(`${decoded.frameCount.toLocaleString()} frames found; choose ${frameLimit.toLocaleString()} or fewer.`);
-        return;
+        return true;
       }
       placeDecodedMedia(decoded, fpsLimit, definitionLimit);
+      return true;
     } catch (error) {
       if (requestId !== mediaDecodeRequestRef.current) return;
-      console.error('Unable to decode GIF/video.', error);
+      console.error('Unable to decode animated media.', error);
       setStatusMsg('');
-      alert(`Unable to decode this GIF/video.\n${error instanceof Error ? error.message : String(error)}`);
+      alert(`${t('Unable to decode this animated media.')}\n${error instanceof Error ? error.message : String(error)}`);
+      return false;
     } finally {
       if (requestId === mediaDecodeRequestRef.current) setMediaImporting(false);
     }
-  }, [mediaColorMode, mediaDifferenceThreshold, mediaMonochromeThreshold, placeDecodedMedia]);
+  }, [mediaColorMode, mediaDifferenceThreshold, mediaMonochromeThreshold, placeDecodedMedia, t]);
 
   const handleTextStamp = async (options: TextStampOptions) => {
-    setStatusMsg(options.emojiArtworkStyle === 'twemoji'
-      ? 'Preparing text stamp and loading cached Twemoji artwork…'
+    const emojiProvider = options.emojiArtworkStyle && options.emojiArtworkStyle !== 'font'
+      ? options.emojiArtworkStyle
+      : null;
+    setStatusMsg(emojiProvider
+      ? 'Preparing text stamp and loading cached emoji artwork…'
       : 'Preparing text stamp…');
     try {
-      const buffer = await createTextStamp(options.emojiArtworkStyle === 'twemoji'
-        ? { ...options, emojiImageLoader: loadTwemojiImage }
+      const buffer = await createTextStamp(emojiProvider
+        ? { ...options, emojiImageLoader: emoji => loadEmojiImage(emojiProvider, emoji) }
         : options);
       if (buffer) {
         setStampBuffer(buffer);
@@ -933,7 +1008,7 @@ function App() {
     setAudioLinkedToAnimation(false);
     mediaSourceFileRef.current = file;
     setMediaTargetSize(null);
-    await importMedia(file, mediaFpsLimit, maxDefinition, maxFrameCount, null);
+    await importMedia(file, mediaFpsLimit, maxDefinition, maxFrameCount, null, true);
   };
 
   const handleAudioUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1028,11 +1103,11 @@ function App() {
         if (items[i].type.indexOf('image') !== -1) {
           const blob = items[i].getAsFile();
           if (blob) {
-            if (blob instanceof File && blob.type === 'image/gif') {
+            if (blob instanceof File && await isMediaImportFile(blob)) {
               setAudioLinkedToAnimation(false);
               mediaSourceFileRef.current = blob;
               setMediaTargetSize(null);
-              await importMedia(blob, mediaFpsLimit, maxDefinition, maxFrameCount, null);
+              await importMedia(blob, mediaFpsLimit, maxDefinition, maxFrameCount, null, true);
             } else {
               await importImage(blob);
             }
@@ -1760,12 +1835,12 @@ function App() {
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      if (file.type === 'image/gif' || file.type.startsWith('video/')) {
+      if (await isMediaImportFile(file)) {
         try {
           setAudioLinkedToAnimation(false);
           mediaSourceFileRef.current = file;
           setMediaTargetSize(null);
-          await importMedia(file, mediaFpsLimit, maxDefinition, maxFrameCount, null);
+          await importMedia(file, mediaFpsLimit, maxDefinition, maxFrameCount, null, true);
         } catch (err) {
           console.error(err);
         }

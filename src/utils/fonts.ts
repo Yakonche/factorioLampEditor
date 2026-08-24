@@ -184,7 +184,18 @@ export const SYSTEM_FONT_OPTIONS: readonly FontOption[] = [
     { family: 'Verdana', label: 'Verdana', category: 'proportional', source: 'system' },
 ];
 
-export type EmojiFontStyle = 'automatic' | 'apple' | 'segoe' | 'noto' | 'twemoji';
+export type EmojiFontStyle =
+    | 'automatic'
+    | 'apple'
+    | 'segoe'
+    | 'noto'
+    | 'tossface'
+    | 'twemoji'
+    | 'openmoji'
+    | 'fluent-flat'
+    | 'fluent-color'
+    | 'fluent-3d'
+    | 'blobmoji';
 
 export interface EmojiFontAvailability {
     apple: boolean;
@@ -223,8 +234,38 @@ export const EMOJI_FONT_STYLES: readonly EmojiFontStyleOption[] = [
         family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
     },
     {
+        id: 'tossface',
+        label: 'Toss Face (bundled)',
+        family: '"Tossface", "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+    },
+    {
         id: 'twemoji',
         label: 'Twemoji 17 (static artwork)',
+        family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+    },
+    {
+        id: 'openmoji',
+        label: 'OpenMoji 17 (color artwork)',
+        family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+    },
+    {
+        id: 'fluent-flat',
+        label: 'Microsoft Fluent Emoji (Flat)',
+        family: '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif',
+    },
+    {
+        id: 'fluent-color',
+        label: 'Microsoft Fluent Emoji (Color)',
+        family: '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif',
+    },
+    {
+        id: 'fluent-3d',
+        label: 'Microsoft Fluent Emoji (3D)',
+        family: '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif',
+    },
+    {
+        id: 'blobmoji',
+        label: 'Blobmoji (color artwork)',
         family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
     },
 ];

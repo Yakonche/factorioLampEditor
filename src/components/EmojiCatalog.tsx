@@ -2,7 +2,7 @@ import React from 'react';
 import emojiDataJson from 'unicode-emoji-json/data-by-emoji.json';
 import { useI18n } from '../i18n';
 import type { EmojiFontStyle } from '../utils/fonts';
-import { emojiAssetUrl, twemojiCodepoint } from '../utils/emojiAssets';
+import { emojiArtworkProviderForStyle, emojiAssetKey, loadEmojiAsset } from '../utils/emojiAssets';
 
 interface EmojiMetadata {
     name: string;
@@ -54,16 +54,35 @@ const EmojiPreview: React.FC<{
     emojiStyle: Exclude<EmojiFontStyle, 'automatic'>;
     fontFamily: string;
 }> = ({ emoji, emojiStyle, fontFamily }) => {
-    const [twemojiFailed, setTwemojiFailed] = React.useState(false);
-    if (emojiStyle === 'twemoji' && !twemojiFailed) {
+    const [artworkUrl, setArtworkUrl] = React.useState<string | null>(null);
+    const provider = emojiArtworkProviderForStyle(emojiStyle);
+    const assetKey = provider ? emojiAssetKey(provider, emoji) : null;
+    React.useEffect(() => {
+        let active = true;
+        let objectUrl: string | null = null;
+        setArtworkUrl(null);
+        if (provider && assetKey) {
+            void loadEmojiAsset(provider, assetKey).then(asset => {
+                if (!active) return;
+                objectUrl = URL.createObjectURL(new Blob([asset.bytes], { type: asset.mimeType }));
+                setArtworkUrl(objectUrl);
+            }).catch(error => {
+                console.warn(`Unable to preview ${provider} emoji artwork.`, error);
+            });
+        }
+        return () => {
+            active = false;
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+    }, [assetKey, provider]);
+    if (artworkUrl) {
         return (
             <img
-                src={emojiAssetUrl('twemoji-static', twemojiCodepoint(emoji))}
+                src={artworkUrl}
                 alt=""
                 loading="lazy"
                 decoding="async"
                 draggable={false}
-                onError={() => setTwemojiFailed(true)}
                 className="h-[26px] w-[26px] object-contain"
             />
         );

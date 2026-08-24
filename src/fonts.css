@@ -7,6 +7,14 @@
 }
 
 @font-face {
+  font-family: 'Tossface';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Tossface/TossFaceFontWeb.otf') format('opentype');
+}
+
+@font-face {
   font-family: 'Iceberg';
   font-style: normal;
   font-weight: 400;

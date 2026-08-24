@@ -480,10 +480,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 </div>
             </div>
 
-            {/* GIF / video animation */}
+            {/* Animated media */}
             <div className="border-b border-gray-700 p-4 md:p-6">
                 <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 md:mb-4 md:text-xs">
-                    GIF / video animation
+                    {t('Animated media')}
                 </h3>
                 <div className="grid grid-cols-[1fr_88px] gap-2">
                     <label className={`flex h-10 cursor-pointer items-center justify-center gap-2 rounded border px-3 transition ${mediaImporting
@@ -497,7 +497,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         <input
                             type="file"
                             className="hidden"
-                            accept="image/gif,video/*,.gif,.mp4,.webm,.mov,.mkv,.avi,.m4v"
+                            accept="image/gif,image/apng,image/png,image/webp,video/*,application/x-tgsticker,.gif,.apng,.png,.webp,.webm,.tgs,.mp4,.mov,.mkv,.avi,.m4v"
                             onChange={onMediaUpload}
                             disabled={mediaImporting}
                         />
@@ -521,7 +521,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     </label>
                 </div>
                 <p className="mt-2 text-[10px] leading-4 text-gray-500">
-                    FFmpeg preserves the ratio, fits the media inside {maxDefinition} x {maxDefinition}, and never exceeds 30 FPS.
+                    {t('GIF, APNG, static or animated WebP, transparent WebM, video, and TGS are supported. Ratio and alpha are preserved; reductions above the selected definition or 30 FPS require confirmation.')} ({maxDefinition} × {maxDefinition})
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-gray-700 bg-gray-900 p-2">
                     <label className="flex flex-col text-[9px] font-bold uppercase tracking-wider text-gray-500">

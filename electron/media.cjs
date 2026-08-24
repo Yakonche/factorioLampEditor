@@ -157,7 +157,38 @@ async function probeMedia(inputPath, ffmpegPath) {
   const sourceWidth = quarterTurn ? dimensions.height : dimensions.width;
   const sourceHeight = quarterTurn ? dimensions.width : dimensions.height;
   const sourceFps = Number(fpsMatch?.[1] ?? MAX_MEDIA_FPS) || MAX_MEDIA_FPS;
-  return { sourceWidth, sourceHeight, sourceFps };
+  const codec = videoLine.match(/Video:\s*([^,\s]+)/i)?.[1]?.toLocaleLowerCase() ?? '';
+  return { sourceWidth, sourceHeight, sourceFps, codec };
+}
+
+function requestBytes(request) {
+  const bytes = request?.bytes instanceof ArrayBuffer
+    ? Buffer.from(request.bytes)
+    : ArrayBuffer.isView(request?.bytes)
+      ? Buffer.from(request.bytes.buffer, request.bytes.byteOffset, request.bytes.byteLength)
+      : Buffer.isBuffer(request?.bytes)
+        ? request.bytes
+        : null;
+  if (!bytes?.length) throw new TypeError('The selected media file is empty.');
+  return bytes;
+}
+
+async function inspectMedia(request, binaries = {}) {
+  if (!request || typeof request.sourceName !== 'string') throw new TypeError('A media filename is required.');
+  const ffmpegPath = binaries.ffmpegPath || require('ffmpeg-static');
+  const bytes = requestBytes(request);
+  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'factorio-lamp-media-inspect-'));
+  const sourceExtension = path.extname(request.sourceName).replace(/[^.a-z0-9]/gi, '').slice(0, 12) || '.media';
+  const inputPath = path.join(temporaryDirectory, `input${sourceExtension}`);
+  try {
+    const normalized = sourceExtension.toLowerCase() === '.gif'
+      ? normalizeLegacyAnimatedGif(bytes).bytes
+      : bytes;
+    await fs.writeFile(inputPath, normalized);
+    return { sourceName: path.basename(request.sourceName), ...await probeMedia(inputPath, ffmpegPath) };
+  } finally {
+    await fs.rm(temporaryDirectory, { recursive: true, force: true });
+  }
 }
 
 function decodeFrames(inputPath, width, height, fps, ffmpegPath, pixelOptions = {}) {
@@ -166,6 +197,7 @@ function decodeFrames(inputPath, width, height, fps, ffmpegPath, pixelOptions = 
     const decoder = spawn(ffmpegPath, [
       '-hide_banner',
       '-loglevel', 'error',
+      ...(pixelOptions.inputDecoder ? ['-c:v', pixelOptions.inputDecoder] : []),
       '-i', inputPath,
       '-map', '0:v:0',
       '-an', '-sn', '-dn',
@@ -312,14 +344,7 @@ async function decodeMedia(request, binaries = {}) {
   const colorMode = ['grayscale', 'monochrome'].includes(request.colorMode) ? request.colorMode : 'full';
   const monochromeThreshold = Math.max(0, Math.min(255, Math.round(Number(request.monochromeThreshold) || 128)));
   const differenceThreshold = Math.max(0, Math.min(255, Math.round(Number(request.differenceThreshold) || 0)));
-  const bytes = request.bytes instanceof ArrayBuffer
-    ? Buffer.from(request.bytes)
-    : ArrayBuffer.isView(request.bytes)
-      ? Buffer.from(request.bytes.buffer, request.bytes.byteOffset, request.bytes.byteLength)
-      : Buffer.isBuffer(request.bytes)
-        ? request.bytes
-        : null;
-  if (!bytes?.length) throw new TypeError('The selected media file is empty.');
+  const bytes = requestBytes(request);
 
   const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'factorio-lamp-media-'));
   const sourceExtension = path.extname(request.sourceName).replace(/[^.a-z0-9]/gi, '').slice(0, 12) || '.media';
@@ -349,6 +374,9 @@ async function decodeMedia(request, binaries = {}) {
       colorMode,
       monochromeThreshold,
       differenceThreshold,
+      inputDecoder: sourceExtension.toLocaleLowerCase() === '.webm' && probe.codec === 'vp9'
+        ? 'libvpx-vp9'
+        : undefined,
     });
     return {
       sourceName: path.basename(request.sourceName),
@@ -381,6 +409,7 @@ module.exports = {
   MEDIA_THUMBNAIL_DIMENSION,
   LEGACY_GIF_FRAME_DELAY_CENTISECONDS,
   decodeMedia,
+  inspectMedia,
   normalizeLegacyAnimatedGif,
   parseRate,
   sampleDurationTicks,

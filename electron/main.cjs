@@ -1,7 +1,7 @@
 const { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, shell } = require('electron');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { decodeMedia } = require('./media.cjs');
+const { decodeMedia, inspectMedia } = require('./media.cjs');
 const { decodeAudioNotes } = require('./audio.cjs');
 const { listSystemFontFamilies } = require('./fonts.cjs');
 const { createEmojiAssetCache } = require('./emoji-cache.cjs');
@@ -122,6 +122,10 @@ ipcMain.handle('blueprint:save-text', async (_event, request) => {
 });
 
 ipcMain.handle('media:decode', (_event, request) => decodeMedia(request, {
+  ffmpegPath: getFfmpegPath(),
+}));
+
+ipcMain.handle('media:inspect', (_event, request) => inspectMedia(request, {
   ffmpegPath: getFfmpegPath(),
 }));
 

@@ -18,7 +18,7 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 - Dessiner sur la grille, effacer des cellules, importer une image fixe ou réinitialiser complètement le canevas.
 - Créer des tampons de texte avec une taille, une couleur et une police globales, des polices TTF/OTF importées et des emojis statiques. Une sélection peut être mise en gras, en italique ou soulignée, et le champ texte dispose d’un menu contextuel complet. Les véritables emojis animés sont créés depuis le catalogue officiel Noto séparé.
 - Choisir entre des polices intégrées au rendu identique partout, l’inventaire complet des polices exposé par l’OS dans l’application de bureau et des fichiers TTF/OTF importés. Les polices importées utilisent leur nom complet OpenType interne plutôt que leur nom de fichier. Chaque source reste divisée entre polices à chasse fixe et proportionnelles, chaque entrée prévisualise sa propre police et affiche une estimation raster conservatrice sans perte perceptible sous la forme `(X px)`.
-- Rechercher et filtrer le catalogue complet des emojis Unicode RGI statiques, avec les variantes de couleur de peau prises en charge. Utiliser le style Apple ou Segoe natif lorsqu’il est disponible, le style Noto Color Emoji intégré sur toutes les plateformes ou les illustrations statiques officielles Twemoji 17.
+- Rechercher et filtrer le catalogue complet des emojis Unicode RGI statiques, avec les variantes de couleur de peau prises en charge. Choisir Apple ou Segoe natifs, Noto Color Emoji ou Toss Face intégrés, ou les illustrations téléchargeables Twemoji 17, OpenMoji 17, Blobmoji et Microsoft Fluent Flat, Color ou 3D.
 - Parcourir les 881 véritables animations du catalogue officiel Google Noto Animated Emoji. Les aperçus visibles utilisent les animations réelles ; en sélectionner une télécharge à la demande la ressource sous licence CC BY 4.0 et convertit ses vraies images en tampon Factorio plaçable à la taille globale choisie. Les anciennes séquences de glyphes créées par l’éditeur ont été retirées ; Twemoji ne fournit aucun catalogue animé officiel.
 - Limiter une zone de texte horizontalement ou verticalement et la faire défiler de droite à gauche, de gauche à droite, de haut en bas ou de bas en haut, avec une bordure vide d’une case.
 - Basculer toute l’interface entre le français et l’anglais grâce aux boutons drapeaux ; les noms des items Factorio restent en anglais.
@@ -32,9 +32,9 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 
 - Importer plusieurs images pour créer un diaporama. Les frames sont affichées dans un bandeau dédié en bas, et non dans la barre latérale.
 - Modifier en une fois la durée de toutes les frames, puis surcharger chaque durée individuellement ; la valeur globale peut de nouveau écraser toutes les durées.
-- Importer toutes les frames d’un GIF, y compris lorsque les informations de durée utilisent une structure ancienne ou non standard.
+- Importer les GIF, APNG, WebP statiques ou animés, WebM transparents, vidéos ordinaires lisibles par FFmpeg et animations Telegram TGS/Lottie. Les durées GIF anciennes ou non standard sont réparées lorsque c’est possible.
 - Importer les formats vidéo lisibles par FFmpeg dans l’application de bureau.
-- Redimensionner les GIF et vidéos en conservant leurs proportions.
+- Redimensionner les médias animés en conservant leurs proportions et leur transparence. Si la définition choisie ou la limite Factorio de 30 FPS impose une conversion, l’application affiche les valeurs avant/après et demande d’abord confirmation.
 - Régler les FPS, la limite de frames, les dimensions, le mode couleur, le monochrome et le filtrage des faibles variations de couleur.
 - Examiner et retirer manuellement des frames lorsque la limite est dépassée, ou appliquer une sélection automatique uniforme.
 - Lier une piste audio à un GIF ou une vidéo afin qu’ils utilisent le même compteur à 60 ticks par seconde et démarrent ensemble.
@@ -77,7 +77,7 @@ L’application de bureau embarque FFmpeg pour décoder les médias localement. 
 
 ### Cache des emojis
 
-Les illustrations Twemoji utilisées dans les tampons de texte et les animations Google Noto sélectionnées sont enregistrées dans le dossier `emoji-cache` du répertoire persistant de données utilisateur d’Electron. Une ressource déjà utilisée peut ensuite être rechargée sans connexion Internet. La version navigateur de développement utilise l’API Cache Storage du navigateur pour le même usage. Le cache peut être supprimé sans danger ; les ressources manquantes seront de nouveau téléchargées lors de leur prochaine utilisation.
+Les illustrations Twemoji, OpenMoji, Blobmoji et Microsoft Fluent téléchargées, ainsi que les animations Google Noto sélectionnées, sont enregistrées dans le dossier `emoji-cache` du répertoire persistant de données utilisateur d’Electron. Une ressource déjà utilisée peut ensuite être rechargée sans connexion Internet. Noto Color Emoji et Toss Face sont intégrés et ne nécessitent aucun premier téléchargement. La version navigateur de développement utilise l’API Cache Storage du navigateur pour le même usage. Le cache peut être supprimé sans danger ; les ressources manquantes seront de nouveau téléchargées lors de leur prochaine utilisation.
 
 ### Paramètre de variation de couleur
 
@@ -138,7 +138,7 @@ npm ci
 npm run desktop:portable
 ```
 
-Le résultat pour cette version est `release/Factorio Lamp Editor-1.5.3-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
+Le résultat Windows est `release/Factorio Lamp Editor-1.6.0-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
 
 ## Compiler l’application Linux portable
 

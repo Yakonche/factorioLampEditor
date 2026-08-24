@@ -1,4 +1,5 @@
 import { emojiFontFamily } from './fonts';
+import type { EmojiStaticAssetProvider } from './emojiAssets';
 import { cloneGrid, type GridData } from './grid';
 import type { GridAnimationData, MediaFrameTransition } from './mediaAnimation';
 
@@ -50,7 +51,7 @@ export interface TextStampOptions {
     characterStyles?: Record<number, Partial<TextCharacterStyle>>;
     animatedCharacters?: Record<number, TextCharacterAnimationInput>;
     emojiFontFamily?: string;
-    emojiArtworkStyle?: 'font' | 'twemoji';
+    emojiArtworkStyle?: 'font' | EmojiStaticAssetProvider;
     emojiImageLoader?: (emoji: string) => Promise<HTMLImageElement | null>;
     /** Preloaded artwork used internally while rasterizing image-based emoji styles. */
     emojiImages?: ReadonlyMap<string, HTMLImageElement>;
@@ -209,7 +210,7 @@ const renderStyledText = (
         const maximumScale = maximumAnimationScale(animation.effect);
         const style = resolveStyle(options, graphemeIndex);
         const variantMetrics = variants.map(variant => {
-            const image = options.emojiArtworkStyle === 'twemoji' && EMOJI_GRAPHEME.test(variant)
+            const image = options.emojiArtworkStyle !== 'font' && EMOJI_GRAPHEME.test(variant)
                 ? options.emojiImages?.get(variant)
                 : undefined;
             if (image) {
@@ -598,7 +599,7 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
                 fontLoads.set(loadKey, document.fonts.load(descriptor, variant));
             }
             if (
-                options.emojiArtworkStyle === 'twemoji'
+                options.emojiArtworkStyle !== 'font'
                 && options.emojiImageLoader
                 && EMOJI_GRAPHEME.test(variant)
                 && !emojiLoads.has(variant)
