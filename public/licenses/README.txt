@@ -22,3 +22,8 @@ The official Noto Animated Emoji catalog is integrated separately. Animation
 assets are downloaded from Google on demand and attributed in:
 
 - Noto-Animated-Emoji-CC-BY-4.0.txt
+
+The optional Twemoji static style downloads official Twemoji artwork on demand
+and stores used assets in the persistent user-data cache. Attribution is in:
+
+- Twemoji-CC-BY-4.0.txt

@@ -24,5 +24,13 @@ interface Window {
       notesPerSecond: number;
     }) => Promise<import('./utils/audio').DecodedAudioTrack>;
     listSystemFonts: () => Promise<string[]>;
+    getEmojiAsset: (
+      provider: import('./utils/emojiAssets').EmojiAssetProvider,
+      codepoint: string,
+    ) => Promise<{
+      bytes: Uint8Array;
+      mimeType: string;
+      source: 'cache' | 'network';
+    }>;
   };
 }

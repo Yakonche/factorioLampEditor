@@ -3,7 +3,6 @@ import {
     DEFAULT_TEXT_VIEWPORT_HEIGHT,
     DEFAULT_TEXT_VIEWPORT_WIDTH,
     splitTextGraphemes,
-    type TextCharacterAnimation,
     type TextCharacterStyle,
     type TextScrollDirection,
     type TextStampOptions,
@@ -156,26 +155,6 @@ const ScrollTimingInput: React.FC<ScrollTimingInputProps> = ({
         </div>
     );
 };
-
-const ANIMATED_EMOJIS = [
-    { label: 'Blink', frames: ['😐', '😑', '😐', '🙂'] },
-    { label: 'Heart', frames: ['❤️', '🩷', '💖', '🩷'] },
-    { label: 'Sparkle', frames: ['✨', '🌟', '💫', '🌟'] },
-    { label: 'Fire', frames: ['🔥', '❤️‍🔥', '🔥', '✨'] },
-    { label: 'Moon', frames: ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'] },
-    { label: 'Signal', frames: ['🔴', '🟠', '🟡', '🟢'] },
-    { label: 'Clock', frames: ['🕛', '🕒', '🕕', '🕘'] },
-    { label: 'Weather', frames: ['☀️', '🌤️', '🌧️', '⛈️', '🌈'] },
-    { label: 'Flower', frames: ['🌱', '🌿', '🌷', '🌻'] },
-    { label: 'Earth', frames: ['🌍', '🌎', '🌏'] },
-    { label: 'Traffic light', frames: ['🔴', '🟡', '🟢', '🟡'] },
-    { label: 'Battery', frames: ['🪫', '🔋', '🪫', '🔋'] },
-    { label: 'Celebration', frames: ['🎉', '🎊', '✨', '🥳'] },
-    { label: 'Faces', frames: ['🙂', '😀', '😂', '🤣'] },
-    { label: 'Cats', frames: ['😺', '😸', '😹', '😻'] },
-    { label: 'Hearts', frames: ['❤️', '🧡', '💛', '💚', '💙', '💜'] },
-    { label: 'Dice', frames: ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'] },
-] as const;
 
 const fontFingerprintCache = new Map<string, string>();
 const recommendedFontSizeCache = new Map<string, number>();
@@ -354,7 +333,6 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
         color: initialColor,
     });
     const [characterStyles, setCharacterStyles] = React.useState<Record<number, Partial<TextCharacterStyle>>>({});
-    const [animatedCharacters, setAnimatedCharacters] = React.useState<Record<number, TextCharacterAnimation>>({});
     const [importedFonts, setImportedFonts] = React.useState<FontOption[]>([]);
     const [systemFonts, setSystemFonts] = React.useState<FontOption[]>([]);
     const [fontInventory, setFontInventory] = React.useState<{ state: 'loading' | 'detected' | 'fallback'; count: number }>({
@@ -480,15 +458,6 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
         updateText(textRef.current + emoji);
     };
 
-    const appendAnimatedEmoji = (animation: TextCharacterAnimation) => {
-        const nextIndex = splitTextGraphemes(textRef.current).length;
-        updateText(textRef.current + animation.frames[0]);
-        setAnimatedCharacters(previous => ({
-            ...previous,
-            [nextIndex]: { ...animation, frames: [...animation.frames] },
-        }));
-    };
-
     const importFont = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         event.target.value = '';
@@ -522,8 +491,8 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
         text,
         defaultStyle: globalStyle,
         characterStyles,
-        animatedCharacters,
         emojiFontFamily: selectedEmojiFontFamily,
+        emojiArtworkStyle: resolvedEmojiStyle === 'twemoji' ? 'twemoji' : 'font',
         viewportWidth: viewportEnabled && !verticalScroll ? Math.max(3, viewportWidth) : undefined,
         viewportHeight: viewportEnabled && verticalScroll ? Math.max(3, viewportHeight) : undefined,
         scroll: viewportEnabled && scrollEnabled,
@@ -574,7 +543,6 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
         const nextText = `${text.slice(0, start)}${replacement}${text.slice(end)}`;
         const caret = start + replacement.length;
         updateText(nextText);
-        setAnimatedCharacters({});
         setCharacterStyles({});
         setSelection({ start: caret, end: caret });
         setContextMenu(null);
@@ -677,7 +645,6 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                         value={text}
                         onChange={(event) => {
                             updateText(event.target.value);
-                            setAnimatedCharacters({});
                             setCharacterStyles({});
                             requestAnimationFrame(() => readTextareaSelection(event.target));
                         }}
@@ -811,6 +778,9 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                             );
                         })}
                     </select>
+                    <span className="mt-1 block font-normal leading-4 text-gray-500">
+                        {t('Twemoji uses downloadable static artwork saved in the persistent emoji cache. The official animated catalog uses Google Noto animations.')}
+                    </span>
                 </label>
                 <label className="flex items-center gap-2 text-[9px] font-bold text-gray-500">
                     COLOR
@@ -846,14 +816,18 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                 onToggle={event => setNativeEmojiOpen(event.currentTarget.open)}
                 className="overflow-hidden rounded-lg border border-gray-700 bg-gray-900 p-2"
             >
-                <summary className="cursor-pointer text-[9px] font-bold uppercase tracking-wider text-gray-400">{t('Native emoji library')}</summary>
+                <summary className="cursor-pointer text-[9px] font-bold uppercase tracking-wider text-gray-400">{t('Static emoji library')}</summary>
                 {nativeEmojiOpen && (
                     <>
                         <p className="mt-2 text-[9px] leading-4 text-gray-500">
                             {t('Every Unicode RGI emoji is available here. Skin-tone variants are generated when the selected emoji supports them.')}
                         </p>
                         <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
-                            <EmojiCatalog fontFamily={selectedEmojiFontFamily} onSelect={appendEmoji} />
+                            <EmojiCatalog
+                                fontFamily={selectedEmojiFontFamily}
+                                emojiStyle={resolvedEmojiStyle}
+                                onSelect={appendEmoji}
+                            />
                         </React.Suspense>
                     </>
                 )}
@@ -868,21 +842,12 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                 {animatedEmojiOpen && (
                     <>
                         <p className="mt-2 text-[9px] leading-4 text-gray-500">
-                            {t('Curated presets are text-glyph sequences made by the editor. The official catalog below contains only emoji with real published animation frames.')}
+                            {t('Only emoji with genuine published animation frames are listed here. Twemoji does not publish an official animated catalog.')}
                         </p>
-                        <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">{t('Curated animated presets')}</p>
-                        <div className="mt-2 grid grid-cols-2 gap-1">
-                            {ANIMATED_EMOJIS.map(animation => (
-                                <button key={animation.label} type="button" onClick={() => appendAnimatedEmoji({ frames: [...animation.frames], effect: 'sequence' })} className="flex min-w-0 items-center gap-2 overflow-hidden rounded border border-gray-700 bg-gray-800 px-2 py-1 text-left text-[9px] text-gray-300 hover:border-fuchsia-500 hover:bg-gray-700">
-                                    <span className="shrink-0 text-xl leading-none" style={{ fontFamily: selectedEmojiFontFamily }}>{animation.frames[0]}</span>
-                                    <span className="truncate">{animation.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                        <p className="mt-3 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">{t('Official Noto Animated Emoji')}</p>
+                        <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">{t('Official Noto Animated Emoji')}</p>
                         <p className="mt-1 text-[9px] leading-4 text-gray-500">
-                            {t('881 genuine Google Noto animations are available. Selecting one downloads its animation once and creates a placeable Factorio stamp at the current global size.')}
-                            {' '}{t('An internet connection is required the first time an animation is selected.')}
+                            {t('881 genuine Google Noto animations are available. Selected animations are saved in the persistent emoji cache and remain available offline.')}
+                            {' '}{t('An internet connection is required only the first time an animation is selected.')}
                         </p>
                         <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
                             <NotoAnimatedEmojiCatalog

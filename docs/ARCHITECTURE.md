@@ -5,7 +5,7 @@
 Factorio Lamp Editor has two layers:
 
 1. A React renderer built by Vite. It owns the grid, editing state, import controls, frame trays, preview, and export UI.
-2. An optional Electron host. It supplies native file dialogs and FFmpeg-backed GIF, video, and audio decoding through a restricted preload API.
+2. An optional Electron host. It supplies native file dialogs, a persistent emoji-asset cache, and FFmpeg-backed GIF, video, and audio decoding through a restricted preload API.
 
 The browser development build supports drawing, text, static images, and multi-image slideshows. Native media decoding is deliberately desktop-only because browsers cannot use the bundled FFmpeg executable directly.
 
@@ -51,7 +51,7 @@ Audio is not embedded. FFmpeg provides decoded channel samples; analysis selects
 
 ## Security boundaries
 
-The renderer does not receive unrestricted Node.js access. Native functions are exposed through the Electron preload bridge. Media decoding receives user-selected paths, writes temporary decoded data, and should validate limits before allocating large frame buffers. Any new IPC method should be narrow, typed in `src/electron.d.ts`, and avoid exposing arbitrary command execution.
+The renderer does not receive unrestricted Node.js access. Native functions are exposed through the Electron preload bridge. Media decoding receives user-selected paths, writes temporary decoded data, and should validate limits before allocating large frame buffers. Emoji caching accepts only two fixed providers and validated Unicode codepoint identifiers, so the renderer cannot turn it into an arbitrary network or file API. Any new IPC method should be narrow, typed in `src/electron.d.ts`, and avoid exposing arbitrary command execution.
 
 ## Generated directories
 

@@ -7,4 +7,5 @@ contextBridge.exposeInMainWorld('factorioLampEditor', {
   decodeMedia: (request) => ipcRenderer.invoke('media:decode', request),
   decodeAudioNotes: (request) => ipcRenderer.invoke('audio:decode-notes', request),
   listSystemFonts: () => ipcRenderer.invoke('fonts:list-system'),
+  getEmojiAsset: (provider, codepoint) => ipcRenderer.invoke('emoji-assets:get', { provider, codepoint }),
 });

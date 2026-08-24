@@ -72,9 +72,9 @@ import type {
   DecodedAudioTrack,
 } from './utils/audio';
 import {
-  notoAnimatedEmojiGifUrl,
   type NotoAnimatedEmojiEntry,
 } from './utils/notoAnimatedEmoji';
+import { loadEmojiAsset, loadTwemojiImage } from './utils/emojiAssets';
 
 type CalculationWorkerResponse = {
   id: number;
@@ -500,9 +500,13 @@ function App() {
   }, [mediaColorMode, mediaDifferenceThreshold, mediaMonochromeThreshold, placeDecodedMedia]);
 
   const handleTextStamp = async (options: TextStampOptions) => {
-    setStatusMsg('Preparing text stamp…');
+    setStatusMsg(options.emojiArtworkStyle === 'twemoji'
+      ? 'Preparing text stamp and loading cached Twemoji artwork…'
+      : 'Preparing text stamp…');
     try {
-      const buffer = await createTextStamp(options);
+      const buffer = await createTextStamp(options.emojiArtworkStyle === 'twemoji'
+        ? { ...options, emojiImageLoader: loadTwemojiImage }
+        : options);
       if (buffer) {
         setStampBuffer(buffer);
         setStampMode('text');
@@ -525,13 +529,15 @@ function App() {
       return;
     }
     const size = Math.max(4, Math.min(128, Math.round(requestedSize)));
-    setStatusMsg(`Downloading ${entry.name} animation…`);
+    setStatusMsg(`Loading ${entry.name} animation…`);
     try {
-      const response = await fetch(notoAnimatedEmojiGifUrl(entry.codepoint), { cache: 'force-cache' });
-      if (!response.ok) throw new Error(`The animation server returned HTTP ${response.status}.`);
+      const asset = await loadEmojiAsset('noto-animated', entry.codepoint);
+      setStatusMsg(asset.source === 'cache'
+        ? `Decoding cached ${entry.name} animation…`
+        : `Downloaded and cached ${entry.name}; decoding animation…`);
       const decoded = await window.factorioLampEditor.decodeMedia({
         sourceName: `noto-animated-${entry.codepoint}.gif`,
-        bytes: await response.arrayBuffer(),
+        bytes: asset.bytes,
         fpsLimit: Math.max(0.1, Math.min(30, mediaFpsLimit)),
         maxDimension: size,
         targetWidth: size,

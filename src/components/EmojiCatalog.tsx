@@ -1,6 +1,8 @@
 import React from 'react';
 import emojiDataJson from 'unicode-emoji-json/data-by-emoji.json';
 import { useI18n } from '../i18n';
+import type { EmojiFontStyle } from '../utils/fonts';
+import { emojiAssetUrl, twemojiCodepoint } from '../utils/emojiAssets';
 
 interface EmojiMetadata {
     name: string;
@@ -15,6 +17,7 @@ interface EmojiEntry extends EmojiMetadata {
 
 interface EmojiCatalogProps {
     fontFamily: string;
+    emojiStyle: Exclude<EmojiFontStyle, 'automatic'>;
     onSelect: (emoji: string) => void;
 }
 
@@ -46,8 +49,35 @@ const applySkinTone = (emoji: string, tone: string, supported: boolean) => {
     return codePoints.join('');
 };
 
+const EmojiPreview: React.FC<{
+    emoji: string;
+    emojiStyle: Exclude<EmojiFontStyle, 'automatic'>;
+    fontFamily: string;
+}> = ({ emoji, emojiStyle, fontFamily }) => {
+    const [twemojiFailed, setTwemojiFailed] = React.useState(false);
+    if (emojiStyle === 'twemoji' && !twemojiFailed) {
+        return (
+            <img
+                src={emojiAssetUrl('twemoji-static', twemojiCodepoint(emoji))}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                draggable={false}
+                onError={() => setTwemojiFailed(true)}
+                className="h-[26px] w-[26px] object-contain"
+            />
+        );
+    }
+    return (
+        <span className="block text-[22px] leading-none" style={{ fontFamily }}>
+            {emoji}
+        </span>
+    );
+};
+
 export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
     fontFamily,
+    emojiStyle,
     onSelect,
 }) => {
     const { t } = useI18n();
@@ -121,12 +151,7 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
                                 aria-label={t(`Insert ${entry.name}`)}
                                 title={`${entry.name} · ${entry.group}`}
                             >
-                                <span
-                                    className="block text-[22px] leading-none"
-                                    style={{ fontFamily }}
-                                >
-                                    {emoji}
-                                </span>
+                                <EmojiPreview emoji={emoji} emojiStyle={emojiStyle} fontFamily={fontFamily} />
                             </button>
                         );
                     })}

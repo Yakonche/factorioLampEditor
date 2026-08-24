@@ -50,6 +50,10 @@ export interface TextStampOptions {
     characterStyles?: Record<number, Partial<TextCharacterStyle>>;
     animatedCharacters?: Record<number, TextCharacterAnimationInput>;
     emojiFontFamily?: string;
+    emojiArtworkStyle?: 'font' | 'twemoji';
+    emojiImageLoader?: (emoji: string) => Promise<HTMLImageElement | null>;
+    /** Preloaded artwork used internally while rasterizing image-based emoji styles. */
+    emojiImages?: ReadonlyMap<string, HTMLImageElement>;
     /** Total display width, including the mandatory one-cell border. */
     viewportWidth?: number;
     /** Total display height, including the mandatory one-cell border. */
@@ -186,6 +190,8 @@ const renderStyledText = (
         descent: number;
         glyphAscent: number;
         glyphDescent: number;
+        glyphHeight: number;
+        image?: HTMLImageElement;
         transform: CharacterAnimationTransform;
     }[][] = [[]];
     graphemes.forEach((originalGrapheme, graphemeIndex) => {
@@ -203,6 +209,20 @@ const renderStyledText = (
         const maximumScale = maximumAnimationScale(animation.effect);
         const style = resolveStyle(options, graphemeIndex);
         const variantMetrics = variants.map(variant => {
+            const image = options.emojiArtworkStyle === 'twemoji' && EMOJI_GRAPHEME.test(variant)
+                ? options.emojiImages?.get(variant)
+                : undefined;
+            if (image) {
+                const size = Math.max(1, Math.round(style.fontSize));
+                return {
+                    variant,
+                    width: size,
+                    leftBearing: 0,
+                    ascent: size,
+                    descent: 0,
+                    image,
+                };
+            }
             measurementContext.font = fontDeclaration(style, variant, options.emojiFontFamily);
             const metrics = measurementContext.measureText(variant);
             const leftBearing = Math.max(0, Math.ceil(metrics.actualBoundingBoxLeft || 0));
@@ -213,6 +233,7 @@ const renderStyledText = (
                 leftBearing,
                 ascent: Math.max(1, Math.ceil(metrics.actualBoundingBoxAscent || 0)),
                 descent: Math.max(1, Math.ceil(metrics.actualBoundingBoxDescent || 0)),
+                image: undefined,
             };
         });
         const selectedMetrics = variantMetrics.find(metrics => metrics.variant === grapheme) ?? variantMetrics[0];
@@ -237,6 +258,8 @@ const renderStyledText = (
             descent,
             glyphAscent: selectedMetrics.ascent,
             glyphDescent: selectedMetrics.descent,
+            glyphHeight: selectedMetrics.ascent + selectedMetrics.descent,
+            image: selectedMetrics.image,
             transform,
         });
     });
@@ -274,7 +297,17 @@ const renderStyledText = (
                 context.translate(glyphCenterX, glyphCenterY);
                 context.scale(item.transform.scaleX, item.transform.scaleY);
                 context.translate(-glyphCenterX, -glyphCenterY);
-                context.fillText(item.grapheme, glyphX, baseline);
+                if (item.image) {
+                    context.drawImage(
+                        item.image,
+                        glyphX,
+                        baseline - item.glyphAscent,
+                        item.glyphWidth,
+                        item.glyphHeight,
+                    );
+                } else {
+                    context.fillText(item.grapheme, glyphX, baseline);
+                }
                 context.restore();
             }
             if (item.style.underline) {
@@ -553,6 +586,7 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
     if (!options.text) return null;
     const graphemes = splitTextGraphemes(options.text);
     const fontLoads = new Map<string, Promise<FontFace[]>>();
+    const emojiLoads = new Map<string, Promise<HTMLImageElement | null>>();
     graphemes.forEach((grapheme, graphemeIndex) => {
         if (grapheme === '\n') return;
         const style = resolveStyle(options, graphemeIndex);
@@ -563,9 +597,23 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
             if (!fontLoads.has(loadKey)) {
                 fontLoads.set(loadKey, document.fonts.load(descriptor, variant));
             }
+            if (
+                options.emojiArtworkStyle === 'twemoji'
+                && options.emojiImageLoader
+                && EMOJI_GRAPHEME.test(variant)
+                && !emojiLoads.has(variant)
+            ) {
+                emojiLoads.set(variant, options.emojiImageLoader(variant));
+            }
         });
     });
     await Promise.all(fontLoads.values());
+    const emojiImages = new Map<string, HTMLImageElement>();
+    await Promise.all([...emojiLoads].map(async ([emoji, loader]) => {
+        const image = await loader;
+        if (image) emojiImages.set(emoji, image);
+    }));
+    const renderingOptions = emojiImages.size ? { ...options, emojiImages } : options;
 
     const animationLength = Math.max(
         1,
@@ -574,7 +622,7 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
         )),
     );
     const renderedFrames = Array.from({ length: animationLength }, (_, animationIndex) => (
-        renderStyledText(options, animationIndex)
+        renderStyledText(renderingOptions, animationIndex)
     )).filter((frame): frame is RenderedText => Boolean(frame));
     if (!renderedFrames.length) return null;
 

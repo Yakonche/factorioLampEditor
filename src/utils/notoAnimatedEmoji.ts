@@ -23,5 +23,4 @@ const assetBaseUrl = (codepoint: string) => (
 );
 
 export const notoAnimatedEmojiWebpUrl = (codepoint: string) => `${assetBaseUrl(codepoint)}/512.webp`;
-export const notoAnimatedEmojiGifUrl = (codepoint: string) => `${assetBaseUrl(codepoint)}/512.gif`;
 export const notoAnimatedEmojiPngUrl = (codepoint: string) => `${assetBaseUrl(codepoint)}/512.png`;

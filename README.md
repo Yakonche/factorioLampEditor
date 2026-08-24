@@ -16,10 +16,10 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 ### Editing and layout
 
 - Draw on the grid, erase cells, import a static image, or reset the complete canvas.
-- Create text stamps with global size, color, font, imported TTF/OTF fonts, emoji, and animated emoji. Selected text can be bold, italic, or underlined, and the text field includes a complete context menu.
+- Create text stamps with global size, color, font, imported TTF/OTF fonts, and static emoji. Selected text can be bold, italic, or underlined, and the text field includes a complete context menu. Genuine animated emoji are created from the separate official Noto catalog.
 - Choose consistently rendered bundled fonts, the complete system-font inventory exposed by the desktop OS, or imported TTF/OTF files. Imported fonts use their internal OpenType full name instead of their file name. Every source remains split into monospaced and proportional groups, every menu entry previews its own typeface, and a conservative full-fidelity raster estimate is shown as `(X px)`.
-- Search and filter the complete static Unicode RGI emoji catalog, including supported skin-tone variants. Select the OS-native Apple or Segoe style when available, or use the bundled Noto Color Emoji style on every platform.
-- Browse all 881 genuine animations in the official Google Noto Animated Emoji catalog. Visible previews use the real animated artwork; selecting one downloads the CC BY 4.0 asset on demand and converts its real frames into a placeable Factorio stamp at the chosen global size. Curated glyph-sequence presets remain available in a separate section.
+- Search and filter the complete static Unicode RGI emoji catalog, including supported skin-tone variants. Select the OS-native Apple or Segoe style when available, use the bundled Noto Color Emoji style on every platform, or choose the official Twemoji 17 static artwork.
+- Browse all 881 genuine animations in the official Google Noto Animated Emoji catalog. Visible previews use the real animated artwork; selecting one downloads the CC BY 4.0 asset on demand and converts its real frames into a placeable Factorio stamp at the chosen global size. The former editor-made curated glyph sequences have been removed; Twemoji has no official animated catalog.
 - Limit a text display horizontally or vertically and scroll it right-to-left, left-to-right, top-to-bottom, or bottom-to-top while keeping a one-cell empty border.
 - Switch the complete interface between English and French with the flag buttons; Factorio item names remain in English.
 - Give a text stamp a bounded display area. Oversized text becomes a scrolling animation and keeps a one-cell empty margin.
@@ -74,6 +74,10 @@ The desktop application bundles FFmpeg for local media decoding. Media stays on 
 5. Configure tiles, power, roboports, help display, and controller placement.
 6. Select **Generate blueprint**, wait for 100%, then copy the resulting string.
 7. In Factorio, open the blueprint import dialog, paste the string, and confirm.
+
+### Emoji cache
+
+Twemoji artwork used in text stamps and selected Google Noto animations are stored under `emoji-cache` in Electron's persistent user-data directory. After an asset has been used once, it can be loaded again without an internet connection. The browser development build uses the browser Cache Storage API for the same purpose. Deleting the cache is safe; missing assets are downloaded again the next time they are used.
 
 ### Color delta
 
@@ -134,7 +138,7 @@ npm ci
 npm run desktop:portable
 ```
 
-The output for this version is `release/Factorio Lamp Editor-1.4.6-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
+The output for this version is `release/Factorio Lamp Editor-1.5.3-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
 
 ## Building the Linux portable application
 

@@ -15,6 +15,7 @@ import {
     readOpenTypeFontNames,
     resolveAutomaticEmojiStyle,
 } from '../src/utils/fonts';
+import { emojiAssetUrl, twemojiCodepoint } from '../src/utils/emojiAssets';
 
 const makeNamedTestFont = (records: ReadonlyArray<readonly [number, string]>): ArrayBuffer => {
     const encodedRecords = records.map(([nameId, value]) => {
@@ -116,7 +117,7 @@ assert.deepEqual(
     ['Noto Sans JP', 'Iceberg', 'Jersey 10', 'MedievalSharp', 'Quantico', 'Space Grotesk'],
 );
 assert.ok(SYSTEM_FONT_OPTIONS.every(font => font.source === 'system'));
-assert.deepEqual(EMOJI_FONT_STYLES.map(style => style.id), ['automatic', 'apple', 'segoe', 'noto']);
+assert.deepEqual(EMOJI_FONT_STYLES.map(style => style.id), ['automatic', 'apple', 'segoe', 'noto', 'twemoji']);
 assert.match(emojiFontFamily('noto'), /^"Noto Color Emoji"/);
 const windowsEmojiAvailability = { apple: false, segoe: true, noto: true };
 const bundledOnlyEmojiAvailability = { apple: false, segoe: false, noto: true };
@@ -125,6 +126,14 @@ assert.equal(emojiStyleAvailable(EMOJI_FONT_STYLES[2], windowsEmojiAvailability)
 assert.equal(resolveAutomaticEmojiStyle(windowsEmojiAvailability, 'Win32'), 'segoe');
 assert.equal(resolveAutomaticEmojiStyle(bundledOnlyEmojiAvailability, 'Linux x86_64'), 'noto');
 assert.equal(emojiStyleLabel('noto'), 'Noto Color Emoji (bundled)');
+assert.equal(emojiStyleLabel('twemoji'), 'Twemoji 17 (static artwork)');
+assert.equal(twemojiCodepoint('❤️'), '2764');
+assert.equal(twemojiCodepoint('👩‍💻'), '1f469-200d-1f4bb');
+assert.equal(twemojiCodepoint('👨‍❤️‍👨'), '1f468-200d-2764-fe0f-200d-1f468');
+assert.equal(
+    emojiAssetUrl('twemoji-static', '1f600'),
+    'https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/72x72/1f600.png',
+);
 assert.equal(fontFamilyCss('Space "Grotesk'), '"Space Grotesk", sans-serif');
 assert.deepEqual(normalizeFontFamilies([' Verdana ', 'arial', 'Arial', '']), ['arial', 'Verdana']);
 

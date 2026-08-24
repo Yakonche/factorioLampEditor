@@ -184,7 +184,7 @@ export const SYSTEM_FONT_OPTIONS: readonly FontOption[] = [
     { family: 'Verdana', label: 'Verdana', category: 'proportional', source: 'system' },
 ];
 
-export type EmojiFontStyle = 'automatic' | 'apple' | 'segoe' | 'noto';
+export type EmojiFontStyle = 'automatic' | 'apple' | 'segoe' | 'noto' | 'twemoji';
 
 export interface EmojiFontAvailability {
     apple: boolean;
@@ -220,6 +220,11 @@ export const EMOJI_FONT_STYLES: readonly EmojiFontStyleOption[] = [
     {
         id: 'noto',
         label: 'Noto Color Emoji (bundled)',
+        family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+    },
+    {
+        id: 'twemoji',
+        label: 'Twemoji 17 (static artwork)',
         family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
     },
 ];

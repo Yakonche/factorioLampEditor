@@ -4,8 +4,10 @@ const path = require('node:path');
 const { decodeMedia } = require('./media.cjs');
 const { decodeAudioNotes } = require('./audio.cjs');
 const { listSystemFontFamilies } = require('./fonts.cjs');
+const { createEmojiAssetCache } = require('./emoji-cache.cjs');
 
 let mainWindow;
+let emojiAssetCache;
 
 // Full-resolution Bad Apple exports can hold hundreds of thousands of sparse
 // ROM entities before streaming compression. This only raises V8's ceiling;
@@ -22,6 +24,15 @@ function getIconPath() {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'app-icon.png')
     : path.join(__dirname, '..', 'public', 'favicon', 'android-chrome-512x512.png');
+}
+
+function getEmojiAssetCache() {
+  if (!emojiAssetCache) {
+    emojiAssetCache = createEmojiAssetCache({
+      cacheRoot: path.join(app.getPath('userData'), 'emoji-cache'),
+    });
+  }
+  return emojiAssetCache;
 }
 
 function createMainWindow() {
@@ -119,6 +130,10 @@ ipcMain.handle('audio:decode-notes', (_event, request) => decodeAudioNotes(reque
 }));
 
 ipcMain.handle('fonts:list-system', () => listSystemFontFamilies());
+
+ipcMain.handle('emoji-assets:get', (_event, request) => (
+  getEmojiAssetCache().get(request?.provider, request?.codepoint)
+));
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);

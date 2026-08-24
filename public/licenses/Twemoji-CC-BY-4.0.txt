@@ -1,0 +1,15 @@
+Twemoji
+
+Creators: Twitter and other Twemoji contributors; maintained by jdecked
+Source: https://github.com/jdecked/twemoji
+Graphics license: Creative Commons Attribution 4.0 International (CC BY 4.0)
+License text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+Factorio Lamp Editor offers the official Twemoji 17.0.3 static PNG artwork as
+an optional emoji style. Assets are downloaded from jsDelivr on demand and
+stored in the user's persistent emoji cache. The artwork is not stored in this
+repository or bundled inside the executable.
+
+No endorsement by Twitter, X, jdecked, or the Twemoji contributors is implied.
+Downloaded artwork is resized and converted into Factorio lamp pixels when a
+user creates a text stamp with the Twemoji style.

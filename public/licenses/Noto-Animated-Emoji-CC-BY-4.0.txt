@@ -6,8 +6,9 @@ License: Creative Commons Attribution 4.0 International (CC BY 4.0)
 License text: https://creativecommons.org/licenses/by/4.0/legalcode
 
 Factorio Lamp Editor displays the official catalog and downloads the selected
-animation asset from fonts.gstatic.com on demand. The animation artwork is not
-stored in this repository or bundled inside the executable.
+animation asset from fonts.gstatic.com on demand. Used assets are retained in
+the user's persistent emoji cache for offline reuse. The animation artwork is
+not stored in this repository or bundled inside the executable.
 
 No endorsement by Google is implied. The downloaded artwork is resized and
 converted into Factorio lamp frames when the user creates an animated stamp.
