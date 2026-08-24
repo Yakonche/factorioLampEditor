@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
 import { createEmptyGrid } from '../src/utils/grid';
 import {
-    animationFrameAtTick,
     composeGridAnimations,
-    createAnimationTimeline,
-    renderAnimationFrame,
+    getGridAnimationTracks,
+    renderGridAnimationAtTick,
     type GridAnimationData,
 } from '../src/utils/mediaAnimation';
 import { keyboardPanDirection } from '../src/utils/keyboardNavigation';
@@ -227,12 +226,17 @@ const composed = composeGridAnimations(
     { x: 3, y: 0, width: 1, height: 1 },
     64,
 );
-const composedTimeline = createAnimationTimeline(composed);
-assert.equal(composedTimeline.durationTicks, 24, 'Independent 8- and 12-tick loops must meet exactly after 24 ticks.');
-const cellsAtTick = (tick: number) => renderAnimationFrame(
-    composed,
-    animationFrameAtTick(composedTimeline, tick),
-).cells;
+const composedTracks = getGridAnimationTracks(composed);
+assert.equal(composedTracks.length, 2, 'Separately placed animated stamps must keep two independent clocks.');
+assert.deepEqual(
+    composedTracks.map(track => track.firstDurationTicks + track.transitions.reduce(
+        (total, transition) => total + transition.durationTicks,
+        0,
+    )),
+    [8, 12],
+    'Independent loop durations must remain unchanged instead of expanding to their least common multiple.',
+);
+const cellsAtTick = (tick: number) => renderGridAnimationAtTick(composed, tick).cells;
 assert.deepEqual([cellsAtTick(0)[1], cellsAtTick(0)[3]], [10, 20]);
 assert.deepEqual([cellsAtTick(4)[1], cellsAtTick(4)[3]], [11, 20]);
 assert.deepEqual([cellsAtTick(6)[1], cellsAtTick(6)[3]], [11, 21]);
@@ -240,9 +244,9 @@ assert.deepEqual([cellsAtTick(8)[1], cellsAtTick(8)[3]], [10, 21]);
 assert.deepEqual([cellsAtTick(12)[1], cellsAtTick(12)[3]], [11, 20]);
 assert.deepEqual([cellsAtTick(23)[1], cellsAtTick(23)[3]], [11, 21]);
 assert.equal(
-    composed.transitions.some(transition => (
+    composedTracks.some(track => track.transitions.some(transition => (
         transition.indices.some((index, patchIndex) => index === 3 && transition.colors[patchIndex] === 91)
-    )),
+    ))),
     false,
     'The newer stamp rectangle must suppress every older animation patch below it.',
 );
@@ -254,6 +258,6 @@ console.log(JSON.stringify({
     sparseCellCount,
     fullFrameCellCount: viewportWidth * viewportHeight * scrollFrameCount,
     emojiFrameTicks: EMOJI_ANIMATION_FRAME_TICKS,
-    composedFrames: composed.transitions.length + 1,
-    composedDurationTicks: composedTimeline.durationTicks,
+    independentTrackFrames: composedTracks.map(track => track.transitions.length + 1),
+    independentTrackDurations: [8, 12],
 }));

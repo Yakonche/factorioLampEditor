@@ -418,6 +418,78 @@ assert.deepEqual(
     new Set(Array.from({ length: 3 }, (_, y) => Array.from({ length: 4 }, (_, x) => `${x - 1},${y - 1}`)).flat()),
 );
 
+const independentAnimation: GridAnimationData = {
+    firstFrame: {
+        width: 2,
+        height: 1,
+        cells: Uint32Array.from([0xff0000ff, 0xff00ff00]),
+    },
+    firstDurationTicks: 4,
+    transitions: [{
+        indices: Uint32Array.of(0),
+        colors: Uint32Array.of(0xffff0000),
+        durationTicks: 4,
+    }],
+    tracks: [{
+        firstDurationTicks: 4,
+        transitions: [{
+            indices: Uint32Array.of(0),
+            colors: Uint32Array.of(0xffff0000),
+            durationTicks: 4,
+        }],
+    }, {
+        firstDurationTicks: 6,
+        transitions: [{
+            indices: Uint32Array.of(1),
+            colors: Uint32Array.of(0xffffffff),
+            durationTicks: 6,
+        }],
+    }],
+};
+const independentResult = generateMediaAnimationBlueprintData(independentAnimation, 2, 1, {
+    poleType,
+    qualityIdx,
+    autoPole: false,
+    smartPlacement: false,
+    autoRoboport: false,
+    autoConstruction: false,
+    includeHelpDisplay: false,
+    controllerSide: 'top',
+});
+assert.equal(independentResult.status, 'Success');
+assert.ok(independentResult.bpString);
+const independentEntities = decodeBlueprint(independentResult.bpString).blueprint.entities;
+const independentTimers = independentEntities.filter(entity => (
+    entity.player_description?.startsWith('Independent media cycle timer')
+));
+assert.equal(independentTimers.length, 2, 'Each separately placed animation needs its own Factorio timer.');
+assert.deepEqual(
+    independentTimers.map(timer => {
+        const condition = (timer.control_behavior?.decider_conditions as {
+            conditions: { first_signal: { name: string }; constant: number }[];
+        }).conditions[0];
+        return [condition.first_signal.name, condition.constant];
+    }),
+    [['signal-T', 8], ['signal-A', 12]],
+    'Independent clocks must preserve each source loop instead of using an LCM timeline.',
+);
+const independentPreview = calculateMediaAnimationPreviewLayout(
+    independentAnimation,
+    2,
+    1,
+    [],
+    [],
+    poleType,
+    false,
+    'top',
+);
+assert.equal(
+    independentPreview.stats.deciderCombinatorCount,
+    independentTimers.length
+        + independentEntities.filter(entity => entity.player_description?.includes('base ROM')).length
+        + independentEntities.filter(entity => entity.player_description?.includes('delta ROM')).length,
+);
+
 const emptyAudioGrid: GridData = { width: 2, height: 2, cells: new Uint32Array(4) };
 const audioTrack: DecodedAudioTrack = {
     sourceName: 'stereo-test.wav',

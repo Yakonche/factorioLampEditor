@@ -20,6 +20,7 @@ import {
   MAX_DEFINITION_LIMIT,
   PIXEL_SIZE,
   POLE_DATA,
+  QUALITY_NAMES,
   ROBOPORT_SIZE,
   TEXT_SCALE_MIN,
   type BackgroundTileName,
@@ -48,12 +49,18 @@ import { generateImageBufferInWorker } from './utils/imageWorkerClient';
 import {
   animationDurationTicks,
   animationFrameAtTick,
+  animationMaximumFrameCount,
+  animationTrackCount,
   composeGridAnimations,
+  createAnimationPreviewTimeline,
   createAnimationTimeline,
+  createAnimationTrackTimeline,
   createAnimationUnionGrid,
   createGridAnimationFromFrames,
   evenlySpacedFrameIndices,
+  getGridAnimationTracks,
   placeDecodedAnimation,
+  renderGridAnimationAtTick,
   selectDecodedMediaFrames,
   type DecodedMediaAnimation,
   type GridAnimationData,
@@ -191,6 +198,24 @@ const mediaThumbnailToDataUrl = (thumbnail: MediaFrameThumbnail) => {
 const formatBlueprintLabel = (filename: string, width: number, height: number) => {
   const imageName = filename.replace(/\.[^/.]+$/, '').trim() || 'Imported Image';
   return `${imageName} (${width}x${height})`;
+};
+
+const POLE_TYPE_STORAGE_KEY = 'factorio-lamp-editor.pole-type';
+const POLE_QUALITY_STORAGE_KEY = 'factorio-lamp-editor.pole-quality';
+const DEFAULT_POLE_TYPE = 'medium-electric-pole';
+
+const storedPoleType = () => {
+  if (typeof window === 'undefined') return DEFAULT_POLE_TYPE;
+  const stored = window.localStorage.getItem(POLE_TYPE_STORAGE_KEY);
+  return stored && Object.prototype.hasOwnProperty.call(POLE_DATA, stored)
+    ? stored
+    : DEFAULT_POLE_TYPE;
+};
+
+const storedPoleQuality = () => {
+  if (typeof window === 'undefined') return 0;
+  const stored = Number(window.localStorage.getItem(POLE_QUALITY_STORAGE_KEY));
+  return Number.isInteger(stored) && stored >= 0 && stored < QUALITY_NAMES.length ? stored : 0;
 };
 
 function App() {
@@ -1132,8 +1157,16 @@ function App() {
   const [autoRoboport, setAutoRoboport] = useState(false);
   const [autoConstruction, setAutoConstruction] = useState(false);
   const [smartPlacement, setSmartPlacement] = useState(false);
-  const [poleType, setPoleType] = useState("medium-electric-pole");
-  const [qualityIdx, setQualityIdx] = useState(0);
+  const [poleType, setPoleType] = useState(storedPoleType);
+  const [qualityIdx, setQualityIdx] = useState(storedPoleQuality);
+
+  useEffect(() => {
+    window.localStorage.setItem(POLE_TYPE_STORAGE_KEY, poleType);
+  }, [poleType]);
+
+  useEffect(() => {
+    window.localStorage.setItem(POLE_QUALITY_STORAGE_KEY, String(qualityIdx));
+  }, [qualityIdx]);
 
   useEffect(() => {
     if (!autoPole || !autoRoboport) setAutoConstruction(false);
@@ -1187,14 +1220,51 @@ function App() {
 
   const activePreviewAnimation = mediaAnimationInfo ? mediaAnimationRef.current : manualAnimation;
   const activePreviewFrameCount = activePreviewAnimation
-    ? activePreviewAnimation.transitions.length + 1
+    ? animationMaximumFrameCount(activePreviewAnimation)
     : 0;
 
   useEffect(() => {
     const animation = activePreviewAnimation;
     if (!animation) return;
 
-    const timeline = createAnimationTimeline(animation);
+    const tracks = getGridAnimationTracks(animation);
+    const timeline = tracks.length > 1
+      ? createAnimationPreviewTimeline(animation)
+      : createAnimationTimeline(animation);
+
+    if (tracks.length > 1) {
+      const trackTimelines = tracks.map(createAnimationTrackTimeline);
+      let renderedSignature = '';
+      const renderTick = (requestedTick: number, force = false) => {
+        const signature = trackTimelines
+          .map(trackTimeline => animationFrameAtTick(trackTimeline, requestedTick))
+          .join(',');
+        if (!force && signature === renderedSignature) return;
+        renderedSignature = signature;
+        const previewGrid = renderGridAnimationAtTick(animation, requestedTick);
+        const displayedFrame = animationFrameAtTick(timeline, requestedTick);
+        mediaPreviewGridRef.current = previewGrid;
+        mediaPreviewFrameRef.current = displayedFrame;
+        setMediaPreviewFrame(previous => previous === displayedFrame ? previous : displayedFrame);
+        setMediaFrameTick(value => value + 1);
+      };
+
+      const initialFrame = Math.min(mediaPreviewFrameRef.current, timeline.frameStartTicks.length - 1);
+      const startingTick = timeline.frameStartTicks[initialFrame];
+      renderTick(startingTick, true);
+      if (!previewPlaying) return;
+
+      let animationFrameRequest = 0;
+      const startedAt = performance.now();
+      const advance = (now: number) => {
+        const elapsedTicks = Math.floor((now - startedAt) * 60 / 1000);
+        renderTick(startingTick + elapsedTicks);
+        animationFrameRequest = requestAnimationFrame(advance);
+      };
+      animationFrameRequest = requestAnimationFrame(advance);
+      return () => cancelAnimationFrame(animationFrameRequest);
+    }
+
     const cells = animation.firstFrame.cells.slice();
     const previewGrid: GridData = {
       width: animation.firstFrame.width,
@@ -1256,17 +1326,31 @@ function App() {
     const cells = gridRef.current.cells.slice();
     const activeAnimation = mediaAnimationRef.current ?? manualAnimation;
     const includeAudio = Boolean(audioTrackRef.current) && (!activeAnimation || audioLinkedToAnimation);
-    const mediaTransitions = activeAnimation?.transitions.map(transition => ({
-      indices: transition.indices.slice(),
-      colors: transition.colors.slice(),
-      durationTicks: transition.durationTicks,
-    }));
+    const mediaTracks = activeAnimation?.tracks?.length
+      ? getGridAnimationTracks(activeAnimation).map(track => ({
+        firstDurationTicks: track.firstDurationTicks,
+        transitions: track.transitions.map(transition => ({
+          indices: transition.indices.slice(),
+          colors: transition.colors.slice(),
+          durationTicks: transition.durationTicks,
+        })),
+      }))
+      : activeAnimation
+        ? [{
+          firstDurationTicks: activeAnimation.firstDurationTicks,
+          transitions: activeAnimation.transitions.map(transition => ({
+            indices: transition.indices.slice(),
+            colors: transition.colors.slice(),
+            durationTicks: transition.durationTicks,
+          })),
+        }]
+        : undefined;
     return new Promise<CalculationWorkerResponse>((resolve, reject) => {
       workerCallbacksRef.current.set(id, { resolve, reject, onProgress });
       const transferables: ArrayBuffer[] = [cells.buffer];
-      mediaTransitions?.forEach((transition) => {
+      mediaTracks?.forEach(track => track.transitions.forEach((transition) => {
         transferables.push(transition.indices.buffer, transition.colors.buffer);
-      });
+      }));
       worker.postMessage({
         ...request,
         id,
@@ -1275,13 +1359,15 @@ function App() {
         audioInstruments: includeAudio
           ? { left: leftAudioInstrument, right: rightAudioInstrument }
           : undefined,
-        mediaAnimation: activeAnimation && mediaTransitions
+        mediaAnimation: activeAnimation && mediaTracks
           ? {
-            firstDurationTicks: activeAnimation.firstDurationTicks,
-            transitions: mediaTransitions.map(transition => ({
-              indices: transition.indices.buffer,
-              colors: transition.colors.buffer,
-              durationTicks: transition.durationTicks,
+            tracks: mediaTracks.map(track => ({
+              firstDurationTicks: track.firstDurationTicks,
+              transitions: track.transitions.map(transition => ({
+                indices: transition.indices.buffer,
+                colors: transition.colors.buffer,
+                durationTicks: transition.durationTicks,
+              })),
             })),
           }
           : undefined,
@@ -1706,7 +1792,7 @@ function App() {
     if (stampAnimation) {
       const previousAnimation = mediaAnimationRef.current;
       const previousAnimationInfo = mediaAnimationInfo;
-      setStatusMsg(previousAnimation ? 'Merging animated stamps…' : 'Placing animated text…');
+      setStatusMsg(previousAnimation ? 'Adding an independent animated stamp…' : 'Placing animated text…');
       try {
         const baseGrid = cloneGrid(previousAnimation?.firstFrame ?? gridRef.current);
         const firstFrame = renderStampFrame(baseGrid, pendingStamp.data).frame;
@@ -1775,7 +1861,8 @@ function App() {
         const contentCenterX = maxX >= minX ? (minX + maxX + 1) / 2 : cx;
         const contentCenterY = maxY >= minY ? (minY + maxY + 1) / 2 : cy;
         const durationTicks = animationDurationTicks(animation);
-        const frameCount = animation.transitions.length + 1;
+        const frameCount = animationMaximumFrameCount(animation);
+        const trackCount = animationTrackCount(animation);
         setBlueprintImageInfo({ sourceName: animationSourceName, width: contentWidth, height: contentHeight });
         setMediaAnimationInfo({
           sourceName: animationSourceName,
@@ -1799,7 +1886,9 @@ function App() {
           width: contentWidth * PIXEL_SIZE,
           height: contentHeight * PIXEL_SIZE,
         });
-        setStatusMsg(`${frameCount.toLocaleString()} combined animation frames created.`);
+        setStatusMsg(trackCount > 1
+          ? `${trackCount.toLocaleString()} independent animation tracks placed (up to ${frameCount.toLocaleString()} frames each).`
+          : `${frameCount.toLocaleString()} animation frames created.`);
         setTimeout(() => setStatusMsg(''), 3000);
       } catch (error) {
         console.error('Unable to place animated text.', error);

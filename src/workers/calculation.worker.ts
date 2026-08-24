@@ -23,11 +23,13 @@ type WorkerRequest = {
     cells: ArrayBuffer;
     secondFrameCells?: ArrayBuffer;
     mediaAnimation?: {
-        firstDurationTicks: number;
-        transitions: {
-            indices: ArrayBuffer;
-            colors: ArrayBuffer;
-            durationTicks: number;
+        tracks: {
+            firstDurationTicks: number;
+            transitions: {
+                indices: ArrayBuffer;
+                colors: ArrayBuffer;
+                durationTicks: number;
+            }[];
         }[];
     };
     width: number;
@@ -65,15 +67,24 @@ context.onmessage = (event: MessageEvent<WorkerRequest>) => {
                 cells: new Uint32Array(request.secondFrameCells),
             }
             : undefined;
-        const mediaAnimation: GridAnimationData | undefined = request.mediaAnimation
+        const mediaTracks = request.mediaAnimation?.tracks.map(track => ({
+            firstDurationTicks: track.firstDurationTicks,
+            transitions: track.transitions.map(transition => ({
+                indices: new Uint32Array(transition.indices),
+                colors: new Uint32Array(transition.colors),
+                durationTicks: transition.durationTicks,
+            })),
+        }));
+        const mediaAnimation: GridAnimationData | undefined = mediaTracks?.length
             ? {
                 firstFrame: grid,
-                firstDurationTicks: request.mediaAnimation.firstDurationTicks,
-                transitions: request.mediaAnimation.transitions.map(transition => ({
+                firstDurationTicks: mediaTracks[0].firstDurationTicks,
+                transitions: mediaTracks[0].transitions.map(transition => ({
                     indices: new Uint32Array(transition.indices),
                     colors: new Uint32Array(transition.colors),
                     durationTicks: transition.durationTicks,
                 })),
+                ...(mediaTracks.length > 1 ? { tracks: mediaTracks } : {}),
             }
             : undefined;
         const playbackAnimation: GridAnimationData | undefined = mediaAnimation ?? (request.audioTrack

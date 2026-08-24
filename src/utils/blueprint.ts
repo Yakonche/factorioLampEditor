@@ -19,6 +19,7 @@ import {
     animationDurationTicks,
     createAnimationConstantGrid,
     createAnimationUnionGrid,
+    getGridAnimationTracks,
     type GridAnimationData,
     type MediaFrameTransition,
 } from './mediaAnimation';
@@ -1538,6 +1539,7 @@ export function calculateMediaAnimationPreviewLayout(
     audioTrack?: DecodedAudioTrack,
     audioInstruments?: AudioInstrumentSelections,
 ): AnimationPreviewLayout {
+    const tracks = getGridAnimationTracks(animation);
     const unionGrid = createAnimationUnionGrid(animation);
     const constantGrid = createAnimationConstantGrid(animation);
     let minX = gridW;
@@ -1612,37 +1614,39 @@ export function calculateMediaAnimationPreviewLayout(
             localLineByGridIndex[y * gridW + x] = line.localLine;
         }
     }
-    const transitionLines: Set<number>[] = [];
-    const lastFrameCells = animation.firstFrame.cells.slice();
-    for (const transition of animation.transitions) {
-        for (let index = 0; index < transition.indices.length; index++) {
-            lastFrameCells[transition.indices[index]] = transition.colors[index];
+    const lineTransitionIndices = new Map<number, { trackIndex: number; frameIndex: number }[]>();
+    tracks.forEach((track, trackIndex) => {
+        const lastFrameCells = animation.firstFrame.cells.slice();
+        for (const transition of track.transitions) {
+            for (let index = 0; index < transition.indices.length; index++) {
+                lastFrameCells[transition.indices[index]] = transition.colors[index];
+            }
         }
-    }
-    const loopLines = new Set<number>();
-    for (let gridIndex = 0; gridIndex < localLineByGridIndex.length; gridIndex++) {
-        const localLine = localLineByGridIndex[gridIndex];
-        if (
-            localLine >= 0
-            && packedRgbOrZero(lastFrameCells[gridIndex]) !== packedRgbOrZero(animation.firstFrame.cells[gridIndex])
-        ) loopLines.add(localLine);
-    }
-    transitionLines.push(loopLines);
-    for (const transition of animation.transitions) {
-        const lines = new Set<number>();
-        for (const gridIndex of transition.indices) {
+        const transitionLines: Set<number>[] = [];
+        const loopLines = new Set<number>();
+        for (let gridIndex = 0; gridIndex < localLineByGridIndex.length; gridIndex++) {
             const localLine = localLineByGridIndex[gridIndex];
-            if (localLine >= 0) lines.add(localLine);
+            if (
+                localLine >= 0
+                && packedRgbOrZero(lastFrameCells[gridIndex]) !== packedRgbOrZero(animation.firstFrame.cells[gridIndex])
+            ) loopLines.add(localLine);
         }
-        transitionLines.push(lines);
-    }
-    const lineTransitionIndices = new Map<number, number[]>();
-    transitionLines.forEach((lines, eventIndex) => {
-        for (const localLine of lines) {
-            const indices = lineTransitionIndices.get(localLine) ?? [];
-            indices.push(eventIndex);
-            lineTransitionIndices.set(localLine, indices);
+        transitionLines.push(loopLines);
+        for (const transition of track.transitions) {
+            const lines = new Set<number>();
+            for (const gridIndex of transition.indices) {
+                const localLine = localLineByGridIndex[gridIndex];
+                if (localLine >= 0) lines.add(localLine);
+            }
+            transitionLines.push(lines);
         }
+        transitionLines.forEach((lines, frameIndex) => {
+            for (const localLine of lines) {
+                const indices = lineTransitionIndices.get(localLine) ?? [];
+                indices.push({ trackIndex, frameIndex });
+                lineTransitionIndices.set(localLine, indices);
+            }
+        });
     });
     const sparseRomCount = [...lineTransitionIndices.values()]
         .reduce((total, indices) => total + indices.length, 0);
@@ -1654,7 +1658,12 @@ export function calculateMediaAnimationPreviewLayout(
         Math.max(2, animationDurationTicks(animation)),
         resolvedAudioInstruments,
     );
-    const transitionBankCount = Math.max(2, maximumSparseRomCount, preparedAudioEvents.length);
+    const transitionBankCount = Math.max(
+        2,
+        maximumSparseRomCount,
+        preparedAudioEvents.length,
+        tracks.length,
+    );
     const geometry = calculateMediaAnimationControllerGeometry(
         supportRects,
         controllerSide,
@@ -1733,7 +1742,9 @@ export function calculateMediaAnimationPreviewLayout(
     addPreview(
         'constant-combinator',
         'Constant combinator',
-        'Media animation clock increment (T = 1)',
+        tracks.length > 1
+            ? `Independent media clock increments (${tracks.length} tracks)`
+            : 'Media animation clock increment (T = 1)',
         timerIncrementCenter.x - 0.5,
         timerIncrementCenter.y - 0.5,
         1,
@@ -1752,13 +1763,21 @@ export function calculateMediaAnimationPreviewLayout(
         1,
         1,
     );
-    addCombinatorPreview(
-        'decider-combinator',
-        'Decider combinator',
-        'Media animation cycle timer',
-        geometry.spineCoord - geometry.pathDirection,
-        clockLine,
-    );
+    tracks.forEach((track, trackIndex) => {
+        addCombinatorPreview(
+            'decider-combinator',
+            'Decider combinator',
+            tracks.length > 1
+                ? `Independent media cycle timer ${trackIndex + 1} (${animationDurationTicks({
+                    firstFrame: animation.firstFrame,
+                    firstDurationTicks: track.firstDurationTicks,
+                    transitions: track.transitions,
+                })} ticks)`
+                : 'Media animation cycle timer',
+            geometry.transitionRomCoords[trackIndex],
+            clockLine,
+        );
+    });
     if (includeHelpDisplay) {
         const displayCenter = absolutePoint(
             geometry.baseRomCoord - geometry.pathDirection * 0.5,
@@ -1796,14 +1815,16 @@ export function calculateMediaAnimationPreviewLayout(
             geometry.baseRomCoord,
             line.localLine + 0.5,
         );
-        (lineTransitionIndices.get(line.localLine) ?? []).forEach((frameIndex, packedIndex) => {
+        (lineTransitionIndices.get(line.localLine) ?? []).forEach((event, packedIndex) => {
             const romIndex = encounteredRomCount++;
             if (romIndex % previewRomStride !== 0 || previewRomCount >= maximumPreviewRoms) return;
             previewRomCount++;
             addCombinatorPreview(
                 'decider-combinator',
                 'Decider combinator',
-                `Media frame ${frameIndex + 1} delta ROM, ${lineLabel} ${line.localLine + 1}`,
+                tracks.length > 1
+                    ? `Track ${event.trackIndex + 1}, media frame ${event.frameIndex + 1} delta ROM, ${lineLabel} ${line.localLine + 1}`
+                    : `Media frame ${event.frameIndex + 1} delta ROM, ${lineLabel} ${line.localLine + 1}`,
                 geometry.transitionRomCoords[packedIndex],
                 line.localLine + 0.5,
             );
@@ -1833,6 +1854,7 @@ export function calculateMediaAnimationPreviewLayout(
         relayPoleCount += circuitPath.generatedRelayXs.length;
     }
 
+    const audioClockLine = clockLine - 3;
     for (let eventIndex = 0; eventIndex < Math.min(preparedAudioEvents.length, maximumPreviewRoms - previewRomCount); eventIndex++) {
         const event = preparedAudioEvents[eventIndex];
         addCombinatorPreview(
@@ -1840,7 +1862,7 @@ export function calculateMediaAnimationPreviewLayout(
             'Decider combinator',
             `Stereo note event, T = ${event.tick}`,
             geometry.transitionRomCoords[eventIndex],
-            clockLine,
+            audioClockLine,
         );
     }
     if (preparedAudioEvents.length) {
@@ -1848,7 +1870,7 @@ export function calculateMediaAnimationPreviewLayout(
             [-2, 'Left', resolvedAudioInstruments.left],
             [2, 'Right', resolvedAudioInstruments.right],
         ] as const) {
-            const center = absolutePoint(geometry.transitionRomCoords[0], clockLine + lineOffset);
+            const center = absolutePoint(geometry.transitionRomCoords[0], audioClockLine + lineOffset);
             addPreview(
                 'programmable-speaker',
                 'Programmable speaker',
@@ -1878,7 +1900,7 @@ export function calculateMediaAnimationPreviewLayout(
     return {
         entities,
         stats: {
-            deciderCombinatorCount: 1 + dynamicLines.length + sparseRomCount + preparedAudioEvents.length,
+            deciderCombinatorCount: tracks.length + dynamicLines.length + sparseRomCount + preparedAudioEvents.length,
             arithmeticCombinatorCount: dynamicLines.length,
             constantCombinatorCount: 2,
             displayPanelCount: includeHelpDisplay ? 1 : 0,
@@ -2371,8 +2393,19 @@ type MediaLampInfo = {
 };
 
 type MediaTransitionEvent = {
+    trackIndex: number;
+    frameIndex: number;
+    timerSignal: FactorioSignalID;
     threshold: number;
     outputsByLine: Map<number, Record<string, unknown>[]>;
+};
+
+const mediaTimerSignals = (trackCount: number): FactorioSignalID[] => {
+    const signals = [TIMER_SIGNAL, ...PIXEL_SIGNALS].slice(0, trackCount);
+    if (signals.length !== trackCount) {
+        throw new Error(`A media blueprint supports at most ${(PIXEL_SIGNALS.length + 1).toLocaleString()} independent animation tracks.`);
+    }
+    return signals;
 };
 
 type PreparedAudioEvent = Pick<AudioNoteEvent, 'tick'> & {
@@ -2501,15 +2534,21 @@ export function generateMediaAnimationBlueprintData(
     ) {
         return { bpString: null, status: 'The media animation grid dimensions are invalid.' };
     }
+    const tracks = getGridAnimationTracks(animation);
     try {
-        animation.transitions.forEach(transition => validateMediaTransition(transition, gridW * gridH));
+        tracks.forEach(track => (
+            track.transitions.forEach(transition => validateMediaTransition(transition, gridW * gridH))
+        ));
     } catch (error) {
         return { bpString: null, status: error instanceof Error ? error.message : String(error) };
     }
     options.onProgress?.(3);
 
-    const frameCount = animation.transitions.length + 1;
-    if (frameCount < 2 && !options.audioTrack) {
+    const frameCount = tracks.reduce(
+        (maximum, track) => Math.max(maximum, track.transitions.length + 1),
+        1,
+    );
+    if (tracks.every(track => !track.transitions.length) && !options.audioTrack) {
         return generateBlueprintData(
             animation.firstFrame,
             gridW,
@@ -2524,9 +2563,22 @@ export function generateMediaAnimationBlueprintData(
             options.backgroundTile,
         );
     }
-    const cycleTicks = Math.max(2, animationDurationTicks(animation));
-    if (cycleTicks > 2_000_000_000) {
+    const trackCycleTicks = tracks.map(track => Math.max(
+        2,
+        track.firstDurationTicks + track.transitions.reduce(
+            (total, transition) => total + transition.durationTicks,
+            0,
+        ),
+    ));
+    const cycleTicks = Math.max(...trackCycleTicks);
+    if (trackCycleTicks.some(duration => duration > 2_000_000_000)) {
         return { bpString: null, status: 'The media animation duration exceeds the Factorio circuit counter range.' };
+    }
+    let timerSignals: FactorioSignalID[];
+    try {
+        timerSignals = mediaTimerSignals(tracks.length);
+    } catch (error) {
+        return { bpString: null, status: error instanceof Error ? error.message : String(error) };
     }
 
     const unionGrid = createAnimationUnionGrid(animation);
@@ -2738,9 +2790,11 @@ export function generateMediaAnimationBlueprintData(
     options.onProgress?.(15);
 
     const lastFrameCells = animation.firstFrame.cells.slice();
-    for (const transition of animation.transitions) {
-        for (let index = 0; index < transition.indices.length; index++) {
-            lastFrameCells[transition.indices[index]] = transition.colors[index];
+    for (const track of tracks) {
+        for (const transition of track.transitions) {
+            for (let index = 0; index < transition.indices.length; index++) {
+                lastFrameCells[transition.indices[index]] = transition.colors[index];
+            }
         }
     }
     const addDeltaOutput = (
@@ -2763,48 +2817,86 @@ export function generateMediaAnimationBlueprintData(
     };
 
     const transitionEvents: MediaTransitionEvent[] = [];
-    const loopOutputs = new Map<number, Record<string, unknown>[]>();
-    for (const gridIndex of lampInfoByIndex.keys()) {
-        addDeltaOutput(
-            loopOutputs,
-            gridIndex,
-            lastFrameCells[gridIndex],
-            animation.firstFrame.cells[gridIndex],
-        );
-    }
-    transitionEvents.push({ threshold: 0, outputsByLine: loopOutputs });
+    const totalTransitionCount = tracks.reduce(
+        (total, track) => total + track.transitions.length,
+        0,
+    );
+    let processedTransitionCount = 0;
+    tracks.forEach((track, trackIndex) => {
+        const timerSignal = timerSignals[trackIndex];
+        const trackLastCells = animation.firstFrame.cells.slice();
+        const changedIndices = new Set<number>();
+        for (const transition of track.transitions) {
+            for (let index = 0; index < transition.indices.length; index++) {
+                const gridIndex = transition.indices[index];
+                changedIndices.add(gridIndex);
+                trackLastCells[gridIndex] = transition.colors[index];
+            }
+        }
+        const loopOutputs = new Map<number, Record<string, unknown>[]>();
+        for (const gridIndex of changedIndices) {
+            addDeltaOutput(
+                loopOutputs,
+                gridIndex,
+                trackLastCells[gridIndex],
+                animation.firstFrame.cells[gridIndex],
+            );
+        }
+        transitionEvents.push({
+            trackIndex,
+            frameIndex: 0,
+            timerSignal,
+            threshold: 0,
+            outputsByLine: loopOutputs,
+        });
 
-    const runningCells = animation.firstFrame.cells.slice();
-    let startTick = Math.max(2, Math.round(animation.firstDurationTicks));
-    for (let transitionIndex = 0; transitionIndex < animation.transitions.length; transitionIndex++) {
-        const transition = animation.transitions[transitionIndex];
-        const outputsByLine = new Map<number, Record<string, unknown>[]>();
-        for (let index = 0; index < transition.indices.length; index++) {
-            const gridIndex = transition.indices[index];
-            const nextColor = transition.colors[index];
-            addDeltaOutput(outputsByLine, gridIndex, runningCells[gridIndex], nextColor);
-            runningCells[gridIndex] = nextColor;
+        const runningCells = animation.firstFrame.cells.slice();
+        let startTick = Math.max(2, Math.round(track.firstDurationTicks));
+        for (let transitionIndex = 0; transitionIndex < track.transitions.length; transitionIndex++) {
+            const transition = track.transitions[transitionIndex];
+            const outputsByLine = new Map<number, Record<string, unknown>[]>();
+            for (let index = 0; index < transition.indices.length; index++) {
+                const gridIndex = transition.indices[index];
+                const nextColor = transition.colors[index];
+                addDeltaOutput(outputsByLine, gridIndex, runningCells[gridIndex], nextColor);
+                runningCells[gridIndex] = nextColor;
+            }
+            transitionEvents.push({
+                trackIndex,
+                frameIndex: transitionIndex + 1,
+                timerSignal,
+                threshold: startTick,
+                outputsByLine,
+            });
+            startTick += Math.max(2, Math.round(transition.durationTicks));
+            processedTransitionCount++;
+            if ((processedTransitionCount & 63) === 0 || processedTransitionCount === totalTransitionCount) {
+                options.onProgress?.(15 + 10 * processedTransitionCount / Math.max(1, totalTransitionCount));
+            }
         }
-        transitionEvents.push({ threshold: startTick, outputsByLine });
-        startTick += Math.max(2, Math.round(transition.durationTicks));
-        if ((transitionIndex & 63) === 0 || transitionIndex === animation.transitions.length - 1) {
-            options.onProgress?.(15 + 10 * (transitionIndex + 1) / Math.max(1, animation.transitions.length));
-        }
-    }
+    });
 
     // A line only needs a ROM when at least one of its pixels changes at that
     // threshold. Packing those sparse ROMs removes the old frame x line matrix
     // without changing the animation's dimensions, colors, timing, or FPS.
     const transitionEventsByLine = new Map<number, {
+        trackIndex: number;
+        timerSignal: FactorioSignalID;
         frameIndex: number;
         threshold: number;
         outputs: Record<string, unknown>[];
     }[]>();
-    transitionEvents.forEach((event, frameIndex) => {
+    transitionEvents.forEach((event) => {
         for (const [localLine, outputs] of event.outputsByLine) {
             if (!outputs.length) continue;
             const lineEvents = transitionEventsByLine.get(localLine) ?? [];
-            lineEvents.push({ frameIndex, threshold: event.threshold, outputs });
+            lineEvents.push({
+                trackIndex: event.trackIndex,
+                timerSignal: event.timerSignal,
+                frameIndex: event.frameIndex,
+                threshold: event.threshold,
+                outputs,
+            });
             transitionEventsByLine.set(localLine, lineEvents);
         }
     });
@@ -2817,7 +2909,12 @@ export function generateMediaAnimationBlueprintData(
     const maximumSparseRomCount = dynamicLines.reduce((maximum, line) => (
         Math.max(maximum, transitionEventsByLine.get(line.localLine)?.length ?? 0)
     ), 0);
-    const transitionBankCount = Math.max(2, maximumSparseRomCount, preparedAudioEvents.length);
+    const transitionBankCount = Math.max(
+        2,
+        maximumSparseRomCount,
+        preparedAudioEvents.length,
+        tracks.length,
+    );
     options.onProgress?.(28);
 
     const geometry = calculateMediaAnimationControllerGeometry(
@@ -2904,25 +3001,33 @@ export function generateMediaAnimationBlueprintData(
 
     const clockLine = geometry.spineLineCoords[0] - 3.5;
     const combinatorDirection = animationCombinatorDirection(controllerSide);
+    const incrementSections = Array.from(
+        { length: Math.ceil(timerSignals.length / 100) },
+        (_, sectionIndex) => ({
+            index: sectionIndex + 1,
+            filters: timerSignals
+                .slice(sectionIndex * 100, sectionIndex * 100 + 100)
+                .map((signal, signalIndex) => ({
+                    index: signalIndex + 1,
+                    type: signal.type,
+                    name: signal.name,
+                    quality: 'normal',
+                    comparator: '=',
+                    count: 1,
+                })),
+        }),
+    );
     const timerIncrement = addEntity({
         name: 'constant-combinator',
         position: localPoint(
             geometry.memoryCoord - geometry.pathDirection * 0.5,
             clockLine,
         ),
-        player_description: 'Media animation clock increment. Keep T = 1.',
+        player_description: tracks.length > 1
+            ? `Independent media clock increments. Keep all ${tracks.length} timer signals at 1.`
+            : 'Media animation clock increment. Keep T = 1.',
         control_behavior: {
-            sections: { sections: [{
-                index: 1,
-                filters: [{
-                    index: 1,
-                    type: TIMER_SIGNAL.type,
-                    name: TIMER_SIGNAL.name,
-                    quality: 'normal',
-                    comparator: '=',
-                    count: 1,
-                }],
-            }] },
+            sections: { sections: incrementSections },
         },
     });
     const controllerEnable = addEntity({
@@ -2946,30 +3051,41 @@ export function generateMediaAnimationBlueprintData(
             }] },
         },
     });
-    const timer = addEntity({
-        name: 'decider-combinator',
-        position: localPoint(
-            geometry.spineCoord - geometry.pathDirection,
-            clockLine,
-        ),
-        direction: combinatorDirection,
-        player_description: `Media cycle timer: T < ${cycleTicks}.`,
-        control_behavior: {
-            decider_conditions: {
-                conditions: [{ first_signal: TIMER_SIGNAL, comparator: '<', constant: cycleTicks }],
-                outputs: [{ signal: TIMER_SIGNAL, copy_count_from_input: true }],
+    let previousTimer: BlueprintEntity | undefined;
+    tracks.forEach((_, trackIndex) => {
+        const timerSignal = timerSignals[trackIndex];
+        const trackDuration = trackCycleTicks[trackIndex];
+        const pathCoordinate = geometry.transitionRomCoords[trackIndex];
+        const timer = addEntity({
+            name: 'decider-combinator',
+            position: localPoint(pathCoordinate, clockLine),
+            direction: combinatorDirection,
+            player_description: tracks.length > 1
+                ? `Independent media cycle timer ${trackIndex + 1}: ${timerSignal.name} < ${trackDuration}.`
+                : `Media cycle timer: T < ${trackDuration}.`,
+            control_behavior: {
+                decider_conditions: {
+                    conditions: [{ first_signal: timerSignal, comparator: '<', constant: trackDuration }],
+                    outputs: [{ signal: timerSignal, copy_count_from_input: true }],
+                },
             },
-        },
+        });
+        // Green is the private feedback bus; distinct timer signals let all
+        // tracks advance independently. Red broadcasts their outputs to ROMs.
+        if (previousTimer) addWire(previousTimer, 2, timer, 2);
+        else addWire(timerIncrement, 2, timer, 2);
+        addWire(timer, 4, timer, 2);
+        const support = nearestControllerSupport(pathCoordinate, clockLine);
+        addWire(timer, 3, support.entity, 1);
+        previousTimer = timer;
     });
-    // Green is the private feedback loop; red broadcasts the timer output.
-    // This separation is what allows T = 0 to exist and sustains 30 FPS.
-    addWire(timerIncrement, 2, timer, 2);
-    addWire(timer, 4, timer, 2);
-    addWire(timer, 3, controllerSupports[0][0].entity, 1);
     addWire(controllerEnable, 1, controllerSupports[0][0].entity, 1);
 
     if (options.includeHelpDisplay) {
         const seconds = (cycleTicks / 60).toLocaleString('en-US', { maximumFractionDigits: 3 });
+        const trackSummary = tracks.length > 1
+            ? `${tracks.length} independent loops\nLongest loop: ${cycleTicks} ticks = ${seconds} s @ 60 UPS\nEach loop has its own timer signal.`
+            : `${frameCount} unique frames\n${cycleTicks} ticks = ${seconds} s @ 60 UPS\nTimer: T < ${cycleTicks}`;
         const audioSummary = options.audioTrack
             ? `\nAudio: ${preparedAudioEvents.length} stereo note events, synchronized at T = 0.`
             : '';
@@ -2980,11 +3096,13 @@ export function generateMediaAnimationBlueprintData(
                 clockLine + 2,
             ),
             icon: { type: 'virtual', name: 'signal-info' },
-            text: `MEDIA ANIMATION\n${frameCount} unique frames\n${cycleTicks} ticks = ${seconds} s @ 60 UPS\nTimer: T < ${cycleTicks}\nFrame ROMs switch on their generated T thresholds.${audioSummary}\nRegenerate from the editor to change timing safely.`,
+            text: `MEDIA ANIMATION\n${trackSummary}\nFrame ROMs switch on their own generated timer thresholds.${audioSummary}\nRegenerate from the editor to change timing safely.`,
         });
     }
 
     if (preparedAudioEvents.length) {
+        const audioTimerSignal = timerSignals[0];
+        const audioClockLine = clockLine - 3;
         const leftSignal: FactorioSignalID = { type: 'virtual', name: 'signal-L' };
         const rightSignal: FactorioSignalID = { type: 'virtual', name: 'signal-R' };
         const audioRoms = preparedAudioEvents.map((event, eventIndex) => {
@@ -3002,17 +3120,17 @@ export function generateMediaAnimationBlueprintData(
             const pathCoordinate = geometry.transitionRomCoords[eventIndex];
             const rom = addEntity({
                 name: 'decider-combinator',
-                position: localPoint(pathCoordinate, clockLine),
+                position: localPoint(pathCoordinate, audioClockLine),
                 direction: combinatorDirection,
                 player_description: `Generated stereo note event, T = ${event.tick}.`,
                 control_behavior: {
                     decider_conditions: {
-                        conditions: [{ first_signal: TIMER_SIGNAL, comparator: '=', constant: event.tick }],
+                        conditions: [{ first_signal: audioTimerSignal, comparator: '=', constant: event.tick }],
                         outputs,
                     },
                 },
             });
-            const support = nearestControllerSupport(pathCoordinate, clockLine);
+            const support = nearestControllerSupport(pathCoordinate, audioClockLine);
             addWire(support.entity, 1, rom, 1);
             return rom;
         });
@@ -3026,7 +3144,7 @@ export function generateMediaAnimationBlueprintData(
             channelLabel: string,
         ) => addEntity({
             name: 'programmable-speaker',
-            position: localPoint(geometry.transitionRomCoords[0], clockLine + lineOffset),
+            position: localPoint(geometry.transitionRomCoords[0], audioClockLine + lineOffset),
             player_description: `${channelLabel} approximate audio channel. ${signal.name === 'signal-L'
                 ? resolvedAudioInstruments.left.label
                 : resolvedAudioInstruments.right.label} notes are synchronized to the media timer.`,
@@ -3109,10 +3227,12 @@ export function generateMediaAnimationBlueprintData(
                 name: 'decider-combinator',
                 position: localPoint(geometry.transitionRomCoords[eventIndex], lineCoordinate),
                 direction: combinatorDirection,
-                player_description: `Generated media frame ${event.frameIndex + 1} delta ROM, ${lineLabel} ${line.localLine + 1}, T = ${event.threshold}.`,
+                player_description: tracks.length > 1
+                    ? `Track ${event.trackIndex + 1}, generated media frame ${event.frameIndex + 1} delta ROM, ${lineLabel} ${line.localLine + 1}, ${event.timerSignal.name} = ${event.threshold}.`
+                    : `Generated media frame ${event.frameIndex + 1} delta ROM, ${lineLabel} ${line.localLine + 1}, T = ${event.threshold}.`,
                 control_behavior: {
                     decider_conditions: {
-                        conditions: [{ first_signal: TIMER_SIGNAL, comparator: '=', constant: event.threshold }],
+                        conditions: [{ first_signal: event.timerSignal, comparator: '=', constant: event.threshold }],
                         outputs: event.outputs,
                     },
                 },

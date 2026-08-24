@@ -40,6 +40,18 @@ export interface GridAnimationData {
     firstFrame: GridData;
     firstDurationTicks: number;
     transitions: MediaFrameTransition[];
+    /**
+     * Independently clocked sparse tracks sharing `firstFrame` as their tick-0
+     * image. This is used when several animated stamps are placed separately:
+     * Factorio gives every track its own counter instead of flattening their
+     * loops through a potentially enormous least-common-multiple timeline.
+     */
+    tracks?: GridAnimationTrack[];
+}
+
+export interface GridAnimationTrack {
+    firstDurationTicks: number;
+    transitions: MediaFrameTransition[];
 }
 
 export interface AnimationTimeline {
@@ -56,24 +68,25 @@ export interface AnimationOverlayBounds {
 
 const normalizeDurationTicks = (value: number) => Math.max(2, Math.round(value));
 
-const greatestCommonDivisor = (first: number, second: number): number => {
-    let left = Math.max(1, Math.round(first));
-    let right = Math.max(1, Math.round(second));
-    while (right) {
-        const remainder = left % right;
-        left = right;
-        right = remainder;
-    }
-    return left;
-};
+export const getGridAnimationTracks = (animation: GridAnimationData): GridAnimationTrack[] => (
+    animation.tracks?.length
+        ? animation.tracks
+        : [{
+            firstDurationTicks: animation.firstDurationTicks,
+            transitions: animation.transitions,
+        }]
+);
 
-const leastCommonMultiple = (first: number, second: number): number => {
-    const result = first / greatestCommonDivisor(first, second) * second;
-    if (!Number.isSafeInteger(result) || result > 2_000_000_000) {
-        throw new RangeError('The combined animation loop is too long for Factorio.');
-    }
-    return result;
-};
+export const animationMaximumFrameCount = (animation: GridAnimationData): number => (
+    getGridAnimationTracks(animation).reduce(
+        (maximum, track) => Math.max(maximum, track.transitions.length + 1),
+        1,
+    )
+);
+
+export const animationTrackCount = (animation: GridAnimationData): number => (
+    getGridAnimationTracks(animation).length
+);
 
 /** Builds the sparse animation format shared by slideshows and decoded media. */
 export function createGridAnimationFromFrames(
@@ -337,6 +350,55 @@ export function createAnimationTimeline(animation: GridAnimationData): Animation
     };
 }
 
+export function createAnimationTrackTimeline(track: GridAnimationTrack): AnimationTimeline {
+    const frameStartTicks = [0];
+    let elapsedTicks = normalizeDurationTicks(track.firstDurationTicks);
+    for (const transition of track.transitions) {
+        frameStartTicks.push(elapsedTicks);
+        elapsedTicks += normalizeDurationTicks(transition.durationTicks);
+    }
+    return {
+        frameStartTicks,
+        durationTicks: Math.max(1, elapsedTicks),
+    };
+}
+
+/** The longest visible track drives the shared preview scrubber. */
+export function createAnimationPreviewTimeline(animation: GridAnimationData): AnimationTimeline {
+    return getGridAnimationTracks(animation)
+        .map(createAnimationTrackTimeline)
+        .reduce((selected, candidate) => {
+            if (candidate.frameStartTicks.length !== selected.frameStartTicks.length) {
+                return candidate.frameStartTicks.length > selected.frameStartTicks.length
+                    ? candidate
+                    : selected;
+            }
+            return candidate.durationTicks > selected.durationTicks ? candidate : selected;
+        });
+}
+
+/** Renders all independent tracks at one shared real-time Factorio tick. */
+export function renderGridAnimationAtTick(
+    animation: GridAnimationData,
+    tick: number,
+): GridData {
+    const cells = animation.firstFrame.cells.slice();
+    for (const track of getGridAnimationTracks(animation)) {
+        const frameIndex = animationFrameAtTick(createAnimationTrackTimeline(track), tick);
+        for (let transitionIndex = 0; transitionIndex < frameIndex; transitionIndex++) {
+            const transition = track.transitions[transitionIndex];
+            for (let patchIndex = 0; patchIndex < transition.indices.length; patchIndex++) {
+                cells[transition.indices[patchIndex]] = transition.colors[patchIndex];
+            }
+        }
+    }
+    return {
+        width: animation.firstFrame.width,
+        height: animation.firstFrame.height,
+        cells,
+    };
+}
+
 /** Returns the frame visible at a loop-relative Factorio tick. */
 export function animationFrameAtTick(timeline: AnimationTimeline, tick: number): number {
     const normalizedTick = ((Math.floor(tick) % timeline.durationTicks) + timeline.durationTicks)
@@ -352,9 +414,9 @@ export function animationFrameAtTick(timeline: AnimationTimeline, tick: number):
 }
 
 /**
- * Combines two independently timed grid animations into one exact Factorio
- * loop. The overlay owns its complete rectangle, including transparent cells,
- * so an older animation cannot reappear below a newly placed stamp.
+ * Adds an independently clocked overlay track without multiplying loop sizes.
+ * The overlay owns its complete rectangle, including transparent cells, so an
+ * older animation cannot reappear below a newly placed stamp.
  */
 export function composeGridAnimations(
     base: GridAnimationData,
@@ -372,23 +434,6 @@ export function composeGridAnimations(
         throw new Error('Combined animations must use the same grid dimensions.');
     }
 
-    const baseTimeline = createAnimationTimeline(base);
-    const overlayTimeline = createAnimationTimeline(overlay);
-    const combinedDuration = leastCommonMultiple(
-        baseTimeline.durationTicks,
-        overlayTimeline.durationTicks,
-    );
-    const baseRepetitions = combinedDuration / baseTimeline.durationTicks;
-    const overlayRepetitions = combinedDuration / overlayTimeline.durationTicks;
-    const estimatedEventCount = baseRepetitions * (base.transitions.length + 1)
-        + overlayRepetitions * (overlay.transitions.length + 1);
-    const normalizedMaximumFrames = Math.max(2, Math.floor(maximumFrames));
-    if (estimatedEventCount > normalizedMaximumFrames * 2) {
-        throw new RangeError(
-            `Combining these independent loops would require more than ${normalizedMaximumFrames.toLocaleString()} frames.`,
-        );
-    }
-
     const overlayLeft = Math.max(0, Math.floor(overlayBounds.x));
     const overlayTop = Math.max(0, Math.floor(overlayBounds.y));
     const overlayRight = Math.min(width, Math.ceil(overlayBounds.x + overlayBounds.width));
@@ -399,101 +444,62 @@ export function composeGridAnimations(
         return x >= overlayLeft && x < overlayRight && y >= overlayTop && y < overlayBottom;
     };
 
-    const events = new Map<number, Map<number, number>>();
-    const addPatch = (
-        tick: number,
-        indices: Uint32Array,
-        colors: Uint32Array,
+    const normalizedMaximumFrames = Math.max(2, Math.floor(maximumFrames));
+    const filterTrack = (
+        track: GridAnimationTrack,
         acceptIndex: (cellIndex: number) => boolean,
-    ) => {
-        if (tick <= 0 || tick >= combinedDuration) return;
-        let patch = events.get(tick);
-        for (let index = 0; index < indices.length; index++) {
-            const cellIndex = indices[index];
-            if (!acceptIndex(cellIndex)) continue;
-            patch ??= new Map<number, number>();
-            patch.set(cellIndex, colors[index]);
+    ): GridAnimationTrack | null => {
+        if (track.transitions.length + 1 > normalizedMaximumFrames) {
+            throw new RangeError(
+                `An individual animation needs ${(track.transitions.length + 1).toLocaleString()} frames, above the ${normalizedMaximumFrames.toLocaleString()} frame limit.`,
+            );
         }
-        if (patch?.size) events.set(tick, patch);
-    };
-
-    const addAnimationEvents = (
-        animation: GridAnimationData,
-        timeline: AnimationTimeline,
-        repetitions: number,
-        acceptIndex: (cellIndex: number) => boolean,
-    ) => {
-        const changedIndices = new Set<number>();
-        animation.transitions.forEach(transition => {
-            transition.indices.forEach(cellIndex => {
-                if (acceptIndex(cellIndex)) changedIndices.add(cellIndex);
-            });
-        });
-        const resetIndices = Uint32Array.from(changedIndices);
-        const resetColors = Uint32Array.from(
-            resetIndices,
-            cellIndex => animation.firstFrame.cells[cellIndex],
-        );
-
-        for (let repetition = 0; repetition < repetitions; repetition++) {
-            const cycleStart = repetition * timeline.durationTicks;
-            animation.transitions.forEach((transition, transitionIndex) => {
-                addPatch(
-                    cycleStart + timeline.frameStartTicks[transitionIndex + 1],
-                    transition.indices,
-                    transition.colors,
-                    acceptIndex,
-                );
-            });
-            if (repetition + 1 < repetitions) {
-                addPatch(cycleStart + timeline.durationTicks, resetIndices, resetColors, acceptIndex);
+        let patchCount = 0;
+        const transitions = track.transitions.map((transition) => {
+            const indices: number[] = [];
+            const colors: number[] = [];
+            for (let index = 0; index < transition.indices.length; index++) {
+                const cellIndex = transition.indices[index];
+                if (!acceptIndex(cellIndex)) continue;
+                indices.push(cellIndex);
+                colors.push(transition.colors[index]);
             }
-        }
+            patchCount += indices.length;
+            return {
+                indices: Uint32Array.from(indices),
+                colors: Uint32Array.from(colors),
+                durationTicks: normalizeDurationTicks(transition.durationTicks),
+            };
+        });
+        return patchCount ? {
+            firstDurationTicks: normalizeDurationTicks(track.firstDurationTicks),
+            transitions,
+        } : null;
     };
 
-    addAnimationEvents(base, baseTimeline, baseRepetitions, cellIndex => !belongsToOverlay(cellIndex));
-    // Added second so the newest stamp wins if malformed source patches happen
-    // to reach beyond their advertised rectangle at the same tick.
-    addAnimationEvents(overlay, overlayTimeline, overlayRepetitions, belongsToOverlay);
-
-    const eventTicks = [...events.keys()].sort((first, second) => first - second);
-    if (eventTicks.length + 1 > normalizedMaximumFrames) {
-        throw new RangeError(
-            `The combined animation needs ${(eventTicks.length + 1).toLocaleString()} frames, above the ${normalizedMaximumFrames.toLocaleString()} frame limit.`,
-        );
-    }
-    if (!eventTicks.length) {
-        return {
-            firstFrame: {
-                width,
-                height,
-                cells: overlay.firstFrame.cells.slice(),
-            },
-            firstDurationTicks: combinedDuration,
-            transitions: [],
-        };
-    }
-
-    const transitions = eventTicks.map((tick, eventIndex): MediaFrameTransition => {
-        const patch = events.get(tick)!;
-        const nextTick = eventTicks[eventIndex + 1] ?? combinedDuration;
-        if (nextTick - tick < 2) {
-            throw new RangeError('These independent animations would require an impossible sub-two-tick frame.');
-        }
-        return {
-            indices: Uint32Array.from(patch.keys()),
-            colors: Uint32Array.from(patch.values()),
-            durationTicks: nextTick - tick,
-        };
-    });
+    const tracks = [
+        ...getGridAnimationTracks(base)
+            .map(track => filterTrack(track, cellIndex => !belongsToOverlay(cellIndex)))
+            .filter((track): track is GridAnimationTrack => Boolean(track)),
+        ...getGridAnimationTracks(overlay)
+            .map(track => filterTrack(track, belongsToOverlay))
+            .filter((track): track is GridAnimationTrack => Boolean(track)),
+    ];
+    const primaryTrack = tracks[0] ?? {
+        firstDurationTicks: normalizeDurationTicks(overlay.firstDurationTicks),
+        transitions: [],
+    };
     return {
         firstFrame: {
             width,
             height,
             cells: overlay.firstFrame.cells.slice(),
         },
-        firstDurationTicks: Math.max(2, eventTicks[0]),
-        transitions,
+        // Keep the legacy top-level fields populated for older callers while
+        // all multi-track-aware code reads `tracks` below.
+        firstDurationTicks: primaryTrack.firstDurationTicks,
+        transitions: primaryTrack.transitions,
+        ...(tracks.length > 1 ? { tracks } : {}),
     };
 }
 
@@ -504,10 +510,12 @@ export function createAnimationUnionGrid(
     for (let index = 0; index < cells.length; index++) {
         if (animation.firstFrame.cells[index]) cells[index] = animation.firstFrame.cells[index];
     }
-    for (const transition of animation.transitions) {
-        for (let index = 0; index < transition.indices.length; index++) {
-            const cellIndex = transition.indices[index];
-            if (transition.colors[index]) cells[cellIndex] = transition.colors[index];
+    for (const track of getGridAnimationTracks(animation)) {
+        for (const transition of track.transitions) {
+            for (let index = 0; index < transition.indices.length; index++) {
+                const cellIndex = transition.indices[index];
+                if (transition.colors[index]) cells[cellIndex] = transition.colors[index];
+            }
         }
     }
     return {
@@ -520,8 +528,10 @@ export function createAnimationUnionGrid(
 /** Returns pixels that are visible and never change anywhere in the loop. */
 export function createAnimationConstantGrid(animation: GridAnimationData): GridData {
     const changed = new Uint8Array(animation.firstFrame.cells.length);
-    for (const transition of animation.transitions) {
-        for (const cellIndex of transition.indices) changed[cellIndex] = 1;
+    for (const track of getGridAnimationTracks(animation)) {
+        for (const transition of track.transitions) {
+            for (const cellIndex of transition.indices) changed[cellIndex] = 1;
+        }
     }
     const cells = new Uint32Array(animation.firstFrame.cells.length);
     for (let index = 0; index < cells.length; index++) {
@@ -537,8 +547,11 @@ export function createAnimationConstantGrid(animation: GridAnimationData): GridD
 }
 
 export function animationDurationTicks(animation: GridAnimationData): number {
-    return animation.firstDurationTicks + animation.transitions.reduce(
-        (total, transition) => total + transition.durationTicks,
-        0,
-    );
+    return getGridAnimationTracks(animation).reduce((maximum, track) => Math.max(
+        maximum,
+        track.firstDurationTicks + track.transitions.reduce(
+            (total, transition) => total + transition.durationTicks,
+            0,
+        ),
+    ), 0);
 }
