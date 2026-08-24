@@ -13,7 +13,11 @@ import {
     animationFrameIndexForTimelineStep,
     createSparseViewportAnimation,
     placeSparseStampAnimation,
+    renderStampAnimationAtTick,
+    stampAnimationDurationTicks,
+    stampAnimationSampleCount,
     type RenderedText,
+    type StampBuffer,
 } from '../src/utils/stamp';
 
 assert.equal(DEFAULT_TEXT_VIEWPORT_WIDTH, 256);
@@ -22,6 +26,31 @@ assert.equal(keyboardPanDirection('KeyW', 'w'), 'up');
 assert.equal(keyboardPanDirection('KeyW', 'z'), 'up');
 assert.equal(keyboardPanDirection('KeyA', 'q'), 'left');
 assert.equal(keyboardPanDirection('', 'ArrowRight'), 'right');
+
+const rasterEmoji: StampBuffer = {
+    w: 2,
+    h: 1,
+    data: Uint32Array.of(10, 0),
+    animation: {
+        firstDurationTicks: 6,
+        sourceFrameCount: 3,
+        transitions: [{
+            indices: Uint32Array.of(0, 1),
+            colors: Uint32Array.of(20, 30),
+            durationTicks: 12,
+        }, {
+            indices: Uint32Array.of(0),
+            colors: Uint32Array.of(40),
+            durationTicks: 6,
+        }],
+    },
+};
+assert.equal(stampAnimationDurationTicks(rasterEmoji), 24);
+assert.equal(stampAnimationSampleCount(rasterEmoji), 2);
+assert.deepEqual([...renderStampAnimationAtTick(rasterEmoji, 0)], [10, 0]);
+assert.deepEqual([...renderStampAnimationAtTick(rasterEmoji, 6)], [20, 30]);
+assert.deepEqual([...renderStampAnimationAtTick(rasterEmoji, 18)], [40, 30]);
+assert.deepEqual([...renderStampAnimationAtTick(rasterEmoji, 24)], [10, 0]);
 
 const renderedWidth = 512;
 const rendered: RenderedText = {

@@ -69,6 +69,8 @@ interface CanvasProps {
     activeRoboports?: ActiveRoboport[];
     previewEntities?: BlueprintPreviewEntity[];
     hasAlternateFrameLamp?: (x: number, y: number) => boolean;
+    /** Union of every animation frame, used to draw currently transparent lamps as black. */
+    lampPresenceGrid?: GridData;
 
     // Coordinates display
     onHover: (x: number, y: number) => void;
@@ -81,12 +83,13 @@ export const Canvas: React.FC<CanvasProps> = ({
     onInteractStart, onInteractMove, onInteractEnd,
     stampMode, stampBuffer, stampScale, fitView,
     autoPole, activePoles, poleType, qualityIdx, autoRoboport, activeRoboports,
-    previewEntities = [], hasAlternateFrameLamp,
+    previewEntities = [], hasAlternateFrameLamp, lampPresenceGrid,
     onHover, tool
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const lampPresenceCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const frameRef = useRef<number | null>(null);
     const renderCallbackRef = useRef<() => void>(() => undefined);
     const lastMousePos = useRef<{ x: number, y: number } | null>(null);
@@ -115,6 +118,33 @@ export const Canvas: React.FC<CanvasProps> = ({
         );
         context.putImageData(new ImageData(bytes, gridData.width, gridData.height), 0, 0);
     }, [gridData]);
+
+    const rebuildLampPresenceCache = useCallback(() => {
+        if (!lampPresenceGrid) {
+            lampPresenceCanvasRef.current = null;
+            return;
+        }
+        let cache = lampPresenceCanvasRef.current;
+        if (!cache) {
+            cache = document.createElement('canvas');
+            lampPresenceCanvasRef.current = cache;
+        }
+        if (cache.width !== lampPresenceGrid.width || cache.height !== lampPresenceGrid.height) {
+            cache.width = lampPresenceGrid.width;
+            cache.height = lampPresenceGrid.height;
+        }
+        const context = cache.getContext('2d');
+        if (!context) return;
+        const bytes = new Uint8ClampedArray(lampPresenceGrid.cells.length * 4);
+        for (let index = 0; index < lampPresenceGrid.cells.length; index++) {
+            if (lampPresenceGrid.cells[index]) bytes[index * 4 + 3] = 0xff;
+        }
+        context.putImageData(
+            new ImageData(bytes, lampPresenceGrid.width, lampPresenceGrid.height),
+            0,
+            0,
+        );
+    }, [lampPresenceGrid]);
 
     // Render Logic
     const render = useCallback(() => {
@@ -157,7 +187,27 @@ export const Canvas: React.FC<CanvasProps> = ({
         const minTileY = Math.max(0, Math.floor(worldT / PIXEL_SIZE));
         const maxTileY = Math.min(GRID_H - 1, Math.floor(worldB / PIXEL_SIZE) + 1);
 
-        // 4. Cached pixels. One bitmap pixel represents one Factorio lamp.
+        // 4. Animation lamp presence. A currently transparent/off lamp is
+        // rendered black so it stays distinguishable from a genuinely empty tile.
+        const cachedLampPresence = lampPresenceCanvasRef.current;
+        if (cachedLampPresence && maxTileX >= minTileX && maxTileY >= minTileY) {
+            const sourceWidth = maxTileX - minTileX + 1;
+            const sourceHeight = maxTileY - minTileY + 1;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(
+                cachedLampPresence,
+                minTileX,
+                minTileY,
+                sourceWidth,
+                sourceHeight,
+                minTileX * PIXEL_SIZE,
+                minTileY * PIXEL_SIZE,
+                sourceWidth * PIXEL_SIZE,
+                sourceHeight * PIXEL_SIZE,
+            );
+        }
+
+        // 5. Cached pixels. One bitmap pixel represents one Factorio lamp.
         const cachedGrid = gridCanvasRef.current;
         if (cachedGrid && maxTileX >= minTileX && maxTileY >= minTileY) {
             const sourceWidth = maxTileX - minTileX + 1;
@@ -176,7 +226,7 @@ export const Canvas: React.FC<CanvasProps> = ({
             );
         }
 
-        // 5. Grid Lines
+        // 6. Grid Lines
         ctx.lineWidth = 1;
 
         // Chunk Lines (32)
@@ -213,7 +263,7 @@ export const Canvas: React.FC<CanvasProps> = ({
             ctx.stroke();
         }
 
-        // 6. Stamp Preview
+        // 7. Stamp Preview
         if (stampMode && stampBuffer && lastMousePos.current) {
             const worldPos = getWorldCoords(lastMousePos.current.x, lastMousePos.current.y, canvas.getBoundingClientRect(), camera, w, h);
             const cx = Math.floor(worldPos.x / PIXEL_SIZE);
@@ -262,7 +312,7 @@ export const Canvas: React.FC<CanvasProps> = ({
             ctx.strokeRect(startX * PIXEL_SIZE, startY * PIXEL_SIZE, drawW * PIXEL_SIZE, drawH * PIXEL_SIZE);
         }
 
-        // 7. Auto Poles
+        // 8. Auto Poles
         if (autoPole && activePoles) {
             const data = POLE_DATA[poleType];
             const size = data.size;
@@ -390,6 +440,11 @@ export const Canvas: React.FC<CanvasProps> = ({
         rebuildGridCache();
         requestRender();
     }, [gridVersion, rebuildGridCache, requestRender]);
+
+    useEffect(() => {
+        rebuildLampPresenceCache();
+        requestRender();
+    }, [rebuildLampPresenceCache, requestRender]);
 
     useEffect(() => {
         requestRender();

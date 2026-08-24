@@ -347,6 +347,26 @@ function App() {
     height: number;
   } | undefined>();
 
+  const ensureAnimationFrameLimit = useCallback((
+    requiredFrames: number,
+    structureName: string,
+  ): number | null => {
+    const normalizedRequired = Math.max(1, Math.round(requiredFrames));
+    if (normalizedRequired <= maxFrameCount) return maxFrameCount;
+    const accepted = window.confirm([
+      t('This structure requires more animation frames than the current limit.'),
+      `${t('Structure')} : ${structureName}`,
+      `${t('Required frames')} : ${normalizedRequired.toLocaleString()}`,
+      `${t('Current frame limit')} : ${maxFrameCount.toLocaleString()}`,
+      '',
+      `${t('OK')} : ${t('raise the frame limit and continue')}`,
+      `${t('Cancel')} : ${t('cancel this structure')}`,
+    ].join('\n'));
+    if (!accepted) return null;
+    setMaxFrameCount(normalizedRequired);
+    return normalizedRequired;
+  }, [maxFrameCount, t]);
+
   const resetPreviewPlayback = useCallback((autoplay = true) => {
     mediaPreviewFrameRef.current = 0;
     setMediaPreviewFrame(0);
@@ -616,6 +636,16 @@ function App() {
         ? { ...options, emojiImageLoader: emoji => loadEmojiImage(emojiProvider, emoji) }
         : options);
       if (buffer) {
+        const requiredFrames = buffer.animation?.transitions.length
+          ? buffer.animation.transitions.length + 1
+          : 1;
+        if (ensureAnimationFrameLimit(requiredFrames, t('Animated text stamp')) === null) {
+          setStampBuffer(null);
+          setStampMode(null);
+          setStatusMsg(t('Structure cancelled.'));
+          setTimeout(() => setStatusMsg(''), 2500);
+          return;
+        }
         setStampBuffer(buffer);
         setStampMode('text');
         setStampScale(1);
@@ -631,10 +661,11 @@ function App() {
   const handleNotoAnimatedEmojiStamp = useCallback(async (
     entry: NotoAnimatedEmojiEntry,
     requestedSize: number,
-  ) => {
+    activateGridStamp: boolean,
+  ): Promise<StampBuffer | null> => {
     if (!window.factorioLampEditor?.decodeMedia) {
       alert('Official animated-emoji stamps are available in the installed desktop application.');
-      return;
+      return null;
     }
     const size = Math.max(4, Math.min(128, Math.round(requestedSize)));
     setStatusMsg(`Loading ${entry.name} animation…`);
@@ -654,30 +685,43 @@ function App() {
         monochromeThreshold: 128,
         differenceThreshold: 0,
       });
-      const selected = decoded.frameCount > maxFrameCount
-        ? selectDecodedMediaFrames(decoded, evenlySpacedFrameIndices(decoded.frameCount, maxFrameCount))
-        : decoded;
-      setStampBuffer({
-        w: selected.width,
-        h: selected.height,
-        data: selected.firstFrame,
+      if (ensureAnimationFrameLimit(decoded.frameCount, `${t('Animated emoji')} : ${entry.name}`) === null) {
+        if (activateGridStamp) {
+          setStampBuffer(null);
+          setStampMode(null);
+        }
+        setStatusMsg(t('Structure cancelled.'));
+        setTimeout(() => setStatusMsg(''), 2500);
+        return null;
+      }
+      const stamp: StampBuffer = {
+        w: decoded.width,
+        h: decoded.height,
+        data: decoded.firstFrame,
         sourceName: `Noto Animated Emoji · ${entry.name}`,
-        animation: selected.frameCount > 1 ? {
-          firstDurationTicks: selected.firstDurationTicks,
+        animation: decoded.frameCount > 1 ? {
+          firstDurationTicks: decoded.firstDurationTicks,
           sourceFrameCount: decoded.frameCount,
-          transitions: selected.transitions,
+          transitions: decoded.transitions,
         } : undefined,
-      });
-      setStampMode('text');
-      setStampScale(1);
-      setStatusMsg(`${entry.name}: ${selected.frameCount.toLocaleString()} real frames ready — click the grid to place it.`);
+      };
+      if (activateGridStamp) {
+        setStampBuffer(stamp);
+        setStampMode('text');
+        setStampScale(1);
+      }
+      setStatusMsg(activateGridStamp
+        ? `${entry.name}: ${decoded.frameCount.toLocaleString()} real frames ready — click the grid to place it.`
+        : `${entry.name}: ${decoded.frameCount.toLocaleString()} real frames inserted into the text field.`);
       setTimeout(() => setStatusMsg(''), 5000);
+      return stamp;
     } catch (error) {
       console.error('Unable to create the official animated emoji stamp.', error);
       setStatusMsg('');
       alert(`Unable to load this animated emoji.\n${error instanceof Error ? error.message : String(error)}`);
+      return null;
     }
-  }, [maxFrameCount, mediaFpsLimit]);
+  }, [ensureAnimationFrameLimit, mediaFpsLimit, t]);
 
   const startPlacedImage = useCallback((
     image: HTMLImageElement,
@@ -1507,8 +1551,7 @@ function App() {
       return;
     }
     const activeFrameCount = mediaAnimationInfo?.frameCount ?? (manualAnimation ? manualAnimation.transitions.length + 1 : 1);
-    if (activeFrameCount > maxFrameCount) {
-      alert(`This animation has ${activeFrameCount.toLocaleString()} frames. Reduce it to ${maxFrameCount.toLocaleString()} frames or raise the frame limit in Settings.`);
+    if (ensureAnimationFrameLimit(activeFrameCount, t('Blueprint animation')) === null) {
       return;
     }
     const primaryLabel = blueprintImageInfo
@@ -1792,6 +1835,22 @@ function App() {
     if (stampAnimation) {
       const previousAnimation = mediaAnimationRef.current;
       const previousAnimationInfo = mediaAnimationInfo;
+      const requiredFrameCount = Math.max(
+        stampAnimation.transitions.length + 1,
+        previousAnimation ? animationMaximumFrameCount(previousAnimation) : 1,
+      );
+      const placementFrameLimit = ensureAnimationFrameLimit(
+        requiredFrameCount,
+        pendingStamp.sourceName ?? t('Animated text stamp'),
+      );
+      if (placementFrameLimit === null) {
+        setStampBuffer(null);
+        setStampMode(null);
+        setStatusMsg(t('Structure cancelled.'));
+        setTimeout(() => setStatusMsg(''), 2500);
+        stampPlacementPendingRef.current = false;
+        return;
+      }
       setStatusMsg(previousAnimation ? 'Adding an independent animated stamp…' : 'Placing animated text…');
       try {
         const baseGrid = cloneGrid(previousAnimation?.firstFrame ?? gridRef.current);
@@ -1819,7 +1878,7 @@ function App() {
             previousAnimation,
             placed.animation,
             { x: startX, y: startY, width: destW, height: destH },
-            maxFrameCount,
+            placementFrameLimit,
           )
           : placed.animation;
         const unionGrid = previousAnimation ? createAnimationUnionGrid(animation) : placed.unionGrid;
@@ -2315,6 +2374,11 @@ function App() {
               activeRoboports={activeRoboports}
               previewEntities={animationPreviewEntities}
               hasAlternateFrameLamp={hasAlternateFrameLamp}
+              lampPresenceGrid={viewingMediaFrame
+                ? mediaUnionGridRef.current
+                : viewingSequenceFrame
+                  ? manualUnionGrid
+                  : undefined}
               onHover={(x, y) => setCoords({ x, y })}
               tool={viewingSequenceFrame || viewingMediaFrame ? 'pan' : tool}
             />

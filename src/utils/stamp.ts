@@ -50,6 +50,8 @@ export interface TextStampOptions {
     defaultStyle: TextCharacterStyle;
     characterStyles?: Record<number, Partial<TextCharacterStyle>>;
     animatedCharacters?: Record<number, TextCharacterAnimationInput>;
+    /** Real raster animations attached to graphemes inserted from the animated emoji catalog. */
+    animatedEmojiStamps?: Record<number, StampBuffer>;
     emojiFontFamily?: string;
     emojiArtworkStyle?: 'font' | EmojiStaticAssetProvider;
     emojiImageLoader?: (emoji: string) => Promise<HTMLImageElement | null>;
@@ -122,6 +124,61 @@ const maximumAnimationScale = (effect: TextCharacterAnimationEffect) => (
     effect === 'pulse' || effect === 'twinkle' ? 1.14 : 1
 );
 
+const normalizeStampDurationTicks = (value: number) => Math.max(2, Math.round(value));
+
+export const stampAnimationDurationTicks = (stamp: StampBuffer): number => {
+    if (!stamp.animation) return EMOJI_ANIMATION_FRAME_TICKS;
+    return normalizeStampDurationTicks(stamp.animation.firstDurationTicks)
+        + stamp.animation.transitions.reduce(
+            (total, transition) => total + normalizeStampDurationTicks(transition.durationTicks),
+            0,
+        );
+};
+
+export const stampAnimationSampleCount = (
+    stamp: StampBuffer,
+    sampleDurationTicks = EMOJI_ANIMATION_FRAME_TICKS,
+): number => (
+    stamp.animation
+        ? Math.max(1, Math.ceil(
+            stampAnimationDurationTicks(stamp) / normalizeStampDurationTicks(sampleDurationTicks),
+        ))
+        : 1
+);
+
+export const renderStampAnimationAtTick = (stamp: StampBuffer, tick: number): Uint32Array => {
+    const cells = stamp.data.slice();
+    if (!stamp.animation) return cells;
+    const durationTicks = stampAnimationDurationTicks(stamp);
+    const normalizedTick = ((Math.floor(tick) % durationTicks) + durationTicks) % durationTicks;
+    let frameEndTick = normalizeStampDurationTicks(stamp.animation.firstDurationTicks);
+    if (normalizedTick < frameEndTick) return cells;
+    for (const transition of stamp.animation.transitions) {
+        for (let patchIndex = 0; patchIndex < transition.indices.length; patchIndex++) {
+            cells[transition.indices[patchIndex]] = transition.colors[patchIndex];
+        }
+        frameEndTick += normalizeStampDurationTicks(transition.durationTicks);
+        if (normalizedTick < frameEndTick) break;
+    }
+    return cells;
+};
+
+const renderStampAnimationImage = (stamp: StampBuffer, tick: number): HTMLCanvasElement => {
+    const canvas = document.createElement('canvas');
+    canvas.width = stamp.w;
+    canvas.height = stamp.h;
+    const context = canvas.getContext('2d');
+    if (!context) return canvas;
+    const cells = renderStampAnimationAtTick(stamp, tick);
+    const bytes = new Uint8ClampedArray(
+        cells.buffer as ArrayBuffer,
+        cells.byteOffset,
+        cells.byteLength,
+    );
+    context.putImageData(new ImageData(bytes, stamp.w, stamp.h), 0, 0);
+    return canvas;
+};
+
 export const animationFrameIndexForTimelineStep = (
     frameIndex: number,
     frameCount: number,
@@ -192,7 +249,7 @@ const renderStyledText = (
         glyphAscent: number;
         glyphDescent: number;
         glyphHeight: number;
-        image?: HTMLImageElement;
+        image?: CanvasImageSource;
         transform: CharacterAnimationTransform;
     }[][] = [[]];
     graphemes.forEach((originalGrapheme, graphemeIndex) => {
@@ -204,15 +261,28 @@ const renderStyledText = (
             options.animatedCharacters?.[graphemeIndex],
             originalGrapheme,
         );
-        const variants = animation.frames;
-        const grapheme = variants[animationIndex % variants.length];
-        const transform = animationTransform(animation.effect, animationIndex);
-        const maximumScale = maximumAnimationScale(animation.effect);
+        const animatedEmojiStamp = options.animatedEmojiStamps?.[graphemeIndex];
+        const animatedEmojiImage = animatedEmojiStamp
+            ? renderStampAnimationImage(
+                animatedEmojiStamp,
+                animationIndex * EMOJI_ANIMATION_FRAME_TICKS,
+            )
+            : undefined;
+        const variants = animatedEmojiStamp ? [originalGrapheme] : animation.frames;
+        const grapheme = animatedEmojiStamp
+            ? originalGrapheme
+            : variants[animationIndex % variants.length];
+        const transform = animatedEmojiStamp
+            ? IDENTITY_ANIMATION_TRANSFORM
+            : animationTransform(animation.effect, animationIndex);
+        const maximumScale = animatedEmojiStamp ? 1 : maximumAnimationScale(animation.effect);
         const style = resolveStyle(options, graphemeIndex);
         const variantMetrics = variants.map(variant => {
-            const image = options.emojiArtworkStyle !== 'font' && EMOJI_GRAPHEME.test(variant)
-                ? options.emojiImages?.get(variant)
-                : undefined;
+            const image = animatedEmojiImage ?? (
+                options.emojiArtworkStyle !== 'font' && EMOJI_GRAPHEME.test(variant)
+                    ? options.emojiImages?.get(variant)
+                    : undefined
+            );
             if (image) {
                 const size = Math.max(1, Math.round(style.fontSize));
                 return {
@@ -239,15 +309,16 @@ const renderStyledText = (
         });
         const selectedMetrics = variantMetrics.find(metrics => metrics.variant === grapheme) ?? variantMetrics[0];
         const width = Math.ceil(Math.max(...variantMetrics.map(metrics => metrics.width)) * maximumScale);
+        const imageOnly = variantMetrics.every(metrics => Boolean(metrics.image));
         const ascent = Math.max(
             1,
             ...variantMetrics.map(metrics => Math.ceil(metrics.ascent * maximumScale)),
-            Math.ceil(style.fontSize * 0.9),
+            ...(imageOnly ? [] : [Math.ceil(style.fontSize * 0.9)]),
         );
         const descent = Math.max(
-            1,
+            0,
             ...variantMetrics.map(metrics => Math.ceil(metrics.descent * maximumScale)),
-            Math.ceil(style.fontSize * 0.25),
+            ...(imageOnly ? [] : [1, Math.ceil(style.fontSize * 0.25)]),
         );
         lines[lines.length - 1].push({
             grapheme,
@@ -267,10 +338,10 @@ const renderStyledText = (
 
     const lineMetrics = lines.map(line => {
         const ascent = Math.max(1, ...line.map(item => item.ascent));
-        const descent = Math.max(1, ...line.map(item => item.descent));
-        return { ascent, descent, height: ascent + descent + 4 };
+        const descent = Math.max(0, ...line.map(item => item.descent));
+        return { ascent, descent, height: ascent + descent };
     });
-    const width = Math.max(1, ...lines.map(line => line.reduce((sum, item) => sum + item.width, 4)));
+    const width = Math.max(1, ...lines.map(line => line.reduce((sum, item) => sum + item.width, 0)));
     const height = Math.max(1, lineMetrics.reduce((sum, value) => sum + value.height, 0));
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -282,9 +353,9 @@ const renderStyledText = (
 
     let y = 0;
     lines.forEach((line, lineIndex) => {
-        let x = 2;
+        let x = 0;
         const metrics = lineMetrics[lineIndex];
-        const baseline = y + 2 + metrics.ascent;
+        const baseline = y + metrics.ascent;
         line.forEach((item) => {
             context.font = fontDeclaration(item.style, item.grapheme, options.emojiFontFamily);
             context.fillStyle = item.style.color;
@@ -590,6 +661,7 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
     const emojiLoads = new Map<string, Promise<HTMLImageElement | null>>();
     graphemes.forEach((grapheme, graphemeIndex) => {
         if (grapheme === '\n') return;
+        if (options.animatedEmojiStamps?.[graphemeIndex]) return;
         const style = resolveStyle(options, graphemeIndex);
         const animation = normalizeCharacterAnimation(options.animatedCharacters?.[graphemeIndex], grapheme);
         animation.frames.forEach(variant => {
@@ -620,6 +692,9 @@ export async function createTextStamp(options: TextStampOptions): Promise<StampB
         1,
         ...Object.values(options.animatedCharacters ?? {}).map(animation => (
             Math.max(1, Array.isArray(animation) ? animation.length : animation.frames.length)
+        )),
+        ...Object.values(options.animatedEmojiStamps ?? {}).map(stamp => (
+            stampAnimationSampleCount(stamp)
         )),
     );
     const renderedFrames = Array.from({ length: animationLength }, (_, animationIndex) => (

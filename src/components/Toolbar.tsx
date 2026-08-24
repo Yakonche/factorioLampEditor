@@ -14,7 +14,7 @@ import {
     type BackgroundTileName,
 } from '../constants';
 import type { AnimationControllerSide } from '../utils/blueprint';
-import type { TextStampOptions } from '../utils/stamp';
+import type { StampBuffer, TextStampOptions } from '../utils/stamp';
 import {
     AUDIO_INSTRUMENTS,
     type AudioInstrumentSelection,
@@ -65,7 +65,11 @@ interface ToolbarProps {
 
     // Stamp props
     renderTextStamp: (options: TextStampOptions) => void;
-    renderNotoAnimatedEmojiStamp: (entry: NotoAnimatedEmojiEntry, size: number) => Promise<void>;
+    renderNotoAnimatedEmojiStamp: (
+        entry: NotoAnimatedEmojiEntry,
+        size: number,
+        activateGridStamp: boolean,
+    ) => Promise<StampBuffer | null>;
     onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onImageDimensionChange: (axis: 'width' | 'height', value: number) => void;
     lockImageAspectRatio: boolean;

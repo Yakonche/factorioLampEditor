@@ -3,6 +3,7 @@ import {
     DEFAULT_TEXT_VIEWPORT_HEIGHT,
     DEFAULT_TEXT_VIEWPORT_WIDTH,
     splitTextGraphemes,
+    type StampBuffer,
     type TextCharacterStyle,
     type TextScrollDirection,
     type TextStampOptions,
@@ -49,8 +50,19 @@ const NotoAnimatedEmojiCatalog = React.lazy(() => import('./NotoAnimatedEmojiCat
 interface TextStampPanelProps {
     initialColor: string;
     onCreate: (options: TextStampOptions) => void;
-    onCreateNotoAnimatedEmoji: (entry: NotoAnimatedEmojiEntry, size: number) => Promise<void>;
+    onCreateNotoAnimatedEmoji: (
+        entry: NotoAnimatedEmojiEntry,
+        size: number,
+        activateGridStamp: boolean,
+    ) => Promise<StampBuffer | null>;
 }
+
+type EmojiDestination = 'text' | 'grid';
+
+type AttachedAnimatedEmoji = {
+    emoji: string;
+    stamp: StampBuffer;
+};
 
 interface ScrollTimingInputProps {
     label: string;
@@ -426,6 +438,9 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
     });
     const [nativeEmojiOpen, setNativeEmojiOpen] = React.useState(false);
     const [animatedEmojiOpen, setAnimatedEmojiOpen] = React.useState(false);
+    const [staticEmojiDestination, setStaticEmojiDestination] = React.useState<EmojiDestination>('text');
+    const [animatedEmojiDestination, setAnimatedEmojiDestination] = React.useState<EmojiDestination>('grid');
+    const [attachedAnimatedEmoji, setAttachedAnimatedEmoji] = React.useState<Record<number, AttachedAnimatedEmoji>>({});
     const [selection, setSelection] = React.useState({ start: 0, end: 0 });
     const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number } | null>(null);
 
@@ -524,10 +539,58 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
     const updateText = (nextText: string) => {
         textRef.current = nextText;
         setText(nextText);
+        const graphemes = splitTextGraphemes(nextText);
+        setAttachedAnimatedEmoji(previous => Object.fromEntries(
+            Object.entries(previous).filter(([index, attached]) => (
+                graphemes[Number(index)] === attached.emoji
+            )),
+        ));
     };
 
-    const appendEmoji = (emoji: string) => {
+    const buildStampOptions = (
+        stampText: string,
+        includeTextSettings: boolean,
+        animatedEmojiStamps: Record<number, StampBuffer> = {},
+    ): TextStampOptions => ({
+        text: stampText,
+        defaultStyle: globalStyle,
+        characterStyles: includeTextSettings ? characterStyles : {},
+        animatedEmojiStamps,
+        emojiFontFamily: selectedEmojiFontFamily,
+        emojiArtworkStyle: emojiArtworkProviderForStyle(resolvedEmojiStyle) ?? 'font',
+        viewportWidth: includeTextSettings && viewportEnabled && !verticalScroll
+            ? Math.max(3, viewportWidth)
+            : undefined,
+        viewportHeight: includeTextSettings && viewportEnabled && verticalScroll
+            ? Math.max(3, viewportHeight)
+            : undefined,
+        scroll: includeTextSettings && viewportEnabled && scrollEnabled,
+        scrollDirection,
+        frameDurationTicks,
+    });
+
+    const handleStaticEmoji = (emoji: string) => {
+        if (staticEmojiDestination === 'grid') {
+            onCreate(buildStampOptions(emoji, false));
+            return;
+        }
         updateText(textRef.current + emoji);
+    };
+
+    const handleAnimatedEmoji = async (entry: NotoAnimatedEmojiEntry) => {
+        const activateGridStamp = animatedEmojiDestination === 'grid';
+        const stamp = await onCreateNotoAnimatedEmoji(entry, globalStyle.fontSize, activateGridStamp);
+        if (!stamp || activateGridStamp) return;
+        const graphemeIndex = splitTextGraphemes(textRef.current).length;
+        updateText(textRef.current + entry.emoji);
+        setAttachedAnimatedEmoji(previous => ({
+            ...previous,
+            [graphemeIndex]: { emoji: entry.emoji, stamp },
+        }));
+        window.requestAnimationFrame(() => {
+            textareaRef.current?.focus();
+            textareaRef.current?.setSelectionRange(textRef.current.length, textRef.current.length);
+        });
     };
 
     const importFont = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -559,18 +622,15 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
         }
     };
 
-    const submit = () => onCreate({
-        text,
-        defaultStyle: globalStyle,
-        characterStyles,
-        emojiFontFamily: selectedEmojiFontFamily,
-        emojiArtworkStyle: emojiArtworkProviderForStyle(resolvedEmojiStyle) ?? 'font',
-        viewportWidth: viewportEnabled && !verticalScroll ? Math.max(3, viewportWidth) : undefined,
-        viewportHeight: viewportEnabled && verticalScroll ? Math.max(3, viewportHeight) : undefined,
-        scroll: viewportEnabled && scrollEnabled,
-        scrollDirection,
-        frameDurationTicks,
-    });
+    const submit = () => {
+        const graphemes = splitTextGraphemes(text);
+        const animatedEmojiStamps = Object.fromEntries(
+            Object.entries(attachedAnimatedEmoji)
+                .filter(([index, attached]) => graphemes[Number(index)] === attached.emoji)
+                .map(([index, attached]) => [index, attached.stamp]),
+        );
+        onCreate(buildStampOptions(text, true, animatedEmojiStamps));
+    };
 
     const updateTimingFromSeconds = (seconds: number): number => {
         const ticks = scrollSecondsToTicks(seconds);
@@ -903,6 +963,17 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                                 </optgroup>
                             </select>
                         </label>
+                        <label className="mt-2 block text-[9px] font-bold uppercase tracking-wider text-gray-500">
+                            {t('Selected emoji destination')}
+                            <select
+                                value={staticEmojiDestination}
+                                onChange={event => setStaticEmojiDestination(event.target.value as EmojiDestination)}
+                                className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1.5 text-[10px] normal-case tracking-normal text-gray-200 outline-none focus:border-yellow-500"
+                            >
+                                <option value="text">{t('Insert into text field')}</option>
+                                <option value="grid">{t('Create a direct grid stamp')}</option>
+                            </select>
+                        </label>
                         <p className="mt-2 text-[9px] leading-4 text-gray-500">
                             {t('The selected library is used for both the catalog preview and the created stamp.')}
                             {' '}
@@ -917,7 +988,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                             <EmojiCatalog
                                 fontFamily={selectedEmojiFontFamily}
                                 emojiStyle={resolvedEmojiStyle}
-                                onSelect={appendEmoji}
+                                onSelect={handleStaticEmoji}
                             />
                         </React.Suspense>
                     </>
@@ -942,9 +1013,20 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                             {t('879 genuine Google Noto animations are available. Selected animations are saved in the persistent emoji cache and remain available offline.')}
                             {' '}{t('An internet connection is required only the first time an animation is selected.')}
                         </p>
+                        <label className="mt-2 block text-[9px] font-bold uppercase tracking-wider text-gray-500">
+                            {t('Selected emoji destination')}
+                            <select
+                                value={animatedEmojiDestination}
+                                onChange={event => setAnimatedEmojiDestination(event.target.value as EmojiDestination)}
+                                className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1.5 text-[10px] normal-case tracking-normal text-gray-200 outline-none focus:border-fuchsia-500"
+                            >
+                                <option value="text">{t('Insert into text field')}</option>
+                                <option value="grid">{t('Create a direct grid stamp')}</option>
+                            </select>
+                        </label>
                         <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
                             <NotoAnimatedEmojiCatalog
-                                onSelect={entry => onCreateNotoAnimatedEmoji(entry, globalStyle.fontSize)}
+                                onSelect={handleAnimatedEmoji}
                             />
                         </React.Suspense>
                         <p className="mt-2 text-[8px] leading-3 text-gray-600">
