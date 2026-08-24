@@ -15,7 +15,9 @@ import {
     emojiFontFamily,
     emojiStyleAvailable,
     emojiStyleLabel,
+    emojiStyleRecommendedMinSize,
     fontFamilyCss,
+    NOTO_ANIMATED_EMOJI_RECOMMENDED_MIN_SIZE,
     normalizeFontFamilies,
     readOpenTypeFontNames,
     readLowestRecommendedPpem,
@@ -770,16 +772,22 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                         {EMOJI_FONT_STYLES.map(style => {
                             const available = emojiStyleAvailable(style, emojiAvailability);
                             const label = style.id === 'automatic'
-                                ? `${t('Automatic')} — ${t('Detected')}: ${t(emojiStyleLabel(automaticEmojiStyle))}`
+                                ? `${t('Automatic')} — ${t('Detected')} : ${t(emojiStyleLabel(automaticEmojiStyle))}`
                                 : t(style.label);
+                            const recommendationStyle = style.id === 'automatic'
+                                ? automaticEmojiStyle
+                                : style.id;
                             return (
                                 <option key={style.id} value={style.id} disabled={!available}>
-                                    {label}{available ? '' : ` — ${t('not detected on this OS')}`}
+                                    {label} ({emojiStyleRecommendedMinSize(recommendationStyle)} px)
+                                    {available ? '' : ` — ${t('not detected on this OS')}`}
                                 </option>
                             );
                         })}
                     </select>
                     <span className="mt-1 block font-normal leading-4 text-gray-500">
+                        {t('The value in parentheses is the estimated minimum for preserving fine details on the lamp grid.')}
+                        {' '}
                         {t('Downloaded emoji artwork is saved in the persistent cache for offline reuse. Toss Face and Noto are bundled; the official animated catalog uses Google Noto animations.')}
                     </span>
                 </label>
@@ -845,7 +853,9 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                         <p className="mt-2 text-[9px] leading-4 text-gray-500">
                             {t('Only emoji with genuine published animation frames are listed here. Twemoji does not publish an official animated catalog.')}
                         </p>
-                        <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">{t('Official Noto Animated Emoji')}</p>
+                        <p className="mt-2 text-[9px] font-bold uppercase tracking-wider text-fuchsia-300">
+                            {t('Official Noto Animated Emoji')} ({NOTO_ANIMATED_EMOJI_RECOMMENDED_MIN_SIZE} px)
+                        </p>
                         <p className="mt-1 text-[9px] leading-4 text-gray-500">
                             {t('881 genuine Google Noto animations are available. Selected animations are saved in the persistent emoji cache and remain available offline.')}
                             {' '}{t('An internet connection is required only the first time an animation is selected.')}

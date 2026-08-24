@@ -208,65 +208,80 @@ export interface EmojiFontStyleOption {
     label: string;
     family: string;
     platform?: 'apple' | 'windows';
+    /** Conservative minimum for preserving fine emoji detail on the lamp grid. */
+    recommendedMinSize: number;
 }
+
+export const NOTO_ANIMATED_EMOJI_RECOMMENDED_MIN_SIZE = 64;
 
 export const EMOJI_FONT_STYLES: readonly EmojiFontStyleOption[] = [
     {
         id: 'automatic',
         label: 'Automatic (OS native)',
         family: '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif',
+        recommendedMinSize: 40,
     },
     {
         id: 'apple',
         label: 'Apple Color Emoji',
         family: '"Apple Color Emoji", "Noto Color Emoji", "Segoe UI Emoji", sans-serif',
         platform: 'apple',
+        recommendedMinSize: 48,
     },
     {
         id: 'segoe',
         label: 'Segoe UI Emoji',
         family: '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif',
         platform: 'windows',
+        recommendedMinSize: 40,
     },
     {
         id: 'noto',
         label: 'Noto Color Emoji (bundled)',
         family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+        recommendedMinSize: 36,
     },
     {
         id: 'tossface',
         label: 'Toss Face (bundled)',
         family: '"Tossface", "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+        recommendedMinSize: 32,
     },
     {
         id: 'twemoji',
         label: 'Twemoji 17 (static artwork)',
         family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+        recommendedMinSize: 24,
     },
     {
         id: 'openmoji',
         label: 'OpenMoji 17 (color artwork)',
         family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+        recommendedMinSize: 36,
     },
     {
         id: 'fluent-flat',
         label: 'Microsoft Fluent Emoji (Flat)',
         family: '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif',
+        recommendedMinSize: 32,
     },
     {
         id: 'fluent-color',
         label: 'Microsoft Fluent Emoji (Color)',
         family: '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif',
+        recommendedMinSize: 40,
     },
     {
         id: 'fluent-3d',
         label: 'Microsoft Fluent Emoji (3D)',
         family: '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif',
+        recommendedMinSize: 64,
     },
     {
         id: 'blobmoji',
         label: 'Blobmoji (color artwork)',
         family: '"Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+        recommendedMinSize: 32,
     },
 ];
 
@@ -305,6 +320,11 @@ export const emojiStyleLabel = (style: Exclude<EmojiFontStyle, 'automatic'>): st
     if (option) return option.label;
     return EMOJI_FONT_STYLES[3].label;
 };
+
+export const emojiStyleRecommendedMinSize = (style: EmojiFontStyle): number => (
+    EMOJI_FONT_STYLES.find(candidate => candidate.id === style)?.recommendedMinSize
+    ?? EMOJI_FONT_STYLES[0].recommendedMinSize
+);
 
 export const containsFontFamily = (families: readonly string[], wantedFamily: string): boolean => {
     const normalizedWanted = wantedFamily.trim().toLocaleLowerCase();

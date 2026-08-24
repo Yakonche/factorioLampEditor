@@ -47,7 +47,33 @@ export interface AnimationTimeline {
     durationTicks: number;
 }
 
+export interface AnimationOverlayBounds {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 const normalizeDurationTicks = (value: number) => Math.max(2, Math.round(value));
+
+const greatestCommonDivisor = (first: number, second: number): number => {
+    let left = Math.max(1, Math.round(first));
+    let right = Math.max(1, Math.round(second));
+    while (right) {
+        const remainder = left % right;
+        left = right;
+        right = remainder;
+    }
+    return left;
+};
+
+const leastCommonMultiple = (first: number, second: number): number => {
+    const result = first / greatestCommonDivisor(first, second) * second;
+    if (!Number.isSafeInteger(result) || result > 2_000_000_000) {
+        throw new RangeError('The combined animation loop is too long for Factorio.');
+    }
+    return result;
+};
 
 /** Builds the sparse animation format shared by slideshows and decoded media. */
 export function createGridAnimationFromFrames(
@@ -323,6 +349,152 @@ export function animationFrameAtTick(timeline: AnimationTimeline, tick: number):
         else high = middle - 1;
     }
     return Math.max(0, high);
+}
+
+/**
+ * Combines two independently timed grid animations into one exact Factorio
+ * loop. The overlay owns its complete rectangle, including transparent cells,
+ * so an older animation cannot reappear below a newly placed stamp.
+ */
+export function composeGridAnimations(
+    base: GridAnimationData,
+    overlay: GridAnimationData,
+    overlayBounds: AnimationOverlayBounds,
+    maximumFrames = 10_000,
+): GridAnimationData {
+    const width = base.firstFrame.width;
+    const height = base.firstFrame.height;
+    if (
+        overlay.firstFrame.width !== width
+        || overlay.firstFrame.height !== height
+        || base.firstFrame.cells.length !== overlay.firstFrame.cells.length
+    ) {
+        throw new Error('Combined animations must use the same grid dimensions.');
+    }
+
+    const baseTimeline = createAnimationTimeline(base);
+    const overlayTimeline = createAnimationTimeline(overlay);
+    const combinedDuration = leastCommonMultiple(
+        baseTimeline.durationTicks,
+        overlayTimeline.durationTicks,
+    );
+    const baseRepetitions = combinedDuration / baseTimeline.durationTicks;
+    const overlayRepetitions = combinedDuration / overlayTimeline.durationTicks;
+    const estimatedEventCount = baseRepetitions * (base.transitions.length + 1)
+        + overlayRepetitions * (overlay.transitions.length + 1);
+    const normalizedMaximumFrames = Math.max(2, Math.floor(maximumFrames));
+    if (estimatedEventCount > normalizedMaximumFrames * 2) {
+        throw new RangeError(
+            `Combining these independent loops would require more than ${normalizedMaximumFrames.toLocaleString()} frames.`,
+        );
+    }
+
+    const overlayLeft = Math.max(0, Math.floor(overlayBounds.x));
+    const overlayTop = Math.max(0, Math.floor(overlayBounds.y));
+    const overlayRight = Math.min(width, Math.ceil(overlayBounds.x + overlayBounds.width));
+    const overlayBottom = Math.min(height, Math.ceil(overlayBounds.y + overlayBounds.height));
+    const belongsToOverlay = (cellIndex: number) => {
+        const x = cellIndex % width;
+        const y = Math.floor(cellIndex / width);
+        return x >= overlayLeft && x < overlayRight && y >= overlayTop && y < overlayBottom;
+    };
+
+    const events = new Map<number, Map<number, number>>();
+    const addPatch = (
+        tick: number,
+        indices: Uint32Array,
+        colors: Uint32Array,
+        acceptIndex: (cellIndex: number) => boolean,
+    ) => {
+        if (tick <= 0 || tick >= combinedDuration) return;
+        let patch = events.get(tick);
+        for (let index = 0; index < indices.length; index++) {
+            const cellIndex = indices[index];
+            if (!acceptIndex(cellIndex)) continue;
+            patch ??= new Map<number, number>();
+            patch.set(cellIndex, colors[index]);
+        }
+        if (patch?.size) events.set(tick, patch);
+    };
+
+    const addAnimationEvents = (
+        animation: GridAnimationData,
+        timeline: AnimationTimeline,
+        repetitions: number,
+        acceptIndex: (cellIndex: number) => boolean,
+    ) => {
+        const changedIndices = new Set<number>();
+        animation.transitions.forEach(transition => {
+            transition.indices.forEach(cellIndex => {
+                if (acceptIndex(cellIndex)) changedIndices.add(cellIndex);
+            });
+        });
+        const resetIndices = Uint32Array.from(changedIndices);
+        const resetColors = Uint32Array.from(
+            resetIndices,
+            cellIndex => animation.firstFrame.cells[cellIndex],
+        );
+
+        for (let repetition = 0; repetition < repetitions; repetition++) {
+            const cycleStart = repetition * timeline.durationTicks;
+            animation.transitions.forEach((transition, transitionIndex) => {
+                addPatch(
+                    cycleStart + timeline.frameStartTicks[transitionIndex + 1],
+                    transition.indices,
+                    transition.colors,
+                    acceptIndex,
+                );
+            });
+            if (repetition + 1 < repetitions) {
+                addPatch(cycleStart + timeline.durationTicks, resetIndices, resetColors, acceptIndex);
+            }
+        }
+    };
+
+    addAnimationEvents(base, baseTimeline, baseRepetitions, cellIndex => !belongsToOverlay(cellIndex));
+    // Added second so the newest stamp wins if malformed source patches happen
+    // to reach beyond their advertised rectangle at the same tick.
+    addAnimationEvents(overlay, overlayTimeline, overlayRepetitions, belongsToOverlay);
+
+    const eventTicks = [...events.keys()].sort((first, second) => first - second);
+    if (eventTicks.length + 1 > normalizedMaximumFrames) {
+        throw new RangeError(
+            `The combined animation needs ${(eventTicks.length + 1).toLocaleString()} frames, above the ${normalizedMaximumFrames.toLocaleString()} frame limit.`,
+        );
+    }
+    if (!eventTicks.length) {
+        return {
+            firstFrame: {
+                width,
+                height,
+                cells: overlay.firstFrame.cells.slice(),
+            },
+            firstDurationTicks: combinedDuration,
+            transitions: [],
+        };
+    }
+
+    const transitions = eventTicks.map((tick, eventIndex): MediaFrameTransition => {
+        const patch = events.get(tick)!;
+        const nextTick = eventTicks[eventIndex + 1] ?? combinedDuration;
+        if (nextTick - tick < 2) {
+            throw new RangeError('These independent animations would require an impossible sub-two-tick frame.');
+        }
+        return {
+            indices: Uint32Array.from(patch.keys()),
+            colors: Uint32Array.from(patch.values()),
+            durationTicks: nextTick - tick,
+        };
+    });
+    return {
+        firstFrame: {
+            width,
+            height,
+            cells: overlay.firstFrame.cells.slice(),
+        },
+        firstDurationTicks: Math.max(2, eventTicks[0]),
+        transitions,
+    };
 }
 
 export function createAnimationUnionGrid(

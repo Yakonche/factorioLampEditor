@@ -7,6 +7,7 @@ import {
     EMOJI_FONT_STYLES,
     SYSTEM_FONT_OPTIONS,
     emojiStyleLabel,
+    emojiStyleRecommendedMinSize,
     emojiFontFamily,
     emojiStyleAvailable,
     fontFamilyCss,
@@ -14,6 +15,7 @@ import {
     readLowestRecommendedPpem,
     readOpenTypeFontNames,
     resolveAutomaticEmojiStyle,
+    NOTO_ANIMATED_EMOJI_RECOMMENDED_MIN_SIZE,
 } from '../src/utils/fonts';
 import { emojiAssetKey, emojiAssetUrl, twemojiCodepoint } from '../src/utils/emojiAssets';
 
@@ -134,6 +136,9 @@ assert.equal(resolveAutomaticEmojiStyle(windowsEmojiAvailability, 'Win32'), 'seg
 assert.equal(resolveAutomaticEmojiStyle(bundledOnlyEmojiAvailability, 'Linux x86_64'), 'noto');
 assert.equal(emojiStyleLabel('noto'), 'Noto Color Emoji (bundled)');
 assert.equal(emojiStyleLabel('twemoji'), 'Twemoji 17 (static artwork)');
+assert.equal(emojiStyleRecommendedMinSize('twemoji'), 24);
+assert.equal(emojiStyleRecommendedMinSize('fluent-3d'), 64);
+assert.equal(NOTO_ANIMATED_EMOJI_RECOMMENDED_MIN_SIZE, 64);
 assert.equal(twemojiCodepoint('❤️'), '2764');
 assert.equal(twemojiCodepoint('👩‍💻'), '1f469-200d-1f4bb');
 assert.equal(twemojiCodepoint('👨‍❤️‍👨'), '1f468-200d-2764-fe0f-200d-1f468');

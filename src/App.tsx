@@ -48,6 +48,7 @@ import { generateImageBufferInWorker } from './utils/imageWorkerClient';
 import {
   animationDurationTicks,
   animationFrameAtTick,
+  composeGridAnimations,
   createAnimationTimeline,
   createAnimationUnionGrid,
   createGridAnimationFromFrames,
@@ -82,6 +83,11 @@ import {
   inspectBrowserImage,
 } from './utils/browserImageAnimation';
 import { useI18n } from './i18n';
+import {
+  isEditableKeyboardTarget,
+  keyboardPanDirection,
+  keyboardPanToken,
+} from './utils/keyboardNavigation';
 
 type CalculationWorkerResponse = {
   id: number;
@@ -107,6 +113,8 @@ const EMPTY_ANIMATION_STATS: AnimationEntityStats = {
   relayPoleCount: 0,
   programmableSpeakerCount: 0,
 };
+
+const KEYBOARD_PAN_SPEED = 640;
 
 const fileExtension = (file: File): string => file.name.split('.').pop()?.toLocaleLowerCase() ?? '';
 const isTgsFile = (file: File): boolean => fileExtension(file) === 'tgs'
@@ -1541,17 +1549,24 @@ function App() {
   const [isPanning, setIsPanning] = useState(false);
   const panStart = useRef({ x: 0, y: 0 });
   const camStart = useRef({ x: 0, y: 0 });
+  const pressedPanKeysRef = useRef(new Map<string, 'up' | 'down' | 'left' | 'right'>());
+  const keyboardPanFrameRef = useRef<number | null>(null);
 
   // Track last grid position for stamping on release
   const lastGridPos = useRef<{ x: number, y: number } | null>(null);
+  const stampPlacementPendingRef = useRef(false);
 
   const onInteractStart = (e: React.MouseEvent | React.TouchEvent, x: number, y: number) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const button = 'button' in e ? e.button : 0;
 
-    if (stampMode && stampBuffer && button !== 2 && !viewingSequenceFrame && !viewingMediaFrame) {
-      lastGridPos.current = { x, y };
+    if (stampMode && stampBuffer && button !== 2) {
+      // Commit on press instead of waiting for a canvas-local mouseup. Electron
+      // can lose that release when focus changes (for example Print Screen or
+      // an OS overlay), which used to leave a valid stamp apparently ignored.
+      lastGridPos.current = null;
+      void commitStamp(x, y);
       return;
     }
 
@@ -1643,8 +1658,10 @@ function App() {
   };
 
   const commitStamp = async (cx: number, cy: number) => {
+    if (stampPlacementPendingRef.current) return;
     const pendingStamp = stampBuffer;
     if (!pendingStamp) return;
+    stampPlacementPendingRef.current = true;
 
     // Check mode
     const isText = stampMode === 'text';
@@ -1687,65 +1704,110 @@ function App() {
 
     const stampAnimation = isText ? pendingStamp.animation : undefined;
     if (stampAnimation) {
-      setStampMode(null);
-      setStampBuffer(null);
-      setStatusMsg('Placing animated text…');
-      const baseGrid = cloneGrid(gridRef.current);
-      const firstFrame = renderStampFrame(baseGrid, pendingStamp.data).frame;
-      const placed = await placeSparseStampAnimation(
-        pendingStamp,
-        firstFrame,
-        startX,
-        startY,
-        stampScale,
-      ).catch((error) => {
+      const previousAnimation = mediaAnimationRef.current;
+      const previousAnimationInfo = mediaAnimationInfo;
+      setStatusMsg(previousAnimation ? 'Merging animated stamps…' : 'Placing animated text…');
+      try {
+        const baseGrid = cloneGrid(previousAnimation?.firstFrame ?? gridRef.current);
+        const firstFrame = renderStampFrame(baseGrid, pendingStamp.data).frame;
+        const placementStamp = previousAnimation ? {
+          ...pendingStamp,
+          animation: {
+            ...stampAnimation,
+            transitions: stampAnimation.transitions.map(transition => ({
+              ...transition,
+              indices: transition.indices.slice(),
+              colors: transition.colors.slice(),
+            })),
+          },
+        } : pendingStamp;
+        const placed = await placeSparseStampAnimation(
+          placementStamp,
+          firstFrame,
+          startX,
+          startY,
+          stampScale,
+        );
+        const animation = previousAnimation
+          ? composeGridAnimations(
+            previousAnimation,
+            placed.animation,
+            { x: startX, y: startY, width: destW, height: destH },
+            maxFrameCount,
+          )
+          : placed.animation;
+        const unionGrid = previousAnimation ? createAnimationUnionGrid(animation) : placed.unionGrid;
+        clearMediaAnimation(true);
+        mediaAnimationRef.current = animation;
+        mediaUnionGridRef.current = unionGrid;
+        mediaPreviewGridRef.current = animation.firstFrame;
+        gridRef.current = animation.firstFrame;
+        committedGridRef.current = cloneGrid(gridRef.current);
+        historyRef.current = [];
+        setHistoryIndex(-1);
+        setSequenceFrames(previous => {
+          previous.forEach(frame => URL.revokeObjectURL(frame.thumbnailUrl));
+          return [];
+        });
+        setAnimationEnabled(false);
+        resetPreviewPlayback(true);
+        setPlacedImage(null);
+        const stampSourceName = pendingStamp.sourceName ?? 'Animated text';
+        const animationSourceName = previousAnimation
+          ? `${previousAnimationInfo?.sourceName ?? 'Animation'} + ${stampSourceName}`
+          : stampSourceName;
+
+        let minX = GRID_W;
+        let minY = GRID_H;
+        let maxX = -1;
+        let maxY = -1;
+        unionGrid.cells.forEach((cell, index) => {
+          if (!cell) return;
+          const x = index % GRID_W;
+          const y = Math.floor(index / GRID_W);
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        });
+        const contentWidth = maxX >= minX ? maxX - minX + 1 : destW;
+        const contentHeight = maxY >= minY ? maxY - minY + 1 : destH;
+        const contentCenterX = maxX >= minX ? (minX + maxX + 1) / 2 : cx;
+        const contentCenterY = maxY >= minY ? (minY + maxY + 1) / 2 : cy;
+        const durationTicks = animationDurationTicks(animation);
+        const frameCount = animation.transitions.length + 1;
+        setBlueprintImageInfo({ sourceName: animationSourceName, width: contentWidth, height: contentHeight });
+        setMediaAnimationInfo({
+          sourceName: animationSourceName,
+          sourceWidth: contentWidth,
+          sourceHeight: contentHeight,
+          width: contentWidth,
+          height: contentHeight,
+          sampledFrameCount: frameCount,
+          frameCount,
+          sampledFps: frameCount * 60 / durationTicks,
+          factorioFps: frameCount * 60 / durationTicks,
+          durationTicks,
+        });
+        setStampMode(null);
+        setStampBuffer(null);
+        setTick(value => value + 1);
+        setMediaFrameTick(value => value + 1);
+        setFitView({
+          centerX: contentCenterX * PIXEL_SIZE,
+          centerY: contentCenterY * PIXEL_SIZE,
+          width: contentWidth * PIXEL_SIZE,
+          height: contentHeight * PIXEL_SIZE,
+        });
+        setStatusMsg(`${frameCount.toLocaleString()} combined animation frames created.`);
+        setTimeout(() => setStatusMsg(''), 3000);
+      } catch (error) {
         console.error('Unable to place animated text.', error);
         setStatusMsg('');
         alert(`Unable to place this animated text.\n${error instanceof Error ? error.message : String(error)}`);
-        return null;
-      });
-      if (!placed) return;
-      const animation = placed.animation;
-      clearMediaAnimation(true);
-      mediaAnimationRef.current = animation;
-      mediaUnionGridRef.current = placed.unionGrid;
-      mediaPreviewGridRef.current = animation.firstFrame;
-      gridRef.current = animation.firstFrame;
-      committedGridRef.current = cloneGrid(gridRef.current);
-      historyRef.current = [];
-      setHistoryIndex(-1);
-      setSequenceFrames(previous => {
-        previous.forEach(frame => URL.revokeObjectURL(frame.thumbnailUrl));
-        return [];
-      });
-      setAnimationEnabled(false);
-      resetPreviewPlayback(true);
-      setPlacedImage(null);
-      const animationSourceName = pendingStamp.sourceName ?? 'Animated text';
-      setBlueprintImageInfo({ sourceName: animationSourceName, width: destW, height: destH });
-      const durationTicks = animationDurationTicks(animation);
-      setMediaAnimationInfo({
-        sourceName: animationSourceName,
-        sourceWidth: destW,
-        sourceHeight: destH,
-        width: destW,
-        height: destH,
-        sampledFrameCount: stampAnimation.sourceFrameCount,
-        frameCount: animation.transitions.length + 1,
-        sampledFps: stampAnimation.sourceFrameCount * 60 / durationTicks,
-        factorioFps: (animation.transitions.length + 1) * 60 / durationTicks,
-        durationTicks,
-      });
-      setTick(value => value + 1);
-      setMediaFrameTick(value => value + 1);
-      setFitView({
-        centerX: cx * PIXEL_SIZE,
-        centerY: cy * PIXEL_SIZE,
-        width: destW * PIXEL_SIZE,
-        height: destH * PIXEL_SIZE,
-      });
-      setStatusMsg(`${animation.transitions.length + 1} animation frames created.`);
-      setTimeout(() => setStatusMsg(''), 3000);
+      } finally {
+        stampPlacementPendingRef.current = false;
+      }
       return;
     }
 
@@ -1760,6 +1822,7 @@ function App() {
 
     setStampMode(null);
     setStampBuffer(null);
+    stampPlacementPendingRef.current = false;
   };
 
   const handleStampScale = useCallback((delta: number) => {
@@ -1768,7 +1831,84 @@ function App() {
     });
   }, [stampMode]);
 
+  useEffect(() => {
+    const pressedKeys = pressedPanKeysRef.current;
+
+    const stopAnimation = () => {
+      if (keyboardPanFrameRef.current !== null) {
+        cancelAnimationFrame(keyboardPanFrameRef.current);
+        keyboardPanFrameRef.current = null;
+      }
+    };
+
+    const startAnimation = () => {
+      if (keyboardPanFrameRef.current !== null) return;
+      let previousTime = performance.now();
+      const advance = (now: number) => {
+        if (!pressedKeys.size) {
+          keyboardPanFrameRef.current = null;
+          return;
+        }
+        const elapsedSeconds = Math.min(0.05, Math.max(0, now - previousTime) / 1000);
+        previousTime = now;
+        let horizontal = 0;
+        let vertical = 0;
+        pressedKeys.forEach(direction => {
+          if (direction === 'left') horizontal -= 1;
+          else if (direction === 'right') horizontal += 1;
+          else if (direction === 'up') vertical -= 1;
+          else if (direction === 'down') vertical += 1;
+        });
+        if (horizontal || vertical) {
+          const diagonalScale = horizontal && vertical ? Math.SQRT1_2 : 1;
+          setCamera(current => {
+            const distance = KEYBOARD_PAN_SPEED * elapsedSeconds * diagonalScale / current.zoom;
+            return {
+              ...current,
+              x: current.x + horizontal * distance,
+              y: current.y + vertical * distance,
+            };
+          });
+        }
+        keyboardPanFrameRef.current = requestAnimationFrame(advance);
+      };
+      keyboardPanFrameRef.current = requestAnimationFrame(advance);
+    };
+
+    const handlePanKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || isEditableKeyboardTarget(event.target)) return;
+      const direction = keyboardPanDirection(event.code, event.key);
+      const token = keyboardPanToken(event.code, event.key);
+      if (!direction || !token) return;
+      event.preventDefault();
+      pressedKeys.set(token, direction);
+      startAnimation();
+    };
+    const handlePanKeyUp = (event: KeyboardEvent) => {
+      const token = keyboardPanToken(event.code, event.key);
+      if (!token) return;
+      pressedKeys.delete(token);
+      if (!pressedKeys.size) stopAnimation();
+    };
+    const handleWindowBlur = () => {
+      pressedKeys.clear();
+      stopAnimation();
+    };
+
+    window.addEventListener('keydown', handlePanKeyDown);
+    window.addEventListener('keyup', handlePanKeyUp);
+    window.addEventListener('blur', handleWindowBlur);
+    return () => {
+      window.removeEventListener('keydown', handlePanKeyDown);
+      window.removeEventListener('keyup', handlePanKeyUp);
+      window.removeEventListener('blur', handleWindowBlur);
+      pressedKeys.clear();
+      stopAnimation();
+    };
+  }, []);
+
   const handleZoomKey = useCallback((e: KeyboardEvent) => {
+    if (isEditableKeyboardTarget(e.target)) return;
     if (stampMode) {
       if (e.key === "+" || e.key === "=") {
         handleStampScale(1);

@@ -16,10 +16,10 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 ### Editing and layout
 
 - Draw on the grid, erase cells, import a static image, or reset the complete canvas.
-- Create text stamps with global size, color, font, imported TTF/OTF fonts, and static emoji. Selected text can be bold, italic, or underlined, and the text field includes a complete context menu. Genuine animated emoji are created from the separate official Noto catalog.
+- Create text stamps with global size, color, font, imported TTF/OTF fonts, and static emoji. Selected text can be bold, italic, or underlined, and the text field includes a complete context menu. Genuine animated emoji are created from the separate official Noto catalog. Every emoji style displays a conservative minimum lamp-grid size for retaining its fine details.
 - Choose consistently rendered bundled fonts, the complete system-font inventory exposed by the desktop OS, or imported TTF/OTF files. Imported fonts use their internal OpenType full name instead of their file name. Every source remains split into monospaced and proportional groups, every menu entry previews its own typeface, and a conservative full-fidelity raster estimate is shown as `(X px)`.
 - Search and filter the complete static Unicode RGI emoji catalog, including supported skin-tone variants. Choose OS-native Apple or Segoe, bundled Noto Color Emoji or Toss Face, or downloadable Twemoji 17, OpenMoji 17, Blobmoji, and Microsoft Fluent Flat, Color, or 3D artwork.
-- Browse all 881 genuine animations in the official Google Noto Animated Emoji catalog. Visible previews use the real animated artwork; selecting one downloads the CC BY 4.0 asset on demand and converts its real frames into a placeable Factorio stamp at the chosen global size. The former editor-made curated glyph sequences have been removed; Twemoji has no official animated catalog.
+- Browse all 881 genuine animations in the official Google Noto Animated Emoji catalog. Visible previews use the real animated artwork; selecting one downloads the CC BY 4.0 asset on demand and converts its real frames into a placeable Factorio stamp at the chosen global size. Multiple animated stamps keep their independent loops and controller data instead of replacing one another. The former editor-made curated glyph sequences have been removed; Twemoji has no official animated catalog.
 - Limit a text display horizontally or vertically and scroll it right-to-left, left-to-right, top-to-bottom, or bottom-to-top while keeping a one-cell empty border.
 - Switch the complete interface between English and French with the flag buttons; Factorio item names remain in English.
 - Give a text stamp a bounded display area. Oversized text becomes a scrolling animation and keeps a one-cell empty margin.
@@ -39,6 +39,7 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 - Inspect and remove decoded frames manually when the configured frame limit is exceeded, or use even automatic selection.
 - Link an audio track to a GIF or video so both use the same 60-tick-per-second counter and start together.
 - Play scrolling text, animated emoji, slideshows, GIFs, and videos directly on the editor canvas with their exact per-frame Factorio timing. The preview can be paused and scrubbed frame by frame.
+- Pan the grid continuously with the arrow keys or the physical WASD/ZQSD key cluster. Chromium's keyboard layout map supplies the labels automatically when the operating system exposes it.
 - Watch real blueprint-generation progress, including the current percentage, during long exports.
 - Copy ordinary blueprints directly. For exceptionally large exports such as full-fidelity Bad Apple, the desktop app avoids a costly clipboard read-back and offers a **Save Blueprint** file fallback without regenerating.
 

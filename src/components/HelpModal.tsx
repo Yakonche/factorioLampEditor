@@ -1,4 +1,5 @@
 import React from 'react';
+import { detectKeyboardPanLabels } from '../utils/keyboardNavigation';
 
 interface HelpModalProps {
     isOpen: boolean;
@@ -6,6 +7,16 @@ interface HelpModalProps {
 }
 
 export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
+    const [panKeys, setPanKeys] = React.useState('W/Z · A/Q · S · D');
+
+    React.useEffect(() => {
+        let active = true;
+        void detectKeyboardPanLabels().then(labels => {
+            if (active) setPanKeys(`${labels.up} · ${labels.left} · ${labels.down} · ${labels.right}`);
+        });
+        return () => { active = false; };
+    }, []);
+
     if (!isOpen) return null;
 
     return (
@@ -20,6 +31,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                         <h3 className="mb-2 border-b border-gray-700 pb-1 font-bold text-gray-100">Navigation</h3>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                             <div className="flex justify-between"><span>Pan canvas</span><span className="rounded bg-gray-700 px-1.5 text-xs text-white">Right-click drag</span></div>
+                            <div className="flex justify-between"><span>Keyboard pan</span><span className="rounded bg-gray-700 px-1.5 font-mono text-xs text-white">{panKeys} / arrows</span></div>
                             <div className="flex justify-between"><span>Zoom</span><span className="rounded bg-gray-700 px-1.5 text-xs text-white">Scroll</span></div>
                             <div className="flex justify-between"><span>Pan tool</span><span className="rounded bg-gray-700 px-1.5 font-mono text-xs text-yellow-500">H</span></div>
                         </div>

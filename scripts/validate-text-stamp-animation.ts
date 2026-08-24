@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { createEmptyGrid } from '../src/utils/grid';
 import {
+    animationFrameAtTick,
+    composeGridAnimations,
+    createAnimationTimeline,
+    renderAnimationFrame,
+    type GridAnimationData,
+} from '../src/utils/mediaAnimation';
+import { keyboardPanDirection } from '../src/utils/keyboardNavigation';
+import {
     DEFAULT_TEXT_VIEWPORT_WIDTH,
     EMOJI_ANIMATION_FRAME_TICKS,
     animationFrameIndexForTimelineStep,
@@ -11,6 +19,10 @@ import {
 
 assert.equal(DEFAULT_TEXT_VIEWPORT_WIDTH, 512);
 assert.equal(EMOJI_ANIMATION_FRAME_TICKS, 12);
+assert.equal(keyboardPanDirection('KeyW', 'w'), 'up');
+assert.equal(keyboardPanDirection('KeyW', 'z'), 'up');
+assert.equal(keyboardPanDirection('KeyA', 'q'), 'left');
+assert.equal(keyboardPanDirection('', 'ArrowRight'), 'right');
 
 const renderedWidth = 512;
 const rendered: RenderedText = {
@@ -183,6 +195,58 @@ assert.deepEqual(
     'Even a short overflow must animate every generic emoji frame instead of staying static.',
 );
 
+const baseFirstFrame = createEmptyGrid(8, 2);
+baseFirstFrame.cells[1] = 10;
+baseFirstFrame.cells[3] = 90;
+const baseAnimation: GridAnimationData = {
+    firstFrame: baseFirstFrame,
+    firstDurationTicks: 4,
+    transitions: [{
+        indices: Uint32Array.of(1, 3),
+        colors: Uint32Array.of(11, 91),
+        durationTicks: 4,
+    }],
+};
+const overlayFirstFrame = {
+    ...baseFirstFrame,
+    cells: baseFirstFrame.cells.slice(),
+};
+overlayFirstFrame.cells[3] = 20;
+const overlayAnimation: GridAnimationData = {
+    firstFrame: overlayFirstFrame,
+    firstDurationTicks: 6,
+    transitions: [{
+        indices: Uint32Array.of(3),
+        colors: Uint32Array.of(21),
+        durationTicks: 6,
+    }],
+};
+const composed = composeGridAnimations(
+    baseAnimation,
+    overlayAnimation,
+    { x: 3, y: 0, width: 1, height: 1 },
+    64,
+);
+const composedTimeline = createAnimationTimeline(composed);
+assert.equal(composedTimeline.durationTicks, 24, 'Independent 8- and 12-tick loops must meet exactly after 24 ticks.');
+const cellsAtTick = (tick: number) => renderAnimationFrame(
+    composed,
+    animationFrameAtTick(composedTimeline, tick),
+).cells;
+assert.deepEqual([cellsAtTick(0)[1], cellsAtTick(0)[3]], [10, 20]);
+assert.deepEqual([cellsAtTick(4)[1], cellsAtTick(4)[3]], [11, 20]);
+assert.deepEqual([cellsAtTick(6)[1], cellsAtTick(6)[3]], [11, 21]);
+assert.deepEqual([cellsAtTick(8)[1], cellsAtTick(8)[3]], [10, 21]);
+assert.deepEqual([cellsAtTick(12)[1], cellsAtTick(12)[3]], [11, 20]);
+assert.deepEqual([cellsAtTick(23)[1], cellsAtTick(23)[3]], [11, 21]);
+assert.equal(
+    composed.transitions.some(transition => (
+        transition.indices.some((index, patchIndex) => index === 3 && transition.colors[patchIndex] === 91)
+    )),
+    false,
+    'The newer stamp rectangle must suppress every older animation patch below it.',
+);
+
 console.log(JSON.stringify({
     defaultViewportWidth: DEFAULT_TEXT_VIEWPORT_WIDTH,
     sourceFrames: scrollFrameCount,
@@ -190,4 +254,6 @@ console.log(JSON.stringify({
     sparseCellCount,
     fullFrameCellCount: viewportWidth * viewportHeight * scrollFrameCount,
     emojiFrameTicks: EMOJI_ANIMATION_FRAME_TICKS,
+    composedFrames: composed.transitions.length + 1,
+    composedDurationTicks: composedTimeline.durationTicks,
 }));

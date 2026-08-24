@@ -97,6 +97,7 @@ const FRENCH_TRANSLATIONS: Record<string, string> = {
     'Microsoft Fluent Emoji (3D)': 'Microsoft Fluent Emoji (3D)',
     'Blobmoji (color artwork)': 'Blobmoji (illustrations couleur)',
     'Downloaded emoji artwork is saved in the persistent cache for offline reuse. Toss Face and Noto are bundled; the official animated catalog uses Google Noto animations.': 'Les illustrations d’emoji téléchargées sont conservées dans le cache persistant pour être réutilisées hors ligne. Toss Face et Noto sont intégrées ; le catalogue animé officiel utilise les animations Google Noto.',
+    'The value in parentheses is the estimated minimum for preserving fine details on the lamp grid.': 'La valeur entre parenthèses est la taille minimale estimée pour préserver les détails fins sur la grille de lampes.',
     'Drawing and stamping': 'Dessin et tampons',
     'Import Image': 'Importer une image',
     'Imported Image': 'Image importée',
