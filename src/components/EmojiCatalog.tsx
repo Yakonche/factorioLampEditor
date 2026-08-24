@@ -100,6 +100,7 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
     onSelect,
 }) => {
     const { t } = useI18n();
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
     const [query, setQuery] = React.useState('');
     const [group, setGroup] = React.useState('');
     const [skinTone, setSkinTone] = React.useState('');
@@ -117,7 +118,18 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
         });
     }, [group, query]);
 
-    React.useEffect(() => setVisibleCount(PAGE_SIZE), [group, query, skinTone]);
+    React.useEffect(() => {
+        setVisibleCount(PAGE_SIZE);
+        if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+    }, [group, query, skinTone]);
+
+    const handleScroll = React.useCallback((event: React.UIEvent<HTMLDivElement>) => {
+        const container = event.currentTarget;
+        const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+        if (remaining <= 24) {
+            setVisibleCount(previous => Math.min(filteredEntries.length, previous + PAGE_SIZE));
+        }
+    }, [filteredEntries.length]);
 
     const visibleEntries = filteredEntries.slice(0, visibleCount);
     const selectEntry = (entry: EmojiEntry) => {
@@ -156,6 +168,8 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
 
             {visibleEntries.length ? (
                 <div
+                    ref={scrollContainerRef}
+                    onScroll={handleScroll}
                     className="grid max-h-64 w-full gap-1 overflow-x-hidden overflow-y-auto pr-1"
                     style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(2.4rem, 1fr))' }}
                 >
@@ -181,17 +195,8 @@ export const EmojiCatalog: React.FC<EmojiCatalogProps> = ({
                 </p>
             )}
 
-            <div className="flex items-center justify-between gap-2 text-[9px] text-gray-500">
+            <div className="text-[9px] text-gray-500">
                 <span>{t(`Showing ${Math.min(visibleCount, filteredEntries.length).toLocaleString()} of ${filteredEntries.length.toLocaleString()} emoji`)}</span>
-                {visibleCount < filteredEntries.length && (
-                    <button
-                        type="button"
-                        onClick={() => setVisibleCount(previous => previous + PAGE_SIZE)}
-                        className="rounded border border-gray-600 bg-gray-800 px-2 py-1 text-gray-300 hover:bg-gray-700"
-                    >
-                        {t('Show more emoji')}
-                    </button>
-                )}
             </div>
         </div>
     );

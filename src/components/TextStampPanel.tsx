@@ -708,6 +708,22 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
         ))
     );
 
+    const renderEmojiStyleOption = (style: (typeof EMOJI_FONT_STYLES)[number]) => {
+        const available = emojiStyleAvailable(style, emojiAvailability);
+        const label = style.id === 'automatic'
+            ? `${t('Automatic')} — ${t('Detected')} : ${t(emojiStyleLabel(automaticEmojiStyle))}`
+            : t(style.label);
+        const recommendationStyle = style.id === 'automatic'
+            ? automaticEmojiStyle
+            : style.id;
+        return (
+            <option key={style.id} value={style.id} disabled={!available}>
+                {label} ({emojiStyleRecommendedMinSize(recommendationStyle)} px)
+                {available ? '' : ` — ${t('not detected on this OS')}`}
+            </option>
+        );
+    };
+
     return (
         <div className="space-y-3">
             <div className="flex items-stretch gap-2">
@@ -831,35 +847,6 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                         {renderFontOptions()}
                     </select>
                 </label>
-                <label className="col-span-3 text-[9px] font-bold text-gray-500">
-                    {t('EMOJI STYLE')}
-                    <select
-                        value={emojiStyle}
-                        onChange={event => setEmojiStyle(event.target.value as EmojiFontStyle)}
-                        className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none"
-                    >
-                        {EMOJI_FONT_STYLES.map(style => {
-                            const available = emojiStyleAvailable(style, emojiAvailability);
-                            const label = style.id === 'automatic'
-                                ? `${t('Automatic')} — ${t('Detected')} : ${t(emojiStyleLabel(automaticEmojiStyle))}`
-                                : t(style.label);
-                            const recommendationStyle = style.id === 'automatic'
-                                ? automaticEmojiStyle
-                                : style.id;
-                            return (
-                                <option key={style.id} value={style.id} disabled={!available}>
-                                    {label} ({emojiStyleRecommendedMinSize(recommendationStyle)} px)
-                                    {available ? '' : ` — ${t('not detected on this OS')}`}
-                                </option>
-                            );
-                        })}
-                    </select>
-                    <span className="mt-1 block font-normal leading-4 text-gray-500">
-                        {t('The value in parentheses is the estimated minimum for preserving fine details on the lamp grid.')}
-                        {' '}
-                        {t('Downloaded emoji artwork is saved in the persistent cache for offline reuse. Toss Face and Noto are bundled; the official animated catalog uses Google Noto animations.')}
-                    </span>
-                </label>
                 <label className="flex items-center gap-2 text-[9px] font-bold text-gray-500">
                     COLOR
                     <input
@@ -897,6 +884,32 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                 <summary className="cursor-pointer text-[9px] font-bold uppercase tracking-wider text-gray-400">{t('Static emoji library')}</summary>
                 {nativeEmojiOpen && (
                     <>
+                        <label className="mt-2 block text-[9px] font-bold uppercase tracking-wider text-gray-500">
+                            {t('Emoji library')}
+                            <select
+                                value={emojiStyle}
+                                onChange={event => setEmojiStyle(event.target.value as EmojiFontStyle)}
+                                className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1.5 text-[10px] normal-case tracking-normal text-gray-200 outline-none focus:border-yellow-500"
+                            >
+                                <optgroup label={t('System and bundled emoji fonts')}>
+                                    {EMOJI_FONT_STYLES
+                                        .filter(style => style.id === 'automatic' || emojiArtworkProviderForStyle(style.id) === null)
+                                        .map(renderEmojiStyleOption)}
+                                </optgroup>
+                                <optgroup label={t('Downloadable artwork libraries')}>
+                                    {EMOJI_FONT_STYLES
+                                        .filter(style => style.id !== 'automatic' && emojiArtworkProviderForStyle(style.id) !== null)
+                                        .map(renderEmojiStyleOption)}
+                                </optgroup>
+                            </select>
+                        </label>
+                        <p className="mt-2 text-[9px] leading-4 text-gray-500">
+                            {t('The selected library is used for both the catalog preview and the created stamp.')}
+                            {' '}
+                            {t('The value in parentheses is the estimated minimum for preserving fine details on the lamp grid.')}
+                            {' '}
+                            {t('Downloaded emoji artwork is saved in the persistent cache for offline reuse. Toss Face and Noto are bundled; the official animated catalog uses Google Noto animations.')}
+                        </p>
                         <p className="mt-2 text-[9px] leading-4 text-gray-500">
                             {t('Every Unicode RGI emoji is available here. Skin-tone variants are generated when the selected emoji supports them.')}
                         </p>
