@@ -18,6 +18,7 @@ import {
     emojiStyleLabel,
     fontFamilyCss,
     normalizeFontFamilies,
+    readOpenTypeFontNames,
     readLowestRecommendedPpem,
     resolveAutomaticEmojiStyle,
     type EmojiFontAvailability,
@@ -494,22 +495,23 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
         if (!file) return;
         try {
             setFontStatus(t('Loading font…'));
-            const cleanName = file.name.replace(/\.(?:ttf|otf)$/i, '').replace(/[^a-z0-9 _-]/gi, '').trim() || 'Custom font';
-            const family = `${cleanName} ${Date.now().toString(36)}`;
+            const fileName = file.name.replace(/\.(?:ttf|otf)$/i, '').replace(/[^a-z0-9 _-]/gi, '').trim() || 'Custom font';
+            const family = `${fileName} ${Date.now().toString(36)}`;
             const fontBytes = await file.arrayBuffer();
+            const displayName = readOpenTypeFontNames(fontBytes).displayName ?? fileName;
             const designerMinimum = readLowestRecommendedPpem(fontBytes) ?? 0;
             const fontFace = new FontFace(family, fontBytes);
             await fontFace.load();
             document.fonts.add(fontFace);
             setImportedFonts(previous => [...previous, {
                 family,
-                label: cleanName,
+                label: displayName,
                 category: detectFontCategory(family),
                 source: 'imported',
                 recommendedMinSize: detectRecommendedMinimumFontSize(family, designerMinimum, true),
             }]);
             setGlobalStyle(previous => ({ ...previous, fontFamily: family }));
-            setFontStatus(`${file.name} · ${t('Font loaded')}`);
+            setFontStatus(`${displayName} · ${t('Font loaded')}`);
         } catch (error) {
             console.error('Unable to load font.', error);
             setFontStatus(t('Unsupported or invalid font'));

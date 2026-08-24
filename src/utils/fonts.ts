@@ -10,9 +10,20 @@ export interface FontOption {
     recommendedMinSize?: number;
 }
 
-/** Reads the font designer's lowest recommended pixels-per-em from an SFNT font. */
-export const readLowestRecommendedPpem = (fontBytes: ArrayBuffer): number | null => {
-    const view = new DataView(fontBytes);
+interface SfntTable {
+    offset: number;
+    length: number;
+}
+
+export interface OpenTypeFontNames {
+    family: string | null;
+    subfamily: string | null;
+    fullName: string | null;
+    postScriptName: string | null;
+    displayName: string | null;
+}
+
+const findSfntTable = (view: DataView, wantedTag: string): SfntTable | null => {
     if (view.byteLength < 12) return null;
     const tableCount = view.getUint16(4, false);
     for (let tableIndex = 0; tableIndex < tableCount; tableIndex++) {
@@ -24,14 +35,127 @@ export const readLowestRecommendedPpem = (fontBytes: ArrayBuffer): number | null
             view.getUint8(recordOffset + 2),
             view.getUint8(recordOffset + 3),
         );
-        if (tag !== 'head') continue;
-        const tableOffset = view.getUint32(recordOffset + 8, false);
-        const tableLength = view.getUint32(recordOffset + 12, false);
-        if (tableLength < 48 || tableOffset + 48 > view.byteLength) return null;
-        const pixelsPerEm = view.getUint16(tableOffset + 46, false);
-        return pixelsPerEm > 0 && pixelsPerEm <= 512 ? pixelsPerEm : null;
+        if (tag !== wantedTag) continue;
+        const offset = view.getUint32(recordOffset + 8, false);
+        const length = view.getUint32(recordOffset + 12, false);
+        if (offset > view.byteLength || length > view.byteLength - offset) return null;
+        return { offset, length };
     }
     return null;
+};
+
+const decodeUtf16BigEndian = (view: DataView, offset: number, length: number): string => {
+    const codeUnits: number[] = [];
+    const end = offset + length - (length % 2);
+    for (let index = offset; index < end; index += 2) {
+        codeUnits.push(view.getUint16(index, false));
+    }
+    let decoded = '';
+    for (let index = 0; index < codeUnits.length; index += 1_024) {
+        decoded += String.fromCharCode(...codeUnits.slice(index, index + 1_024));
+    }
+    return decoded;
+};
+
+const decodeSingleByteName = (view: DataView, offset: number, length: number): string => {
+    let decoded = '';
+    for (let index = offset; index < offset + length; index++) {
+        decoded += String.fromCharCode(view.getUint8(index));
+    }
+    return decoded;
+};
+
+const cleanFontName = (value: string): string => [...value.normalize('NFC')]
+    .filter(character => {
+        const codePoint = character.codePointAt(0) ?? 0;
+        return codePoint > 0x1f && codePoint !== 0x7f;
+    })
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const nameRecordPriority = (platformId: number, languageId: number): number => {
+    if (platformId === 3 && languageId === 0x0409) return 0;
+    if (platformId === 0 && (languageId === 0 || languageId === 0xffff)) return 1;
+    if (platformId === 0) return 2;
+    if (platformId === 3) return 3;
+    if (platformId === 1 && languageId === 0) return 4;
+    if (platformId === 1) return 5;
+    return 6;
+};
+
+const combineFontFamilyAndStyle = (family: string | null, style: string | null): string | null => {
+    if (!family) return null;
+    if (!style || /^(regular|normal|roman|book)$/i.test(style)) return family;
+    if (family.toLocaleLowerCase().endsWith(style.toLocaleLowerCase())) return family;
+    return `${family} ${style}`;
+};
+
+/** Reads user-facing names from the OpenType `name` table of a TTF/OTF font. */
+export const readOpenTypeFontNames = (fontBytes: ArrayBuffer): OpenTypeFontNames => {
+    const emptyNames: OpenTypeFontNames = {
+        family: null,
+        subfamily: null,
+        fullName: null,
+        postScriptName: null,
+        displayName: null,
+    };
+    const view = new DataView(fontBytes);
+    const table = findSfntTable(view, 'name');
+    if (!table || table.length < 6) return emptyNames;
+
+    const recordCount = view.getUint16(table.offset + 2, false);
+    const recordsEnd = table.offset + 6 + recordCount * 12;
+    const stringsOffset = table.offset + view.getUint16(table.offset + 4, false);
+    const tableEnd = table.offset + table.length;
+    if (recordsEnd > tableEnd || stringsOffset > tableEnd) return emptyNames;
+
+    const wantedNameIds = new Set([1, 2, 4, 6, 16, 17]);
+    const names = new Map<number, { value: string; priority: number }>();
+    for (let recordIndex = 0; recordIndex < recordCount; recordIndex++) {
+        const recordOffset = table.offset + 6 + recordIndex * 12;
+        const platformId = view.getUint16(recordOffset, false);
+        const languageId = view.getUint16(recordOffset + 4, false);
+        const nameId = view.getUint16(recordOffset + 6, false);
+        if (!wantedNameIds.has(nameId)) continue;
+
+        const stringLength = view.getUint16(recordOffset + 8, false);
+        const stringOffset = stringsOffset + view.getUint16(recordOffset + 10, false);
+        if (stringOffset > tableEnd || stringLength > tableEnd - stringOffset) continue;
+        const decoded = platformId === 0 || platformId === 3
+            ? decodeUtf16BigEndian(view, stringOffset, stringLength)
+            : decodeSingleByteName(view, stringOffset, stringLength);
+        const value = cleanFontName(decoded);
+        if (!value) continue;
+
+        const priority = nameRecordPriority(platformId, languageId);
+        const current = names.get(nameId);
+        if (!current || priority < current.priority) names.set(nameId, { value, priority });
+    }
+
+    const valueFor = (nameId: number): string | null => names.get(nameId)?.value ?? null;
+    const family = valueFor(16) ?? valueFor(1);
+    const subfamily = valueFor(17) ?? valueFor(2);
+    const fullName = valueFor(4);
+    const postScriptName = valueFor(6);
+    return {
+        family,
+        subfamily,
+        fullName,
+        postScriptName,
+        displayName: fullName
+            ?? combineFontFamilyAndStyle(family, subfamily)
+            ?? postScriptName,
+    };
+};
+
+/** Reads the font designer's lowest recommended pixels-per-em from an SFNT font. */
+export const readLowestRecommendedPpem = (fontBytes: ArrayBuffer): number | null => {
+    const view = new DataView(fontBytes);
+    const table = findSfntTable(view, 'head');
+    if (!table || table.length < 48) return null;
+    const pixelsPerEm = view.getUint16(table.offset + 46, false);
+    return pixelsPerEm > 0 && pixelsPerEm <= 512 ? pixelsPerEm : null;
 };
 
 export const BUNDLED_FONT_OPTIONS: readonly FontOption[] = [

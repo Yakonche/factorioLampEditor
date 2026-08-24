@@ -12,8 +12,50 @@ import {
     fontFamilyCss,
     normalizeFontFamilies,
     readLowestRecommendedPpem,
+    readOpenTypeFontNames,
     resolveAutomaticEmojiStyle,
 } from '../src/utils/fonts';
+
+const makeNamedTestFont = (records: ReadonlyArray<readonly [number, string]>): ArrayBuffer => {
+    const encodedRecords = records.map(([nameId, value]) => {
+        const bytes = new Uint8Array(value.length * 2);
+        for (let index = 0; index < value.length; index++) {
+            const codeUnit = value.charCodeAt(index);
+            bytes[index * 2] = codeUnit >>> 8;
+            bytes[index * 2 + 1] = codeUnit & 0xff;
+        }
+        return { nameId, bytes };
+    });
+    const nameHeaderLength = 6 + encodedRecords.length * 12;
+    const nameTableLength = nameHeaderLength
+        + encodedRecords.reduce((total, record) => total + record.bytes.length, 0);
+    const nameTableOffset = 28;
+    const font = new ArrayBuffer(nameTableOffset + nameTableLength);
+    const view = new DataView(font);
+    view.setUint16(4, 1, false);
+    for (const [index, character] of [...'name'].entries()) {
+        view.setUint8(12 + index, character.charCodeAt(0));
+    }
+    view.setUint32(20, nameTableOffset, false);
+    view.setUint32(24, nameTableLength, false);
+    view.setUint16(nameTableOffset + 2, encodedRecords.length, false);
+    view.setUint16(nameTableOffset + 4, nameHeaderLength, false);
+
+    let relativeStringOffset = 0;
+    for (const [recordIndex, record] of encodedRecords.entries()) {
+        const recordOffset = nameTableOffset + 6 + recordIndex * 12;
+        view.setUint16(recordOffset, 3, false);
+        view.setUint16(recordOffset + 2, 1, false);
+        view.setUint16(recordOffset + 4, 0x0409, false);
+        view.setUint16(recordOffset + 6, record.nameId, false);
+        view.setUint16(recordOffset + 8, record.bytes.length, false);
+        view.setUint16(recordOffset + 10, relativeStringOffset, false);
+        new Uint8Array(font, nameTableOffset + nameHeaderLength + relativeStringOffset, record.bytes.length)
+            .set(record.bytes);
+        relativeStringOffset += record.bytes.length;
+    }
+    return font;
+};
 
 const bundledFiles = [
     ['Iceberg', 'Iceberg-Regular.ttf'],
@@ -37,6 +79,23 @@ const icebergBuffer = icebergFont.buffer.slice(
 ) as ArrayBuffer;
 assert.ok((readLowestRecommendedPpem(icebergBuffer) ?? 0) > 0);
 assert.equal(readLowestRecommendedPpem(new ArrayBuffer(4)), null);
+assert.match(readOpenTypeFontNames(icebergBuffer).displayName ?? '', /Iceberg/i);
+assert.deepEqual(
+    readOpenTypeFontNames(makeNamedTestFont([
+        [1, 'SDK_JP_Web'],
+        [2, 'Heavy'],
+        [4, 'SDK_JP_Web Heavy'],
+        [6, 'SDKJPWeb-Heavy'],
+    ])),
+    {
+        family: 'SDK_JP_Web',
+        subfamily: 'Heavy',
+        fullName: 'SDK_JP_Web Heavy',
+        postScriptName: 'SDKJPWeb-Heavy',
+        displayName: 'SDK_JP_Web Heavy',
+    },
+);
+assert.equal(readOpenTypeFontNames(new ArrayBuffer(4)).displayName, null);
 
 for (const directory of ['Noto-Sans-JP', 'Noto-Color-Emoji']) {
     const licensePath = resolve('public/licenses/fonts', directory, 'OFL.txt');
