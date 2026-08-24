@@ -3,7 +3,7 @@ import type { EmojiStaticAssetProvider } from './emojiAssets';
 import { cloneGrid, type GridData } from './grid';
 import type { GridAnimationData, MediaFrameTransition } from './mediaAnimation';
 
-export const DEFAULT_TEXT_VIEWPORT_WIDTH = 512;
+export const DEFAULT_TEXT_VIEWPORT_WIDTH = 256;
 export const DEFAULT_TEXT_VIEWPORT_HEIGHT = 64;
 export const EMOJI_ANIMATION_FRAME_TICKS = 12;
 

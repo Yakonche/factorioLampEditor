@@ -14,9 +14,15 @@ interface NotoAnimatedEmojiCatalogProps {
 const PAGE_SIZE = 120;
 const CATEGORIES = [...new Set(NOTO_ANIMATED_EMOJI.map(entry => entry.category))];
 
-const AnimatedPreview: React.FC<{ entry: NotoAnimatedEmojiEntry }> = ({ entry }) => {
+const SCROLL_SETTLE_DELAY_MS = 180;
+
+const AnimatedPreview: React.FC<{
+    entry: NotoAnimatedEmojiEntry;
+    scrolling: boolean;
+}> = ({ entry, scrolling }) => {
     const ref = React.useRef<HTMLImageElement>(null);
     const [visible, setVisible] = React.useState(false);
+    const [animationReady, setAnimationReady] = React.useState(false);
     const [failed, setFailed] = React.useState(false);
 
     React.useEffect(() => {
@@ -27,19 +33,44 @@ const AnimatedPreview: React.FC<{ entry: NotoAnimatedEmojiEntry }> = ({ entry })
             return;
         }
         const observer = new IntersectionObserver(entries => {
-            if (entries.some(candidate => candidate.isIntersecting)) {
-                setVisible(true);
-                observer.disconnect();
-            }
-        }, { rootMargin: '96px' });
+            setVisible(entries.some(candidate => candidate.isIntersecting));
+        });
         observer.observe(element);
         return () => observer.disconnect();
     }, []);
 
+    React.useEffect(() => {
+        if (!visible || animationReady || failed) return;
+        let cancelled = false;
+        const image = new Image();
+        const markReady = () => {
+            if (!cancelled) setAnimationReady(true);
+        };
+        image.decoding = 'async';
+        image.onload = () => {
+            if (typeof image.decode === 'function') {
+                void image.decode().then(markReady, markReady);
+            } else {
+                markReady();
+            }
+        };
+        image.onerror = () => {
+            if (!cancelled) setFailed(true);
+        };
+        image.src = notoAnimatedEmojiWebpUrl(entry.codepoint);
+        return () => {
+            cancelled = true;
+            image.onload = null;
+            image.onerror = null;
+        };
+    }, [animationReady, entry.codepoint, failed, visible]);
+
+    const animate = visible && animationReady && !scrolling && !failed;
+
     return (
         <img
             ref={ref}
-            src={visible && !failed
+            src={animate
                 ? notoAnimatedEmojiWebpUrl(entry.codepoint)
                 : notoAnimatedEmojiPngUrl(entry.codepoint)}
             alt=""
@@ -54,10 +85,13 @@ const AnimatedPreview: React.FC<{ entry: NotoAnimatedEmojiEntry }> = ({ entry })
 
 export const NotoAnimatedEmojiCatalog: React.FC<NotoAnimatedEmojiCatalogProps> = ({ onSelect }) => {
     const { t } = useI18n();
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+    const scrollSettleTimerRef = React.useRef<number | null>(null);
     const [query, setQuery] = React.useState('');
     const [category, setCategory] = React.useState('');
     const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
     const [loadingCodepoint, setLoadingCodepoint] = React.useState('');
+    const [scrolling, setScrolling] = React.useState(false);
 
     const filteredEntries = React.useMemo(() => {
         const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -71,7 +105,33 @@ export const NotoAnimatedEmojiCatalog: React.FC<NotoAnimatedEmojiCatalogProps> =
         });
     }, [category, query]);
 
-    React.useEffect(() => setVisibleCount(PAGE_SIZE), [category, query]);
+    React.useEffect(() => {
+        setVisibleCount(PAGE_SIZE);
+        scrollContainerRef.current?.scrollTo({ top: 0 });
+    }, [category, query]);
+
+    React.useEffect(() => () => {
+        if (scrollSettleTimerRef.current !== null) {
+            window.clearTimeout(scrollSettleTimerRef.current);
+        }
+    }, []);
+
+    const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+        const container = event.currentTarget;
+        setScrolling(true);
+        if (scrollSettleTimerRef.current !== null) {
+            window.clearTimeout(scrollSettleTimerRef.current);
+        }
+        scrollSettleTimerRef.current = window.setTimeout(() => {
+            scrollSettleTimerRef.current = null;
+            setScrolling(false);
+        }, SCROLL_SETTLE_DELAY_MS);
+
+        const remainingScroll = container.scrollHeight - container.scrollTop - container.clientHeight;
+        if (remainingScroll <= 24) {
+            setVisibleCount(previous => Math.min(filteredEntries.length, previous + PAGE_SIZE));
+        }
+    };
 
     const selectEntry = async (entry: NotoAnimatedEmojiEntry) => {
         if (loadingCodepoint) return;
@@ -109,6 +169,8 @@ export const NotoAnimatedEmojiCatalog: React.FC<NotoAnimatedEmojiCatalogProps> =
 
             {visibleEntries.length ? (
                 <div
+                    ref={scrollContainerRef}
+                    onScroll={handleScroll}
                     className="grid max-h-64 w-full gap-1 overflow-x-hidden overflow-y-auto pr-1"
                     style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(3rem, 1fr))' }}
                 >
@@ -122,7 +184,7 @@ export const NotoAnimatedEmojiCatalog: React.FC<NotoAnimatedEmojiCatalogProps> =
                             title={`${entry.name} · ${entry.category}`}
                             className="relative flex aspect-square min-w-0 items-center justify-center overflow-hidden rounded border border-gray-700 bg-gray-800 p-0 hover:border-fuchsia-500 hover:bg-gray-700 disabled:cursor-wait disabled:opacity-50"
                         >
-                            <AnimatedPreview entry={entry} />
+                            <AnimatedPreview entry={entry} scrolling={scrolling} />
                             {loadingCodepoint === entry.codepoint && (
                                 <span className="absolute inset-0 flex items-center justify-center bg-gray-950/70 text-fuchsia-200">
                                     <i className="fa-solid fa-spinner animate-spin" aria-hidden="true" />
@@ -139,15 +201,6 @@ export const NotoAnimatedEmojiCatalog: React.FC<NotoAnimatedEmojiCatalogProps> =
 
             <div className="flex items-center justify-between gap-2 text-[9px] text-gray-500">
                 <span>{Math.min(visibleCount, filteredEntries.length).toLocaleString()} / {filteredEntries.length.toLocaleString()}</span>
-                {visibleCount < filteredEntries.length && (
-                    <button
-                        type="button"
-                        onClick={() => setVisibleCount(previous => previous + PAGE_SIZE)}
-                        className="rounded border border-gray-600 bg-gray-800 px-2 py-1 text-gray-300 hover:bg-gray-700"
-                    >
-                        {t('Show more animated emoji')}
-                    </button>
-                )}
             </div>
         </div>
     );

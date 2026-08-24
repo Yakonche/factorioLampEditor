@@ -13,7 +13,8 @@ import {
 } from '../src/utils/scrollTiming';
 
 assert.equal(FACTORIO_TICKS_PER_SECOND, 60);
-assert.equal(DEFAULT_SCROLL_STEP_TICKS, 6);
+assert.equal(DEFAULT_SCROLL_STEP_TICKS, 4);
+assert.equal(scrollTicksToCellsPerSecond(DEFAULT_SCROLL_STEP_TICKS), 15);
 assert.equal(scrollSecondsToTicks(0.1), 6);
 assert.equal(scrollTicksToSeconds(6), 0.1);
 assert.equal(scrollCellsPerSecondToTicks(10), 6);

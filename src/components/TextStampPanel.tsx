@@ -159,6 +159,75 @@ const ScrollTimingInput: React.FC<ScrollTimingInputProps> = ({
     );
 };
 
+interface ConstrainedIntegerInputProps {
+    label: string;
+    value: number;
+    minimum: number;
+    maximum: number;
+    onValueChange: (value: number) => void;
+}
+
+const ConstrainedIntegerInput: React.FC<ConstrainedIntegerInputProps> = ({
+    label,
+    value,
+    minimum,
+    maximum,
+    onValueChange,
+}) => {
+    const [draft, setDraft] = React.useState(String(value));
+    const [focused, setFocused] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!focused) setDraft(String(value));
+    }, [focused, value]);
+
+    const applyDraft = () => {
+        const parsed = draft.trim() ? Number(draft) : Number.NaN;
+        const canonical = Number.isFinite(parsed)
+            ? Math.max(minimum, Math.min(maximum, Math.round(parsed)))
+            : value;
+        onValueChange(canonical);
+        setDraft(String(canonical));
+    };
+
+    return (
+        <input
+            type="number"
+            inputMode="numeric"
+            aria-label={label}
+            min={minimum}
+            max={maximum}
+            step="1"
+            value={draft}
+            onFocus={() => setFocused(true)}
+            onBlur={() => {
+                applyDraft();
+                setFocused(false);
+            }}
+            onChange={event => {
+                const nextDraft = event.target.value;
+                setDraft(nextDraft);
+                const parsed = Number(nextDraft);
+                if (
+                    nextDraft.trim()
+                    && Number.isInteger(parsed)
+                    && parsed >= minimum
+                    && parsed <= maximum
+                ) {
+                    onValueChange(parsed);
+                }
+            }}
+            onKeyDown={event => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    event.currentTarget.blur();
+                }
+            }}
+            className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-blue-300"
+        />
+    );
+};
+
 const fontFingerprintCache = new Map<string, string>();
 const recommendedFontSizeCache = new Map<string, number>();
 
@@ -857,7 +926,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                             {t('Official Noto Animated Emoji')} ({NOTO_ANIMATED_EMOJI_RECOMMENDED_MIN_SIZE} px)
                         </p>
                         <p className="mt-1 text-[9px] leading-4 text-gray-500">
-                            {t('881 genuine Google Noto animations are available. Selected animations are saved in the persistent emoji cache and remain available offline.')}
+                            {t('879 genuine Google Noto animations are available. Selected animations are saved in the persistent emoji cache and remain available offline.')}
                             {' '}{t('An internet connection is required only the first time an animation is selected.')}
                         </p>
                         <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
@@ -894,17 +963,15 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                         </label>
                         <label className="text-[9px] text-gray-500">
                             {t(verticalScroll ? 'Zone height (cells)' : 'Zone width (cells)')}
-                            <input
-                                type="number"
-                                min="3"
-                                max="1024"
+                            <ConstrainedIntegerInput
+                                label={t(verticalScroll ? 'Zone height (cells)' : 'Zone width (cells)')}
+                                minimum={3}
+                                maximum={1024}
                                 value={verticalScroll ? viewportHeight : viewportWidth}
-                                onChange={event => {
-                                    const value = Math.max(3, Math.min(1024, Number(event.target.value) || 3));
+                                onValueChange={value => {
                                     if (verticalScroll) setViewportHeight(value);
                                     else setViewportWidth(value);
                                 }}
-                                className="mt-1 w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-blue-300"
                             />
                         </label>
                         <ScrollTimingInput

@@ -276,7 +276,7 @@ const FRENCH_TRANSLATIONS: Record<string, string> = {
     'Every Unicode RGI emoji is available here. Skin-tone variants are generated when the selected emoji supports them.': 'Tous les emojis Unicode RGI sont disponibles ici. Les variantes de couleur de peau sont générées lorsque l’emoji sélectionné les prend en charge.',
     'Official Noto Animated Emoji': 'Emojis animés Noto officiels',
     'Only emoji with genuine published animation frames are listed here. Twemoji does not publish an official animated catalog.': 'Seuls les emojis possédant de véritables images d’animation publiées sont listés ici. Twemoji ne publie pas de catalogue animé officiel.',
-    '881 genuine Google Noto animations are available. Selected animations are saved in the persistent emoji cache and remain available offline.': '881 véritables animations Google Noto sont disponibles. Les animations sélectionnées sont enregistrées dans le cache persistant d’emojis et restent disponibles hors ligne.',
+    '879 genuine Google Noto animations are available. Selected animations are saved in the persistent emoji cache and remain available offline.': '879 véritables animations Google Noto sont disponibles. Les animations sélectionnées sont enregistrées dans le cache persistant d’emojis et restent disponibles hors ligne.',
     'An internet connection is required only the first time an animation is selected.': 'Une connexion Internet est nécessaire uniquement lors de la première sélection d’une animation.',
     'Noto Animated Emoji by Google, licensed under CC BY 4.0.': 'Noto Animated Emoji par Google, sous licence CC BY 4.0.',
     'Search animated emoji by name or symbol': 'Rechercher un emoji animé par nom ou symbole',

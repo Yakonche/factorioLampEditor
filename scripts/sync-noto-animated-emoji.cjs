@@ -3,6 +3,10 @@ const path = require('node:path');
 
 const API_URL = 'https://googlefonts.github.io/noto-emoji-animation/data/api.json';
 const OUTPUT_PATH = path.join(__dirname, '..', 'src', 'data', 'noto-animated-emoji.json');
+// These two records are exposed by the catalog API, but Google publishes no
+// GIF, WebP, or PNG asset for either codepoint. Keep them in the static emoji
+// library instead of presenting broken tiles as genuine animations.
+const UNPUBLISHED_CODEPOINTS = new Set(['a9_fe0f', 'ae_fe0f']);
 
 function codepointToEmoji(codepoint) {
   return String.fromCodePoint(...codepoint.split('_').map(value => Number.parseInt(value, 16)));
@@ -29,7 +33,7 @@ async function main() {
     source: 'https://googlefonts.github.io/noto-emoji-animation/',
     api: API_URL,
     license: 'CC BY 4.0',
-    icons: source.icons.map(icon => ({
+    icons: source.icons.filter(icon => !UNPUBLISHED_CODEPOINTS.has(icon.codepoint)).map(icon => ({
       codepoint: icon.codepoint,
       emoji: codepointToEmoji(icon.codepoint),
       name: readableName(icon),

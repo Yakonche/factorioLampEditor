@@ -17,7 +17,7 @@ import {
     type RenderedText,
 } from '../src/utils/stamp';
 
-assert.equal(DEFAULT_TEXT_VIEWPORT_WIDTH, 512);
+assert.equal(DEFAULT_TEXT_VIEWPORT_WIDTH, 256);
 assert.equal(EMOJI_ANIMATION_FRAME_TICKS, 12);
 assert.equal(keyboardPanDirection('KeyW', 'w'), 'up');
 assert.equal(keyboardPanDirection('KeyW', 'z'), 'up');
