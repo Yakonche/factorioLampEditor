@@ -1,6 +1,6 @@
 import {
     prepareAudioEvents,
-    resolveAudioInstruments,
+    resolveAudioVoices,
     type AudioInstrumentName,
     type AudioInstrumentSelections,
     type DecodedAudioTrack,
@@ -16,12 +16,14 @@ export interface FactorioAudioPreviewController {
     duration: number;
     pause: () => Promise<void>;
     resume: () => Promise<void>;
+    seek: (seconds: number) => Promise<void>;
     stop: () => Promise<void>;
 }
 
 interface PreviewNote {
     tick: number;
     channel: 'left' | 'right';
+    voiceIndex: number;
     instrument: AudioInstrumentName;
     pitch: number;
 }
@@ -36,7 +38,7 @@ export const createFactorioAudioPreview = async (
     const readSample = window.factorioLampEditor?.readFactorioSpeakerSound;
     if (!readSample) throw new Error('Factorio speaker sound access is unavailable.');
 
-    const instruments = resolveAudioInstruments(audioTrack, selections);
+    const instruments = resolveAudioVoices(audioTrack, selections);
     const cycleTicks = Math.max(
         1,
         Math.ceil(audioTrack.durationSeconds * 60) + 1,
@@ -45,29 +47,35 @@ export const createFactorioAudioPreview = async (
     const preparedEvents = prepareAudioEvents(audioTrack, cycleTicks, instruments);
     const notes: PreviewNote[] = preparedEvents.flatMap(event => {
         const eventNotes: PreviewNote[] = [];
-        if (event.leftPitch !== undefined) {
+        (event.leftPitches ?? (event.leftPitch !== undefined ? [event.leftPitch] : [])).forEach((pitch, voiceIndex) => {
             eventNotes.push({
                 tick: event.tick,
                 channel: 'left',
-                instrument: instruments.left.name,
-                pitch: event.leftPitch,
+                voiceIndex,
+                instrument: instruments.left[voiceIndex].name,
+                pitch,
             });
-        }
-        if (event.rightPitch !== undefined) {
+        });
+        (event.rightPitches ?? (event.rightPitch !== undefined ? [event.rightPitch] : [])).forEach((pitch, voiceIndex) => {
             eventNotes.push({
                 tick: event.tick,
                 channel: 'right',
-                instrument: instruments.right.name,
-                pitch: event.rightPitch,
+                voiceIndex,
+                instrument: instruments.right[voiceIndex].name,
+                pitch,
             });
-        }
+        });
         return eventNotes;
     });
     if (notes.length === 0) throw new Error('The converted audio does not contain any playable notes.');
 
     const context = new AudioContext();
     const masterGain = context.createGain();
-    masterGain.gain.value = audioTrack.sourceChannels > 1 ? 0.58 : 0.72;
+    const speakerCount = instruments.left.length + instruments.right.length;
+    masterGain.gain.value = Math.min(
+        audioTrack.sourceChannels > 1 ? 0.58 : 0.72,
+        1.1 / Math.sqrt(Math.max(1, speakerCount)),
+    );
     masterGain.connect(context.destination);
 
     const uniqueSamples = [...new Map(notes.map(note => [
@@ -106,11 +114,7 @@ export const createFactorioAudioPreview = async (
     let paused = false;
     let startTime = 0;
 
-    const finish = async (notifyEnded: boolean) => {
-        if (stopped) return;
-        stopped = true;
-        if (timers.schedulerId !== undefined) window.clearInterval(timers.schedulerId);
-        if (timers.animationFrameId !== undefined) window.cancelAnimationFrame(timers.animationFrameId);
+    const stopActiveSources = () => {
         for (const source of activeSources) {
             try {
                 source.stop();
@@ -119,6 +123,26 @@ export const createFactorioAudioPreview = async (
             }
         }
         activeSources.clear();
+    };
+
+    const findFirstPotentiallyAudibleNote = (seconds: number) => {
+        const earliestSeconds = Math.max(0, seconds - longestSample);
+        let low = 0;
+        let high = notes.length;
+        while (low < high) {
+            const middle = Math.floor((low + high) / 2);
+            if (notes[middle].tick / 60 < earliestSeconds) low = middle + 1;
+            else high = middle;
+        }
+        return low;
+    };
+
+    const finish = async (notifyEnded: boolean) => {
+        if (stopped) return;
+        stopped = true;
+        if (timers.schedulerId !== undefined) window.clearInterval(timers.schedulerId);
+        if (timers.animationFrameId !== undefined) window.cancelAnimationFrame(timers.animationFrameId);
+        stopActiveSources();
         if (context.state !== 'closed') await context.close();
         if (notifyEnded && !ended) {
             ended = true;
@@ -135,17 +159,27 @@ export const createFactorioAudioPreview = async (
             const note = notes[scheduledIndex];
             const buffer = buffers.get(sampleKey(note.instrument, note.pitch));
             if (buffer) {
+                const intendedStart = startTime + note.tick / 60;
+                const offset = Math.max(0, context.currentTime - intendedStart);
+                if (offset >= buffer.duration) {
+                    scheduledIndex += 1;
+                    continue;
+                }
                 const source = context.createBufferSource();
                 source.buffer = buffer;
                 const panner = context.createStereoPanner();
+                const channelVoices = instruments[note.channel].length;
+                const voiceSpread = channelVoices > 1
+                    ? (note.voiceIndex / (channelVoices - 1) - 0.5) * 0.22
+                    : 0;
                 panner.pan.value = audioTrack.sourceChannels > 1
-                    ? (note.channel === 'left' ? -0.72 : 0.72)
+                    ? Math.max(-1, Math.min(1, (note.channel === 'left' ? -0.72 : 0.72) + voiceSpread))
                     : 0;
                 source.connect(panner);
                 panner.connect(masterGain);
                 activeSources.add(source);
                 source.addEventListener('ended', () => activeSources.delete(source), { once: true });
-                source.start(Math.max(context.currentTime, startTime + note.tick / 60));
+                source.start(Math.max(context.currentTime, intendedStart), offset);
             }
             scheduledIndex += 1;
         }
@@ -185,6 +219,15 @@ export const createFactorioAudioPreview = async (
             paused = false;
             scheduleAhead();
             timers.animationFrameId = window.requestAnimationFrame(updateProgress);
+        },
+        seek: async seconds => {
+            if (stopped) return;
+            const target = Math.max(0, Math.min(Number.isFinite(seconds) ? seconds : 0, duration));
+            stopActiveSources();
+            scheduledIndex = findFirstPotentiallyAudibleNote(target);
+            startTime = context.currentTime - target;
+            callbacks.onTimeUpdate?.(target, duration);
+            if (!paused) scheduleAhead();
         },
         stop: () => finish(false),
     };

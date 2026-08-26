@@ -86,10 +86,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                     <div>
                         <h3 className="mb-2 border-b border-gray-700 pb-1 font-bold text-gray-100">Audio and programmable speakers</h3>
                         <ul className="list-inside list-disc space-y-2 pl-1 text-xs text-gray-400">
-                            <li>Import MP3, WAV, FLAC, OGG, or another FFmpeg-readable audio file. The app detects one dominant pitch per left/right channel.</li>
-                            <li>One decider stores both channel pitches for each sampled instant; two programmable speakers play the approximate sequences.</li>
+                            <li>Import MP3, WAV, FLAC, OGG, or another FFmpeg-readable audio file. The app can extract up to four simultaneous pitches per left/right channel.</li>
+                            <li>One decider stores every detected voice for each sampled instant; each voice uses one programmable speaker and all speakers share the same tick clock.</li>
                             <li>The sampling rate accepts 1–60 notes/s because Factorio runs at 60 ticks/s. 4–8 is recommended; high values produce much larger, denser, and often less musical blueprints.</li>
-                            <li>Choose a native instrument independently for each speaker, or use Auto to minimize notes clipped outside its range. Piano has 48 notes (F3–E7); the other melodic instruments have 36-note ranges.</li>
+                            <li>Choose the primary native instrument for each channel, or use Auto to minimize clipped notes. Additional voices automatically use suitable different timbres when possible.</li>
+                            <li>The exact Factorio sound preview timeline can be scrubbed while playing or paused.</li>
                             <li>Use the converted preview to hear the exact local Factorio programmable-speaker samples before export. The desktop app detects common Factorio installations automatically, or you can select the game folder manually; game sounds are read in place and are never copied into the app.</li>
                             <li>After importing an animation and audio, click <strong>Link audio to animation</strong>. Linked playback shares the same tick counter and starts at T = 0; the animation defines the combined loop. Audio-only blueprints use the complete audio duration.</li>
                             <li>The original waveforms cannot be embedded in a vanilla blueprint, so this is a musical approximation rather than faithful MP3 or stereo playback.</li>

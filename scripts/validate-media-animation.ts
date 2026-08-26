@@ -521,12 +521,15 @@ const audioTrack: DecodedAudioTrack = {
     notesPerSecond: 4,
     durationTicks: 120,
     durationSeconds: 2,
-    leftNoteCount: 3,
-    rightNoteCount: 2,
+    voicesPerChannel: 2,
+    leftNoteCount: 6,
+    rightNoteCount: 5,
+    leftVoiceNoteCounts: [3, 3],
+    rightVoiceNoteCounts: [3, 2],
     events: [
-        { tick: 0, leftPitch: 17, rightPitch: 20, leftMidi: 69, rightMidi: 72 },
-        { tick: 30, leftPitch: 19, leftMidi: 71 },
-        { tick: 60, leftPitch: 20, rightPitch: 24, leftMidi: 72, rightMidi: 76 },
+        { tick: 0, leftPitch: 17, rightPitch: 20, leftMidi: 69, rightMidi: 72, leftMidis: [60, 69], rightMidis: [67, 72] },
+        { tick: 30, leftPitch: 19, leftMidi: 71, leftMidis: [62, 71], rightMidis: [67] },
+        { tick: 60, leftPitch: 20, rightPitch: 24, leftMidi: 72, rightMidi: 76, leftMidis: [64, 72], rightMidis: [69, 76] },
     ],
 };
 const audioAnimation: GridAnimationData = {
@@ -554,15 +557,15 @@ const audioBlueprint = decodeBlueprint(audioResult.bpString);
 writeFileSync('node_modules/.cache/audio-speaker-blueprint.txt', audioResult.bpString);
 const audioEntities = audioBlueprint.blueprint.entities;
 const speakers = audioEntities.filter(entity => entity.name === 'programmable-speaker');
-const noteRoms = audioEntities.filter(entity => entity.player_description?.startsWith('Generated stereo note event'));
-assert.equal(speakers.length, 2);
-assert.equal(noteRoms.length, audioTrack.events.length, 'One decider should store both channel pitches for each tick.');
+const noteRoms = audioEntities.filter(entity => entity.player_description?.startsWith('Generated synchronized'));
+assert.equal(speakers.length, 4);
+assert.equal(noteRoms.length, audioTrack.events.length, 'One decider should store every synchronized voice pitch for each tick.');
 assert.ok(speakers.every(speaker => speaker.parameters?.playback_mode === 'local'));
 assert.deepEqual(
     new Set(speakers.map(speaker => (
         (speaker.control_behavior?.circuit_parameters as { instrument_id?: number })?.instrument_id
     ))),
-    new Set([4, 8]),
+    new Set([3, 4, 8]),
 );
 assert.ok(audioProgress.length > 2);
 assert.equal(Math.round(audioProgress.at(-1) ?? -1), 100);
@@ -585,8 +588,24 @@ const audioPreview = calculateMediaAnimationPreviewLayout(
     audioTrack,
     audioInstruments,
 );
-assert.equal(audioPreview.stats.programmableSpeakerCount, 2);
+assert.equal(audioPreview.stats.programmableSpeakerCount, 4);
 assert.equal(audioPreview.stats.deciderCombinatorCount, noteRoms.length + 1);
+const placedAudioPreview = calculateMediaAnimationPreviewLayout(
+    audioAnimation,
+    2,
+    2,
+    [],
+    [],
+    poleType,
+    true,
+    'top',
+    false,
+    audioTrack,
+    audioInstruments,
+    { x: 1, y: 1 },
+);
+assert.equal(placedAudioPreview.entities[0].x, audioPreview.entities[0].x + 1);
+assert.equal(placedAudioPreview.entities[0].y, audioPreview.entities[0].y + 1);
 
 // Very large animations only render a bounded sample of their ROM footprints.
 // The sample must cover the full controller instead of clustering in the first

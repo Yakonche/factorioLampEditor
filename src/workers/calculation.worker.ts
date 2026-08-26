@@ -48,6 +48,7 @@ type WorkerRequest = {
     backgroundTile?: BackgroundTileName;
     audioTrack?: DecodedAudioTrack;
     audioInstruments?: AudioInstrumentSelections;
+    audioPlacement?: { x: number; y: number };
 };
 
 const context: DedicatedWorkerGlobalScope = self as unknown as DedicatedWorkerGlobalScope;
@@ -118,6 +119,7 @@ context.onmessage = (event: MessageEvent<WorkerRequest>) => {
                     backgroundTile: request.backgroundTile,
                     audioTrack: request.audioTrack,
                     audioInstruments: request.audioInstruments,
+                    audioPlacement: request.audioPlacement,
                     onProgress: reportProgress,
                 })
                 : request.animationEnabled && secondFrame
@@ -193,10 +195,12 @@ context.onmessage = (event: MessageEvent<WorkerRequest>) => {
             return;
         }
         if (maxX === -1) {
-            minX = 0;
-            minY = 0;
-            maxX = 0;
-            maxY = 0;
+            const placementX = Math.max(0, Math.min(request.width - 1, Math.round(request.audioPlacement?.x ?? 0)));
+            const placementY = Math.max(0, Math.min(request.height - 1, Math.round(request.audioPlacement?.y ?? 0)));
+            minX = placementX;
+            minY = placementY;
+            maxX = placementX;
+            maxY = placementY;
         }
 
         const poles = request.autoPole
@@ -230,6 +234,7 @@ context.onmessage = (event: MessageEvent<WorkerRequest>) => {
                 Boolean(request.autoRoboport && request.autoConstruction),
                 request.audioTrack,
                 request.audioInstruments,
+                request.audioPlacement,
             )
             : request.animationEnabled && secondFrame
             ? calculateAnimationPreviewLayout(

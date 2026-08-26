@@ -17,6 +17,7 @@ import type { AnimationControllerSide } from '../utils/blueprint';
 import type { StampBuffer, TextStampOptions } from '../utils/stamp';
 import {
     AUDIO_INSTRUMENTS,
+    resolveAudioVoices,
     type AudioInstrumentSelection,
     type DecodedAudioTrack,
 } from '../utils/audio';
@@ -140,9 +141,13 @@ interface ToolbarProps {
     onAudioUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     audioNotesPerSecond: number;
     setAudioNotesPerSecond: (value: number) => void;
+    audioVoicesPerChannel: number;
+    setAudioVoicesPerChannel: (value: number) => void;
     audioTrackInfo?: DecodedAudioTrack;
     audioImporting: boolean;
     onRemoveAudioTrack: () => void;
+    audioPlaced: boolean;
+    onPlaceAudioTrack: () => void;
     hasAnimation: boolean;
     audioLinkedToAnimation: boolean;
     setAudioLinkedToAnimation: (value: boolean) => void;
@@ -211,7 +216,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     mediaAnimationInfo, mediaImporting, mediaPreviewFrame,
     setMediaPreviewFrame, onRemoveMediaAnimation,
     onAudioUpload, audioNotesPerSecond, setAudioNotesPerSecond,
+    audioVoicesPerChannel, setAudioVoicesPerChannel,
     audioTrackInfo, audioImporting, onRemoveAudioTrack,
+    audioPlaced, onPlaceAudioTrack,
     hasAnimation, audioLinkedToAnimation, setAudioLinkedToAnimation,
     leftAudioInstrument, setLeftAudioInstrument,
     rightAudioInstrument, setRightAudioInstrument,
@@ -269,6 +276,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     const roboportPower = roboportCount * ROBOPORT_DRAIN_WATTS;
     const speakerPower = programmableSpeakerCount * PROGRAMMABLE_SPEAKER_POWER_WATTS;
     const totalPower = lampPower + combinatorPower + roboportPower + speakerPower;
+    const resolvedAudioVoices = audioTrackInfo
+        ? resolveAudioVoices(audioTrackInfo, { left: leftAudioInstrument, right: rightAudioInstrument })
+        : undefined;
+    const convertedSpeakerCount = resolvedAudioVoices
+        ? resolvedAudioVoices.left.length + resolvedAudioVoices.right.length
+        : 0;
 
     return (
         <div
@@ -490,7 +503,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 md:mb-4 md:text-xs">
                     {t('Animated media')}
                 </h3>
-                <div className="grid grid-cols-[1fr_88px] gap-2">
+                <div className="grid grid-cols-[1fr_76px_82px] gap-2">
                     <label className={`flex h-10 cursor-pointer items-center justify-center gap-2 rounded border px-3 transition ${mediaImporting
                         ? 'cursor-wait border-pink-400/40 bg-pink-950/50 text-pink-200'
                         : 'border-pink-500/40 bg-pink-950/30 text-pink-200 hover:bg-pink-900/40'
@@ -739,9 +752,26 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             aria-label="Audio notes per second"
                         />
                     </label>
+                    <label className="rounded border border-gray-600 bg-gray-900 px-2 py-1">
+                        <span className="block text-[8px] font-bold uppercase tracking-wider text-gray-500">Voices / ch.</span>
+                        <input
+                            type="number"
+                            min="1"
+                            max="4"
+                            step="1"
+                            value={audioVoicesPerChannel}
+                            disabled={audioImporting}
+                            onChange={event => {
+                                const value = Number(event.target.value);
+                                if (Number.isFinite(value)) setAudioVoicesPerChannel(Math.max(1, Math.min(4, Math.round(value))));
+                            }}
+                            className="w-full bg-transparent font-mono text-xs font-bold text-cyan-300 outline-none"
+                            aria-label="Audio voices per channel"
+                        />
+                    </label>
                 </div>
                 <p className="mt-2 text-[10px] leading-4 text-gray-500">
-                    FFmpeg detects one dominant pitch per left/right channel. Factorio allows at most one new sample per tick: 1–60 notes/s; 4–8 is recommended. The result uses two native speakers, not the original waveforms.
+                    FFmpeg extracts up to four simultaneous pitches per left/right channel. Each voice gets its own native Factorio instrument and speaker; every speaker shares one tick clock. Factorio allows at most one new sample per tick: 1–60 notes/s; 4–8 is recommended.
                 </p>
 
                 {audioTrackInfo && (
@@ -764,14 +794,25 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         </div>
                         <div className="grid grid-cols-2 gap-2 rounded border border-gray-700 bg-gray-800/60 p-2 font-mono">
                             <span><span className="text-gray-500">Events: </span>{audioTrackInfo.events.length.toLocaleString()}</span>
-                            <span><span className="text-gray-500">Speakers: </span>2</span>
+                            <span><span className="text-gray-500">Speakers: </span>{convertedSpeakerCount}</span>
                             <span><span className="text-gray-500">Left notes: </span>{audioTrackInfo.leftNoteCount.toLocaleString()}</span>
                             <span><span className="text-gray-500">Right notes: </span>{audioTrackInfo.rightNoteCount.toLocaleString()}</span>
                         </div>
+                        <button
+                            type="button"
+                            onClick={onPlaceAudioTrack}
+                            className={`flex w-full items-center justify-center gap-2 rounded border px-3 py-2 text-[9px] font-bold uppercase tracking-wider transition ${audioPlaced
+                                ? 'border-cyan-500/40 bg-cyan-950/30 text-cyan-200 hover:bg-cyan-900/50'
+                                : 'border-amber-400/50 bg-amber-950/40 text-amber-100 hover:bg-amber-900/50'
+                                }`}
+                        >
+                            <i className="fa-solid fa-location-crosshairs"></i>
+                            {audioPlaced ? 'Move audio controller' : 'Place audio controller on grid'}
+                        </button>
                         <div className="grid grid-cols-2 gap-2">
                             {([
-                                ['Left speaker', leftAudioInstrument, setLeftAudioInstrument],
-                                ['Right speaker', rightAudioInstrument, setRightAudioInstrument],
+                                ['Left primary voice', leftAudioInstrument, setLeftAudioInstrument],
+                                ['Right primary voice', rightAudioInstrument, setRightAudioInstrument],
                             ] as const).map(([label, value, setValue]) => (
                                 <label key={label} className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
                                     {label}
@@ -791,7 +832,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             ))}
                         </div>
                         <p className="rounded border border-gray-700 bg-gray-800/50 p-2 leading-4 text-gray-400">
-                            Auto selects the native instrument whose pitch range clips the fewest detected notes. Each speaker keeps one instrument for the whole track.
+                            Auto selects the native instruments whose pitch ranges clip the fewest detected notes. Equivalent ranges use different timbres when possible; each voice keeps one instrument for the whole track.
                         </p>
                         <AudioPreviewControls
                             track={audioTrackInfo}
@@ -815,7 +856,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             ? 'border-amber-500/30 bg-amber-950/30 text-amber-100/80'
                             : 'border-cyan-500/20 bg-cyan-950/20 text-cyan-100/80'
                             }`}>
-                            {hasAnimation
+                            {!audioPlaced
+                                ? 'The audio is ready. Place its controller on the grid before it can be exported.'
+                                : hasAnimation
                                 ? audioLinkedToAnimation
                                     ? <>Tick 0 is shared with the animation timer. {mediaAnimationInfo
                                         ? audioTrackInfo.durationTicks > mediaAnimationInfo.durationTicks

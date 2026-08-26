@@ -25,10 +25,15 @@ import {
 } from './mediaAnimation';
 import {
     prepareAudioEvents,
-    resolveAudioInstruments,
+    resolveAudioVoices,
     type AudioInstrumentSelections,
     type DecodedAudioTrack,
 } from './audio';
+
+const AUDIO_VOICE_SIGNALS = {
+    left: ['signal-L', 'signal-A', 'signal-B', 'signal-C'],
+    right: ['signal-R', 'signal-D', 'signal-E', 'signal-F'],
+} as const;
 
 /** Maximum sampled controller/audio footprints drawn in the editor preview. */
 export const MAX_BLUEPRINT_PREVIEW_ENTITIES = 100_000;
@@ -1536,6 +1541,7 @@ export function calculateMediaAnimationPreviewLayout(
     includeControllerRoboports = false,
     audioTrack?: DecodedAudioTrack,
     audioInstruments?: AudioInstrumentSelections,
+    audioPlacement?: { x: number; y: number },
 ): AnimationPreviewLayout {
     const tracks = getGridAnimationTracks(animation);
     const unionGrid = createAnimationUnionGrid(animation);
@@ -1555,10 +1561,12 @@ export function calculateMediaAnimationPreviewLayout(
     }
     if (maxX === -1) {
         if (!audioTrack) return { entities: [], stats: emptyAnimationStats(), bounds: null };
-        minX = 0;
-        minY = 0;
-        maxX = 0;
-        maxY = 0;
+        const placementX = Math.max(0, Math.min(gridW - 1, Math.round(audioPlacement?.x ?? 0)));
+        const placementY = Math.max(0, Math.min(gridH - 1, Math.round(audioPlacement?.y ?? 0)));
+        minX = placementX;
+        minY = placementY;
+        maxX = placementX;
+        maxY = placementY;
     }
 
     const occupied = new Uint8Array(gridW * gridH);
@@ -1650,7 +1658,7 @@ export function calculateMediaAnimationPreviewLayout(
         .reduce((total, indices) => total + indices.length, 0);
     const maximumSparseRomCount = [...lineTransitionIndices.values()]
         .reduce((maximum, indices) => Math.max(maximum, indices.length), 0);
-    const resolvedAudioInstruments = resolveAudioInstruments(audioTrack, audioInstruments);
+    const resolvedAudioInstruments = resolveAudioVoices(audioTrack, audioInstruments);
     const preparedAudioEvents = prepareAudioEvents(
         audioTrack,
         Math.max(2, animationDurationTicks(animation)),
@@ -1864,15 +1872,20 @@ export function calculateMediaAnimationPreviewLayout(
         );
     }
     if (preparedAudioEvents.length) {
-        for (const [lineOffset, channel, instrument] of [
-            [-2, 'Left', resolvedAudioInstruments.left],
-            [2, 'Right', resolvedAudioInstruments.right],
-        ] as const) {
-            const center = absolutePoint(geometry.transitionRomCoords[0], audioClockLine + lineOffset);
+        const previewVoices = (['left', 'right'] as const).flatMap(channel => (
+            resolvedAudioInstruments[channel].map((instrument, voiceIndex) => ({
+                channel,
+                instrument,
+                voiceIndex,
+                lineOffset: channel === 'left' ? -2 - voiceIndex * 2 : 2 + voiceIndex * 2,
+            }))
+        ));
+        for (const voice of previewVoices) {
+            const center = absolutePoint(geometry.transitionRomCoords[0], audioClockLine + voice.lineOffset);
             addPreview(
                 'programmable-speaker',
                 'Programmable speaker',
-                `${channel} approximate ${instrument.label} channel (${instrument.range})`,
+                `${voice.channel === 'left' ? 'Left' : 'Right'} voice ${voice.voiceIndex + 1}, approximate ${voice.instrument.label} (${voice.instrument.range})`,
                 center.x - 0.5,
                 center.y - 0.5,
                 1,
@@ -1905,7 +1918,9 @@ export function calculateMediaAnimationPreviewLayout(
             controllerPoleCount: geometry.powerPathCoords.length * geometry.spineLineCoords.length,
             controllerRoboportCount: controllerRoboports.length,
             relayPoleCount,
-            programmableSpeakerCount: preparedAudioEvents.length ? 2 : 0,
+            programmableSpeakerCount: preparedAudioEvents.length
+                ? resolvedAudioInstruments.left.length + resolvedAudioInstruments.right.length
+                : 0,
         },
         bounds: { minX: previewMinX, minY: previewMinY, maxX: previewMaxX, maxY: previewMaxY },
     };
@@ -2381,6 +2396,7 @@ export function generateAnimatedBlueprintData(
 export type MediaBlueprintOptions = Omit<AnimatedBlueprintOptions, 'delayTicks'> & {
     audioTrack?: DecodedAudioTrack;
     audioInstruments?: AudioInstrumentSelections;
+    audioPlacement?: { x: number; y: number };
     onProgress?: (percentage: number) => void;
 };
 
@@ -2504,10 +2520,12 @@ export function generateMediaAnimationBlueprintData(
     }
     if (maxX === -1) {
         if (!options.audioTrack) return { bpString: null, status: 'Every decoded media frame is empty.' };
-        minX = 0;
-        minY = 0;
-        maxX = 0;
-        maxY = 0;
+        const placementX = Math.max(0, Math.min(gridW - 1, Math.round(options.audioPlacement?.x ?? 0)));
+        const placementY = Math.max(0, Math.min(gridH - 1, Math.round(options.audioPlacement?.y ?? 0)));
+        minX = placementX;
+        minY = placementY;
+        maxX = placementX;
+        maxY = placementY;
     }
 
     const imageWidth = maxX - minX + 1;
@@ -2806,7 +2824,7 @@ export function generateMediaAnimationBlueprintData(
             transitionEventsByLine.set(localLine, lineEvents);
         }
     });
-    const resolvedAudioInstruments = resolveAudioInstruments(options.audioTrack, options.audioInstruments);
+    const resolvedAudioInstruments = resolveAudioVoices(options.audioTrack, options.audioInstruments);
     const preparedAudioEvents = prepareAudioEvents(
         options.audioTrack,
         cycleTicks,
@@ -3009,26 +3027,38 @@ export function generateMediaAnimationBlueprintData(
     if (preparedAudioEvents.length) {
         const audioTimerSignal = timerSignals[0];
         const audioClockLine = clockLine - 3;
-        const leftSignal: FactorioSignalID = { type: 'virtual', name: 'signal-L' };
-        const rightSignal: FactorioSignalID = { type: 'virtual', name: 'signal-R' };
+        const audioVoices = (['left', 'right'] as const).flatMap(channel => (
+            resolvedAudioInstruments[channel].map((instrument, voiceIndex) => ({
+                channel,
+                voiceIndex,
+                instrument,
+                signal: {
+                    type: 'virtual',
+                    name: AUDIO_VOICE_SIGNALS[channel][voiceIndex],
+                } as FactorioSignalID,
+                lineOffset: channel === 'left' ? -2 - voiceIndex * 2 : 2 + voiceIndex * 2,
+            }))
+        ));
         const audioRoms = preparedAudioEvents.map((event, eventIndex) => {
             const outputs: Record<string, unknown>[] = [];
-            if (event.leftPitch !== undefined) outputs.push({
-                signal: leftSignal,
-                copy_count_from_input: false,
-                constant: event.leftPitch,
-            });
-            if (event.rightPitch !== undefined) outputs.push({
-                signal: rightSignal,
-                copy_count_from_input: false,
-                constant: event.rightPitch,
-            });
+            for (const voice of audioVoices) {
+                const pitches = voice.channel === 'left'
+                    ? event.leftPitches ?? (event.leftPitch !== undefined ? [event.leftPitch] : [])
+                    : event.rightPitches ?? (event.rightPitch !== undefined ? [event.rightPitch] : []);
+                const pitch = pitches[voice.voiceIndex];
+                if (pitch === undefined) continue;
+                outputs.push({
+                    signal: voice.signal,
+                    copy_count_from_input: false,
+                    constant: pitch,
+                });
+            }
             const pathCoordinate = geometry.transitionRomCoords[eventIndex];
             const rom = addEntity({
                 name: 'decider-combinator',
                 position: localPoint(pathCoordinate, audioClockLine),
                 direction: combinatorDirection,
-                player_description: `Generated stereo note event, T = ${event.tick}.`,
+                player_description: `Generated synchronized ${audioVoices.length}-voice note event, T = ${event.tick}.`,
                 control_behavior: {
                     decider_conditions: {
                         conditions: [{ first_signal: audioTimerSignal, comparator: '=', constant: event.tick }],
@@ -3044,16 +3074,10 @@ export function generateMediaAnimationBlueprintData(
             addWire(audioRoms[index - 1], 4, audioRoms[index], 4);
         }
 
-        const createSpeaker = (
-            signal: FactorioSignalID,
-            lineOffset: number,
-            channelLabel: string,
-        ) => addEntity({
+        const createSpeaker = (voice: typeof audioVoices[number]) => addEntity({
             name: 'programmable-speaker',
-            position: localPoint(geometry.transitionRomCoords[0], audioClockLine + lineOffset),
-            player_description: `${channelLabel} approximate audio channel. ${signal.name === 'signal-L'
-                ? resolvedAudioInstruments.left.label
-                : resolvedAudioInstruments.right.label} notes are synchronized to the media timer.`,
+            position: localPoint(geometry.transitionRomCoords[0], audioClockLine + voice.lineOffset),
+            player_description: `${voice.channel === 'left' ? 'Left' : 'Right'} approximate audio voice ${voice.voiceIndex + 1}. ${voice.instrument.label} notes are synchronized to the shared media timer.`,
             parameters: {
                 playback_volume: 0.65,
                 playback_mode: 'local',
@@ -3061,21 +3085,18 @@ export function generateMediaAnimationBlueprintData(
                 volume_controlled_by_signal: false,
             },
             control_behavior: {
-                circuit_condition: { first_signal: signal, comparator: '>', constant: 0 },
+                circuit_condition: { first_signal: voice.signal, comparator: '>', constant: 0 },
                 circuit_parameters: {
                     signal_value_is_pitch: true,
                     stop_playing_sounds: false,
-                    instrument_id: signal.name === 'signal-L'
-                        ? resolvedAudioInstruments.left.instrumentId
-                        : resolvedAudioInstruments.right.instrumentId,
+                    instrument_id: voice.instrument.instrumentId,
                     note_id: 0,
                 },
             },
         });
-        const leftSpeaker = createSpeaker(leftSignal, -2, 'Left');
-        const rightSpeaker = createSpeaker(rightSignal, 2, 'Right');
-        addWire(audioRoms[0], 4, leftSpeaker, 2);
-        addWire(audioRoms[0], 4, rightSpeaker, 2);
+        for (const voice of audioVoices) {
+            addWire(audioRoms[0], 4, createSpeaker(voice), 2);
+        }
     }
     options.onProgress?.(32);
 

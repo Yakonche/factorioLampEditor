@@ -31,6 +31,7 @@ interface Window {
       sourceName: string;
       bytes: ArrayBuffer;
       notesPerSecond: number;
+      voicesPerChannel: number;
     }) => Promise<import('./utils/audio').DecodedAudioTrack>;
     getFactorioSpeakerSoundStatus: () => Promise<{
       available: boolean;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useI18n } from '../i18n';
 import {
-    resolveAudioInstruments,
+    resolveAudioVoices,
     type AudioInstrumentSelections,
     type DecodedAudioTrack,
 } from '../utils/audio';
@@ -37,7 +37,7 @@ export const AudioPreviewControls: React.FC<AudioPreviewControlsProps> = ({ trac
     const [error, setError] = React.useState<string>();
     const controllerRef = React.useRef<FactorioAudioPreviewController | undefined>(undefined);
     const requestIdRef = React.useRef(0);
-    const resolved = resolveAudioInstruments(track, selections);
+    const resolved = resolveAudioVoices(track, selections);
 
     const refreshStatus = React.useCallback(async () => {
         const getStatus = window.factorioLampEditor?.getFactorioSpeakerSoundStatus;
@@ -148,6 +148,14 @@ export const AudioPreviewControls: React.FC<AudioPreviewControlsProps> = ({ trac
         setTime(previous => ({ current: 0, duration: previous.duration }));
     };
 
+    const seek = (seconds: number) => {
+        const controller = controllerRef.current;
+        if (!controller) return;
+        const target = Math.max(0, Math.min(seconds, time.duration));
+        setTime(previous => ({ ...previous, current: target }));
+        void controller.seek(target);
+    };
+
     const desktopBridgeAvailable = Boolean(window.factorioLampEditor?.getFactorioSpeakerSoundStatus);
     const loadingPercent = loadProgress.total > 0
         ? Math.round(loadProgress.loaded / loadProgress.total * 100)
@@ -162,7 +170,7 @@ export const AudioPreviewControls: React.FC<AudioPreviewControlsProps> = ({ trac
                         {t('Exact Factorio sound preview')}
                     </p>
                     <p className="mt-1 text-[9px] text-gray-400">
-                        {t('Left')} : {resolved.left.label} · {t('Right')} : {resolved.right.label}
+                        {t('Left')} : {resolved.left.map(instrument => instrument.label).join(', ')} · {t('Right')} : {resolved.right.map(instrument => instrument.label).join(', ')}
                     </p>
                 </div>
                 {soundStatus?.available && (
@@ -235,11 +243,26 @@ export const AudioPreviewControls: React.FC<AudioPreviewControlsProps> = ({ trac
                         </button>
                     </div>
                     <div>
-                        <progress
-                            value={phase === 'loading' ? loadingPercent : time.current}
-                            max={phase === 'loading' ? 100 : Math.max(time.duration, 0.001)}
-                            className="h-1.5 w-full accent-cyan-400"
-                        />
+                        {phase === 'loading' ? (
+                            <progress
+                                value={loadingPercent}
+                                max={100}
+                                className="h-1.5 w-full accent-cyan-400"
+                            />
+                        ) : (
+                            <input
+                                type="range"
+                                min={0}
+                                max={Math.max(time.duration, 0.001)}
+                                step={0.01}
+                                value={Math.min(time.current, time.duration)}
+                                onChange={event => seek(Number(event.currentTarget.value))}
+                                disabled={phase !== 'playing' && phase !== 'paused'}
+                                className="h-1.5 w-full cursor-pointer accent-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
+                                aria-label={t('Seek converted preview')}
+                                title={t('Seek converted preview')}
+                            />
+                        )}
                         <div className="mt-0.5 flex justify-between font-mono text-[8px] text-gray-500">
                             <span>{formatTime(time.current)}</span>
                             <span>{formatTime(time.duration)}</span>

@@ -8,6 +8,7 @@ const {
   FFT_SIZE,
   decodeAudioNotes,
   detectDominantMidi,
+  detectDominantMidis,
   detectFactorioPianoPitch,
   extractNoteEvents,
 } = require('../electron/audio.cjs');
@@ -22,6 +23,18 @@ assert.equal(detectFactorioPianoPitch(createSineWindow(523.251), AUDIO_SAMPLE_RA
 assert.equal(detectDominantMidi(createSineWindow(87.307), AUDIO_SAMPLE_RATE), 41, 'F2 should remain available for the lowest native instruments.');
 assert.equal(detectDominantMidi(createSineWindow(5274.041), AUDIO_SAMPLE_RATE), 112, 'E8 should remain available for the highest native instruments.');
 assert.equal(detectFactorioPianoPitch(new Float64Array(FFT_SIZE), AUDIO_SAMPLE_RATE), undefined);
+
+const cMajorWindow = Float64Array.from(
+  { length: FFT_SIZE },
+  (_, index) => [261.626, 329.628, 391.995].reduce((sample, frequency) => (
+    sample + Math.sin(2 * Math.PI * frequency * index / AUDIO_SAMPLE_RATE) * 0.24
+  ), 0),
+);
+assert.deepEqual(
+  detectDominantMidis(cMajorWindow, AUDIO_SAMPLE_RATE, 4),
+  [60, 64, 67],
+  'Polyphonic extraction should preserve the three simultaneous C-major pitches.',
+);
 
 const pcmFrames = AUDIO_SAMPLE_RATE;
 const pcm = Buffer.alloc(pcmFrames * 4);
@@ -51,9 +64,11 @@ assert.ok(extracted.events.every(event => event.leftMidi === 69 && event.rightMi
       sourceName: 'stereo.wav',
       bytes: fs.readFileSync(wavePath),
       notesPerSecond: 4,
+      voicesPerChannel: 2,
     }, { ffmpegPath });
     assert.equal(decoded.sourceChannels, 2);
     assert.equal(decoded.notesPerSecond, 4);
+    assert.equal(decoded.voicesPerChannel, 2);
     assert.ok(decoded.events.length >= 4);
     assert.ok(decoded.events.every(event => event.leftPitch === 17 && event.rightPitch === 20));
     assert.ok(decoded.events.every(event => event.leftMidi === 69 && event.rightMidi === 72));

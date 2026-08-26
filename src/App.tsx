@@ -246,6 +246,7 @@ function App() {
   const audioSourceFileRef = useRef<File | null>(null);
   const audioDecodeRequestRef = useRef(0);
   const lastDecodedNotesPerSecondRef = useRef<number | null>(null);
+  const lastDecodedVoicesPerChannelRef = useRef<number | null>(null);
   const lastDecodedFpsLimitRef = useRef<number | null>(null);
   const lastDecodedMaxDefinitionRef = useRef<number | null>(null);
   const lastDecodedTargetSizeRef = useRef<string | null>(null);
@@ -305,7 +306,7 @@ function App() {
   }, [historyIndex]);
 
   // Stamps
-  const [stampMode, setStampMode] = useState<'text' | 'image' | null>(null);
+  const [stampMode, setStampMode] = useState<'text' | 'image' | 'audio' | null>(null);
   const [stampBuffer, setStampBuffer] = useState<StampBuffer | null>(null);
   const [placedImage, setPlacedImage] = useState<(ImportedFrame & { baseGrid: GridData }) | null>(null);
   const [sequenceFrames, setSequenceFrames] = useState<SequenceFrame[]>([]);
@@ -334,7 +335,9 @@ function App() {
   const [previewSeekVersion, setPreviewSeekVersion] = useState(0);
   const [inspectedLamp, setInspectedLamp] = useState<{ x: number; y: number } | null>(null);
   const [audioNotesPerSecond, setAudioNotesPerSecond] = useState(4);
+  const [audioVoicesPerChannel, setAudioVoicesPerChannel] = useState(2);
   const [audioTrackInfo, setAudioTrackInfo] = useState<DecodedAudioTrack | null>(null);
+  const [audioPlacement, setAudioPlacement] = useState<{ x: number; y: number } | null>(null);
   const [audioImporting, setAudioImporting] = useState(false);
   const [audioLinkedToAnimation, setAudioLinkedToAnimation] = useState(false);
   const [leftAudioInstrument, setLeftAudioInstrument] = useState<AudioInstrumentSelection>('auto');
@@ -438,30 +441,58 @@ function App() {
     audioTrackRef.current = null;
     audioSourceFileRef.current = null;
     lastDecodedNotesPerSecondRef.current = null;
+    lastDecodedVoicesPerChannelRef.current = null;
     setAudioTrackInfo(null);
+    setAudioPlacement(null);
     setAudioImporting(false);
     setAudioLinkedToAnimation(false);
+    setStampMode(previous => previous === 'audio' ? null : previous);
+    setStampBuffer(previous => stampMode === 'audio' ? null : previous);
+  }, [stampMode]);
+
+  const beginAudioPlacement = useCallback((track: DecodedAudioTrack) => {
+    setAudioPlacement(null);
+    setStampScale(1);
+    setStampBuffer({
+      w: 1,
+      h: 1,
+      data: new Uint32Array([colorToUint32('#22d3ee')]),
+      sourceName: track.sourceName,
+    });
+    setStampMode('audio');
   }, []);
 
-  const importAudio = useCallback(async (file: File, notesPerSecond: number) => {
+  const importAudio = useCallback(async (
+    file: File,
+    notesPerSecond: number,
+    voicesPerChannel: number,
+    requirePlacement = false,
+  ) => {
     if (!window.factorioLampEditor?.decodeAudioNotes) {
       alert('Audio-to-speaker conversion is available in the installed desktop application.');
       return;
     }
     const requestId = ++audioDecodeRequestRef.current;
     setAudioImporting(true);
-    setStatusMsg('Extracting approximate left/right piano notes with FFmpeg...');
+    setStatusMsg('Extracting synchronized polyphonic notes with FFmpeg...');
     try {
       const decoded = await window.factorioLampEditor.decodeAudioNotes({
         sourceName: file.name,
         bytes: await file.arrayBuffer(),
         notesPerSecond: Math.max(1, Math.min(60, notesPerSecond)),
+        voicesPerChannel: Math.max(1, Math.min(4, Math.round(voicesPerChannel))),
       });
       if (requestId !== audioDecodeRequestRef.current) return;
       audioTrackRef.current = decoded;
       lastDecodedNotesPerSecondRef.current = notesPerSecond;
+      lastDecodedVoicesPerChannelRef.current = voicesPerChannel;
       setAudioTrackInfo(decoded);
-      setStatusMsg(`${decoded.events.length.toLocaleString()} stereo note events extracted`);
+      if (requirePlacement) {
+        beginAudioPlacement(decoded);
+        setStatusMsg(`${decoded.events.length.toLocaleString()} polyphonic events extracted. Click the grid to place the audio controller.`);
+      } else {
+        setStatusMsg(`${decoded.events.length.toLocaleString()} polyphonic note events extracted`);
+      }
       setTimeout(() => setStatusMsg(''), 3500);
     } catch (error) {
       if (requestId !== audioDecodeRequestRef.current) return;
@@ -471,7 +502,7 @@ function App() {
     } finally {
       if (requestId === audioDecodeRequestRef.current) setAudioImporting(false);
     }
-  }, []);
+  }, [beginAudioPlacement]);
 
   const placeDecodedMedia = useCallback((
     decoded: DecodedMediaAnimation,
@@ -812,13 +843,20 @@ function App() {
 
   useEffect(() => {
     const source = audioSourceFileRef.current;
-    if (!source || lastDecodedNotesPerSecondRef.current === null) return;
-    if (Math.abs(lastDecodedNotesPerSecondRef.current - audioNotesPerSecond) < 0.0001) return;
+    if (
+      !source
+      || lastDecodedNotesPerSecondRef.current === null
+      || lastDecodedVoicesPerChannelRef.current === null
+    ) return;
+    if (
+      Math.abs(lastDecodedNotesPerSecondRef.current - audioNotesPerSecond) < 0.0001
+      && lastDecodedVoicesPerChannelRef.current === audioVoicesPerChannel
+    ) return;
     const timer = setTimeout(() => {
-      void importAudio(source, audioNotesPerSecond);
+      void importAudio(source, audioNotesPerSecond, audioVoicesPerChannel);
     }, 450);
     return () => clearTimeout(timer);
-  }, [audioNotesPerSecond, importAudio]);
+  }, [audioNotesPerSecond, audioVoicesPerChannel, importAudio]);
 
   useEffect(() => {
     const decoded = decodedMediaRef.current;
@@ -1099,7 +1137,7 @@ function App() {
     if (!file) return;
     setAudioLinkedToAnimation(false);
     audioSourceFileRef.current = file;
-    await importAudio(file, audioNotesPerSecond);
+    await importAudio(file, audioNotesPerSecond, audioVoicesPerChannel, true);
   };
 
   const handleMediaDimensionChange = useCallback((axis: 'width' | 'height', value: number) => {
@@ -1364,7 +1402,7 @@ function App() {
     manualAnimation ? createAnimationUnionGrid(manualAnimation) : gridRef.current
   ), [manualAnimation]);
   const hasActiveAnimation = Boolean(activePreviewAnimation);
-  const audioIncludedInCurrentComposition = Boolean(audioTrackInfo)
+  const audioIncludedInCurrentComposition = Boolean(audioTrackInfo && audioPlacement)
     && (!hasActiveAnimation || audioLinkedToAnimation);
 
   const runCalculation = useCallback((
@@ -1376,7 +1414,8 @@ function App() {
     const id = ++workerRequestIdRef.current;
     const cells = gridRef.current.cells.slice();
     const activeAnimation = mediaAnimationRef.current ?? manualAnimation;
-    const includeAudio = Boolean(audioTrackRef.current) && (!activeAnimation || audioLinkedToAnimation);
+    const includeAudio = Boolean(audioTrackRef.current && audioPlacement)
+      && (!activeAnimation || audioLinkedToAnimation);
     const mediaTracks = activeAnimation?.tracks?.length
       ? getGridAnimationTracks(activeAnimation).map(track => ({
         firstDurationTicks: track.firstDurationTicks,
@@ -1410,6 +1449,7 @@ function App() {
         audioInstruments: includeAudio
           ? { left: leftAudioInstrument, right: rightAudioInstrument }
           : undefined,
+        audioPlacement: includeAudio ? audioPlacement : undefined,
         mediaAnimation: activeAnimation && mediaTracks
           ? {
             tracks: mediaTracks.map(track => ({
@@ -1426,7 +1466,7 @@ function App() {
         height: GRID_H,
       }, transferables);
     });
-  }, [audioLinkedToAnimation, leftAudioInstrument, manualAnimation, rightAudioInstrument]);
+  }, [audioLinkedToAnimation, audioPlacement, leftAudioInstrument, manualAnimation, rightAudioInstrument]);
 
   // Stats
   const [lampCount, setLampCount] = useState(0);
@@ -1884,6 +1924,22 @@ function App() {
     const pendingStamp = stampBuffer;
     if (!pendingStamp) return;
     stampPlacementPendingRef.current = true;
+
+    if (stampMode === 'audio') {
+      if (cx < 0 || cx >= GRID_W || cy < 0 || cy >= GRID_H) {
+        stampPlacementPendingRef.current = false;
+        return;
+      }
+      setAudioPlacement({ x: Math.round(cx), y: Math.round(cy) });
+      setStampMode(null);
+      setStampBuffer(null);
+      shouldFitAnimationPreviewRef.current = true;
+      setTick(value => value + 1);
+      setStatusMsg(t('Audio controller placed. All speakers share the same tick clock.'));
+      setTimeout(() => setStatusMsg(''), 3000);
+      stampPlacementPendingRef.current = false;
+      return;
+    }
 
     // Check mode
     const isText = stampMode === 'text';
@@ -2421,7 +2477,7 @@ function App() {
 
             {stampMode && (
               <div className="absolute top-4 left-4 z-10 bg-blue-600/90 backdrop-blur text-white px-3 py-1.5 rounded-lg shadow-lg text-[10px] md:text-xs font-bold border border-blue-400/30 flex items-center gap-2 pointer-events-none">
-                🎯 <span>Click to Stamp</span>
+                🎯 <span>{stampMode === 'audio' ? t('Click to place audio controller') : t('Click to Stamp')}</span>
               </div>
             )}
 
@@ -2576,9 +2632,15 @@ function App() {
             onAudioUpload={handleAudioUpload}
             audioNotesPerSecond={audioNotesPerSecond}
             setAudioNotesPerSecond={setAudioNotesPerSecond}
+            audioVoicesPerChannel={audioVoicesPerChannel}
+            setAudioVoicesPerChannel={setAudioVoicesPerChannel}
             audioTrackInfo={audioTrackInfo ?? undefined}
             audioImporting={audioImporting}
             onRemoveAudioTrack={clearAudioTrack}
+            audioPlaced={Boolean(audioPlacement)}
+            onPlaceAudioTrack={() => {
+              if (audioTrackInfo) beginAudioPlacement(audioTrackInfo);
+            }}
             hasAnimation={hasActiveAnimation}
             audioLinkedToAnimation={audioLinkedToAnimation}
             setAudioLinkedToAnimation={setAudioLinkedToAnimation}

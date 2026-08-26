@@ -50,7 +50,7 @@ interface CanvasProps {
     onLampClick?: (x: number, y: number) => void;
 
     // Visuals
-    stampMode: 'text' | 'image' | null;
+    stampMode: 'text' | 'image' | 'audio' | null;
     stampBuffer: StampBuffer | null;
     stampScale: number;
 

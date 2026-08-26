@@ -12,6 +12,8 @@ const AUDIO_SAMPLE_RATE = 16_000;
 const FFT_SIZE = 4_096;
 const MIN_NOTES_PER_SECOND = 1;
 const MAX_NOTES_PER_SECOND = 60;
+const MIN_VOICES_PER_CHANNEL = 1;
+const MAX_VOICES_PER_CHANNEL = 4;
 const PIANO_FIRST_MIDI_NOTE = 53; // F3, Factorio piano pitch 1.
 const PIANO_NOTE_COUNT = 48; // F3 through E7.
 const DETECTION_FIRST_MIDI_NOTE = 41; // F2, lowest native melodic note.
@@ -71,30 +73,62 @@ function fftRealMagnitudes(samples) {
   return magnitudes;
 }
 
-function detectDominantMidi(samples, sampleRate) {
+function midiBinEnergy(magnitudes, midi, sampleCount, sampleRate) {
+  const frequency = 440 * (2 ** ((midi - 69) / 12));
+  const centerBin = Math.round(frequency * sampleCount / sampleRate);
+  let energy = 0;
+  for (let bin = Math.max(1, centerBin - 1); bin <= Math.min(magnitudes.length - 1, centerBin + 1); bin++) {
+    energy += magnitudes[bin];
+  }
+  return energy;
+}
+
+function detectDominantMidis(samples, sampleRate, maximumVoices = 1) {
   let sumSquares = 0;
   for (const sample of samples) sumSquares += sample * sample;
   const rms = Math.sqrt(sumSquares / samples.length);
-  if (rms < SILENCE_RMS) return undefined;
+  if (rms < SILENCE_RMS) return [];
 
-  const magnitudes = fftRealMagnitudes(samples);
-  let bestMidi;
-  let bestEnergy = 0;
-  for (let midi = DETECTION_FIRST_MIDI_NOTE; midi <= DETECTION_LAST_MIDI_NOTE; midi++) {
-    const frequency = 440 * (2 ** ((midi - 69) / 12));
-    const exactBin = frequency * samples.length / sampleRate;
-    const centerBin = Math.round(exactBin);
-    let energy = 0;
-    // A small neighborhood makes the detector tolerant of tuning and FFT-bin boundaries.
-    for (let bin = Math.max(1, centerBin - 1); bin <= Math.min(magnitudes.length - 1, centerBin + 1); bin++) {
-      energy += magnitudes[bin];
+  const residual = fftRealMagnitudes(samples);
+  const voiceLimit = Math.max(MIN_VOICES_PER_CHANNEL, Math.min(
+    MAX_VOICES_PER_CHANNEL,
+    Math.round(maximumVoices) || 1,
+  ));
+  const detected = [];
+  let firstEnergy = 0;
+  for (let voiceIndex = 0; voiceIndex < voiceLimit; voiceIndex++) {
+    let bestMidi;
+    let bestEnergy = 0;
+    for (let midi = DETECTION_FIRST_MIDI_NOTE; midi <= DETECTION_LAST_MIDI_NOTE; midi++) {
+      if (detected.some(note => Math.abs(note - midi) <= 1)) continue;
+      const energy = midiBinEnergy(residual, midi, samples.length, sampleRate);
+      if (energy > bestEnergy) {
+        bestEnergy = energy;
+        bestMidi = midi;
+      }
     }
-    if (energy > bestEnergy) {
-      bestEnergy = energy;
-      bestMidi = midi;
+    if (bestMidi === undefined) break;
+    if (voiceIndex === 0) firstEnergy = bestEnergy;
+    // Reject residual noise and quiet harmonics once the principal pitch has
+    // been selected. This keeps extra speakers useful for actual polyphony.
+    if (bestEnergy < firstEnergy * 0.1) break;
+    detected.push(bestMidi);
+
+    const fundamental = 440 * (2 ** ((bestMidi - 69) / 12));
+    for (let harmonic = 1; harmonic <= 8; harmonic++) {
+      const centerBin = Math.round(fundamental * harmonic * samples.length / sampleRate);
+      if (centerBin >= residual.length) break;
+      const radius = harmonic <= 2 ? 2 : 1;
+      for (let bin = Math.max(1, centerBin - radius); bin <= Math.min(residual.length - 1, centerBin + radius); bin++) {
+        residual[bin] = 0;
+      }
     }
   }
-  return bestMidi;
+  return detected.sort((first, second) => first - second);
+}
+
+function detectDominantMidi(samples, sampleRate) {
+  return detectDominantMidis(samples, sampleRate, 1)[0];
 }
 
 function detectFactorioPianoPitch(samples, sampleRate) {
@@ -167,14 +201,18 @@ function decodeStereoPcm(inputPath, ffmpegPath) {
   });
 }
 
-function extractNoteEvents(pcm, notesPerSecond) {
+function extractNoteEvents(pcm, notesPerSecond, voicesPerChannel = 1) {
   const frameCount = Math.floor(pcm.length / 4);
   const hopFrames = Math.max(1, Math.round(AUDIO_SAMPLE_RATE / notesPerSecond));
   const leftWindow = new Float64Array(FFT_SIZE);
   const rightWindow = new Float64Array(FFT_SIZE);
   const events = [];
-  let leftNoteCount = 0;
-  let rightNoteCount = 0;
+  const normalizedVoicesPerChannel = Math.max(MIN_VOICES_PER_CHANNEL, Math.min(
+    MAX_VOICES_PER_CHANNEL,
+    Math.round(voicesPerChannel) || 1,
+  ));
+  const leftVoiceNoteCounts = Array.from({ length: normalizedVoicesPerChannel }, () => 0);
+  const rightVoiceNoteCounts = Array.from({ length: normalizedVoicesPerChannel }, () => 0);
 
   for (let startFrame = 0; startFrame < frameCount; startFrame += hopFrames) {
     leftWindow.fill(0);
@@ -185,19 +223,23 @@ function extractNoteEvents(pcm, notesPerSecond) {
       leftWindow[offset] = pcm.readInt16LE(byteOffset) / 32768;
       rightWindow[offset] = pcm.readInt16LE(byteOffset + 2) / 32768;
     }
-    const leftMidi = detectDominantMidi(leftWindow, AUDIO_SAMPLE_RATE);
-    const rightMidi = detectDominantMidi(rightWindow, AUDIO_SAMPLE_RATE);
+    const leftMidis = detectDominantMidis(leftWindow, AUDIO_SAMPLE_RATE, normalizedVoicesPerChannel);
+    const rightMidis = detectDominantMidis(rightWindow, AUDIO_SAMPLE_RATE, normalizedVoicesPerChannel);
+    const leftMidi = leftMidis[0];
+    const rightMidi = rightMidis[0];
     if (leftMidi === undefined && rightMidi === undefined) continue;
-    if (leftMidi !== undefined) leftNoteCount++;
-    if (rightMidi !== undefined) rightNoteCount++;
+    leftMidis.forEach((_, voiceIndex) => leftVoiceNoteCounts[voiceIndex]++);
+    rightMidis.forEach((_, voiceIndex) => rightVoiceNoteCounts[voiceIndex]++);
     events.push({
       tick: Math.round(startFrame * 60 / AUDIO_SAMPLE_RATE),
       ...(leftMidi !== undefined ? {
         leftMidi,
+        leftMidis,
         leftPitch: Math.max(1, Math.min(PIANO_NOTE_COUNT, leftMidi - PIANO_FIRST_MIDI_NOTE + 1)),
       } : {}),
       ...(rightMidi !== undefined ? {
         rightMidi,
+        rightMidis,
         rightPitch: Math.max(1, Math.min(PIANO_NOTE_COUNT, rightMidi - PIANO_FIRST_MIDI_NOTE + 1)),
       } : {}),
     });
@@ -206,8 +248,11 @@ function extractNoteEvents(pcm, notesPerSecond) {
   return {
     durationTicks: Math.max(2, Math.round(frameCount * 60 / AUDIO_SAMPLE_RATE)),
     durationSeconds: frameCount / AUDIO_SAMPLE_RATE,
-    leftNoteCount,
-    rightNoteCount,
+    voicesPerChannel: normalizedVoicesPerChannel,
+    leftNoteCount: leftVoiceNoteCounts.reduce((total, count) => total + count, 0),
+    rightNoteCount: rightVoiceNoteCounts.reduce((total, count) => total + count, 0),
+    leftVoiceNoteCounts,
+    rightVoiceNoteCounts,
     events,
   };
 }
@@ -219,6 +264,10 @@ async function decodeAudioNotes(request, binaries = {}) {
   const notesPerSecond = Math.max(
     MIN_NOTES_PER_SECOND,
     Math.min(MAX_NOTES_PER_SECOND, Number(request.notesPerSecond) || 4),
+  );
+  const voicesPerChannel = Math.max(
+    MIN_VOICES_PER_CHANNEL,
+    Math.min(MAX_VOICES_PER_CHANNEL, Math.round(Number(request.voicesPerChannel)) || 2),
   );
   const bytes = request.bytes instanceof ArrayBuffer
     ? Buffer.from(request.bytes)
@@ -242,7 +291,7 @@ async function decodeAudioNotes(request, binaries = {}) {
       sourceChannels: probe.sourceChannels,
       sampleRate: AUDIO_SAMPLE_RATE,
       notesPerSecond,
-      ...extractNoteEvents(pcm, notesPerSecond),
+      ...extractNoteEvents(pcm, notesPerSecond, voicesPerChannel),
     };
   } finally {
     await fs.rm(temporaryDirectory, { recursive: true, force: true });
@@ -253,11 +302,14 @@ module.exports = {
   AUDIO_SAMPLE_RATE,
   FFT_SIZE,
   MAX_NOTES_PER_SECOND,
+  MAX_VOICES_PER_CHANNEL,
   MIN_NOTES_PER_SECOND,
+  MIN_VOICES_PER_CHANNEL,
   PIANO_FIRST_MIDI_NOTE,
   PIANO_NOTE_COUNT,
   decodeAudioNotes,
   detectDominantMidi,
+  detectDominantMidis,
   detectFactorioPianoPitch,
   extractNoteEvents,
 };
