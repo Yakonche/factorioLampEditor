@@ -2,6 +2,8 @@ import React from 'react';
 import {
     DEFAULT_TEXT_VIEWPORT_HEIGHT,
     DEFAULT_TEXT_VIEWPORT_WIDTH,
+    insertAtTextSelection,
+    reconcileTextGraphemeAttachments,
     splitTextGraphemes,
     type StampBuffer,
     type TextCharacterStyle,
@@ -439,7 +441,7 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
     const [nativeEmojiOpen, setNativeEmojiOpen] = React.useState(false);
     const [animatedEmojiOpen, setAnimatedEmojiOpen] = React.useState(false);
     const [staticEmojiDestination, setStaticEmojiDestination] = React.useState<EmojiDestination>('text');
-    const [animatedEmojiDestination, setAnimatedEmojiDestination] = React.useState<EmojiDestination>('grid');
+    const [animatedEmojiDestination, setAnimatedEmojiDestination] = React.useState<EmojiDestination>('text');
     const [attachedAnimatedEmoji, setAttachedAnimatedEmoji] = React.useState<Record<number, AttachedAnimatedEmoji>>({});
     const [selection, setSelection] = React.useState({ start: 0, end: 0 });
     const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number } | null>(null);
@@ -537,14 +539,28 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
     }, []);
 
     const updateText = (nextText: string) => {
+        const previousText = textRef.current;
         textRef.current = nextText;
         setText(nextText);
-        const graphemes = splitTextGraphemes(nextText);
-        setAttachedAnimatedEmoji(previous => Object.fromEntries(
-            Object.entries(previous).filter(([index, attached]) => (
-                graphemes[Number(index)] === attached.emoji
-            )),
+        setAttachedAnimatedEmoji(previous => reconcileTextGraphemeAttachments(
+            previousText,
+            nextText,
+            previous,
         ));
+    };
+
+    const currentTextSelection = () => {
+        const textarea = textareaRef.current;
+        return textarea
+            ? { start: textarea.selectionStart, end: textarea.selectionEnd }
+            : { start: textRef.current.length, end: textRef.current.length };
+    };
+
+    const focusTextAt = (caret: number) => {
+        window.requestAnimationFrame(() => {
+            textareaRef.current?.focus();
+            textareaRef.current?.setSelectionRange(caret, caret);
+        });
     };
 
     const buildStampOptions = (
@@ -574,23 +590,33 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
             onCreate(buildStampOptions(emoji, false));
             return;
         }
-        updateText(textRef.current + emoji);
+        const selected = currentTextSelection();
+        const insertion = insertAtTextSelection(textRef.current, selected.start, selected.end, emoji);
+        updateText(insertion.text);
+        setCharacterStyles({});
+        setSelection({ start: insertion.caret, end: insertion.caret });
+        focusTextAt(insertion.caret);
     };
 
     const handleAnimatedEmoji = async (entry: NotoAnimatedEmojiEntry) => {
         const activateGridStamp = animatedEmojiDestination === 'grid';
+        const selected = currentTextSelection();
         const stamp = await onCreateNotoAnimatedEmoji(entry, globalStyle.fontSize, activateGridStamp);
         if (!stamp || activateGridStamp) return;
-        const graphemeIndex = splitTextGraphemes(textRef.current).length;
-        updateText(textRef.current + entry.emoji);
+        const insertion = insertAtTextSelection(
+            textRef.current,
+            selected.start,
+            selected.end,
+            entry.emoji,
+        );
+        updateText(insertion.text);
         setAttachedAnimatedEmoji(previous => ({
             ...previous,
-            [graphemeIndex]: { emoji: entry.emoji, stamp },
+            [insertion.graphemeIndex]: { emoji: entry.emoji, stamp },
         }));
-        window.requestAnimationFrame(() => {
-            textareaRef.current?.focus();
-            textareaRef.current?.setSelectionRange(textRef.current.length, textRef.current.length);
-        });
+        setCharacterStyles({});
+        setSelection({ start: insertion.caret, end: insertion.caret });
+        focusTextAt(insertion.caret);
     };
 
     const importFont = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -840,6 +866,12 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                             ))}
                         </div>
                     )}
+                    {Object.keys(attachedAnimatedEmoji).length > 0 && (
+                        <p className="mt-1 text-[9px] text-fuchsia-300">
+                            <i className="fa-solid fa-film mr-1" />
+                            {t('Animated emoji attached to STAMPS text')} : {Object.keys(attachedAnimatedEmoji).length}
+                        </p>
+                    )}
                 </div>
                 <button
                     type="button"
@@ -1024,6 +1056,11 @@ export const TextStampPanel: React.FC<TextStampPanelProps> = ({
                                 <option value="grid">{t('Create a direct grid stamp')}</option>
                             </select>
                         </label>
+                        {animatedEmojiDestination === 'text' && (
+                            <p className="mt-1 text-[9px] leading-4 text-fuchsia-300">
+                                {t('The emoji is inserted at the text cursor and keeps its real animation frames when the STAMPS text is created.')}
+                            </p>
+                        )}
                         <React.Suspense fallback={<p className="mt-3 text-[9px] text-gray-500">Loading emoji library…</p>}>
                             <NotoAnimatedEmojiCatalog
                                 onSelect={handleAnimatedEmoji}

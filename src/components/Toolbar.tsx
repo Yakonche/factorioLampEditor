@@ -21,6 +21,7 @@ import {
     type DecodedAudioTrack,
 } from '../utils/audio';
 import { TextStampPanel } from './TextStampPanel';
+import { AudioPreviewControls } from './AudioPreviewControls';
 import { useI18n } from '../i18n';
 import type { NotoAnimatedEmojiEntry } from '../utils/notoAnimatedEmoji';
 
@@ -792,6 +793,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         <p className="rounded border border-gray-700 bg-gray-800/50 p-2 leading-4 text-gray-400">
                             Auto selects the native instrument whose pitch range clips the fewest detected notes. Each speaker keeps one instrument for the whole track.
                         </p>
+                        <AudioPreviewControls
+                            track={audioTrackInfo}
+                            selections={{ left: leftAudioInstrument, right: rightAudioInstrument }}
+                        />
                         {hasAnimation && (
                             <button
                                 type="button"

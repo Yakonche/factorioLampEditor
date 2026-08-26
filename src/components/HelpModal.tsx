@@ -90,6 +90,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                             <li>One decider stores both channel pitches for each sampled instant; two programmable speakers play the approximate sequences.</li>
                             <li>The sampling rate accepts 1–60 notes/s because Factorio runs at 60 ticks/s. 4–8 is recommended; high values produce much larger, denser, and often less musical blueprints.</li>
                             <li>Choose a native instrument independently for each speaker, or use Auto to minimize notes clipped outside its range. Piano has 48 notes (F3–E7); the other melodic instruments have 36-note ranges.</li>
+                            <li>Use the converted preview to hear the exact local Factorio programmable-speaker samples before export. The desktop app detects common Factorio installations automatically, or you can select the game folder manually; game sounds are read in place and are never copied into the app.</li>
                             <li>After importing an animation and audio, click <strong>Link audio to animation</strong>. Linked playback shares the same tick counter and starts at T = 0; the animation defines the combined loop. Audio-only blueprints use the complete audio duration.</li>
                             <li>The original waveforms cannot be embedded in a vanilla blueprint, so this is a musical approximation rather than faithful MP3 or stereo playback.</li>
                         </ul>

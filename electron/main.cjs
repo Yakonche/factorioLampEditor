@@ -5,9 +5,11 @@ const { decodeMedia, inspectMedia } = require('./media.cjs');
 const { decodeAudioNotes } = require('./audio.cjs');
 const { listSystemFontFamilies } = require('./fonts.cjs');
 const { createEmojiAssetCache } = require('./emoji-cache.cjs');
+const { createFactorioSoundLibrary } = require('./factorio-sounds.cjs');
 
 let mainWindow;
 let emojiAssetCache;
+let factorioSoundLibrary;
 
 // Full-resolution Bad Apple exports can hold hundreds of thousands of sparse
 // ROM entities before streaming compression. This only raises V8's ceiling;
@@ -33,6 +35,15 @@ function getEmojiAssetCache() {
     });
   }
   return emojiAssetCache;
+}
+
+function getFactorioSoundLibrary() {
+  if (!factorioSoundLibrary) {
+    factorioSoundLibrary = createFactorioSoundLibrary({
+      configPath: path.join(app.getPath('userData'), 'factorio-sound-source.json'),
+    });
+  }
+  return factorioSoundLibrary;
 }
 
 function createMainWindow() {
@@ -132,6 +143,24 @@ ipcMain.handle('media:inspect', (_event, request) => inspectMedia(request, {
 ipcMain.handle('audio:decode-notes', (_event, request) => decodeAudioNotes(request, {
   ffmpegPath: getFfmpegPath(),
 }));
+
+ipcMain.handle('factorio-sounds:status', () => getFactorioSoundLibrary().status());
+
+ipcMain.handle('factorio-sounds:select', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select the Factorio installation folder',
+    properties: ['openDirectory'],
+  });
+  if (result.canceled || !result.filePaths[0]) return { canceled: true };
+  return {
+    canceled: false,
+    ...await getFactorioSoundLibrary().select(result.filePaths[0]),
+  };
+});
+
+ipcMain.handle('factorio-sounds:read', (_event, request) => (
+  getFactorioSoundLibrary().read(request?.instrument, request?.pitch)
+));
 
 ipcMain.handle('fonts:list-system', () => listSystemFontFamilies());
 

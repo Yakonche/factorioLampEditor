@@ -17,7 +17,7 @@ L’éditeur représente chaque pixel visible par une lampe Factorio, puis const
 
 - Dessiner sur la grille, effacer des cellules, importer une image fixe ou réinitialiser complètement le canevas.
 - Cliquer sur une lamp visible pour ouvrir un inspecteur RGB/hex en direct. Les valeurs animées suivent l’image courante de l’aperçu à la vitesse de Factorio ; mettez la lecture en pause depuis l’inspecteur pour modifier cette image avec les champs RGB, une valeur hexadécimale ou le sélecteur de couleur natif.
-- Créer des tampons de texte avec une taille, une couleur et une police globales, des polices TTF/OTF importées et des emojis statiques. Une sélection peut être mise en gras, en italique ou soulignée, et le champ texte dispose d’un menu contextuel complet. Les véritables emojis animés sont créés depuis le catalogue officiel Noto séparé. Chaque style d’emoji affiche une taille minimale prudente pour préserver ses détails fins sur la grille de lampes.
+- Créer des tampons de texte avec une taille, une couleur et une police globales, des polices TTF/OTF importées et des emojis statiques ou réellement animés. Les animations Noto peuvent être insérées à l’emplacement du curseur ou placées directement sur la grille ; leurs véritables frames restent attachées au bon caractère pendant l’édition du texte. Une sélection peut être mise en gras, en italique ou soulignée, et le champ texte dispose d’un menu contextuel complet. Chaque style d’emoji affiche une taille minimale prudente pour préserver ses détails fins sur la grille de lampes.
 - Choisir entre des polices intégrées au rendu identique partout, l’inventaire complet des polices exposé par l’OS dans l’application de bureau et des fichiers TTF/OTF importés. Les polices importées utilisent leur nom complet OpenType interne plutôt que leur nom de fichier. Chaque source reste divisée entre polices à chasse fixe et proportionnelles, chaque entrée prévisualise sa propre police et affiche une estimation raster conservatrice sans perte perceptible sous la forme `(X px)`.
 - Rechercher et filtrer le catalogue complet des emojis Unicode RGI statiques, avec les variantes de couleur de peau prises en charge. Choisir Apple ou Segoe natifs, Noto Color Emoji ou Toss Face intégrés, ou les illustrations téléchargeables Twemoji 17, OpenMoji 17, Blobmoji et Microsoft Fluent Flat, Color ou 3D.
 - Parcourir les 879 animations publiées du catalogue officiel Google Noto Animated Emoji. Les aperçus visibles utilisent les animations réelles ; en sélectionner une télécharge à la demande la ressource sous licence CC BY 4.0 et convertit ses vraies images en tampon Factorio plaçable à la taille globale choisie. Plusieurs tampons animés conservent leurs boucles et leurs contrôleurs indépendants au lieu de se remplacer. Les anciennes séquences de glyphes créées par l’éditeur ont été retirées ; Twemoji ne fournit aucun catalogue animé officiel.
@@ -91,6 +91,8 @@ Une blueprint Factorio vanilla ne peut contenir ni MP3, ni forme d’onde stér�
 
 L’échantillonnage accepte de 1 à 60 notes par seconde, Factorio fonctionnant à 60 ticks par seconde. Un débit élevé améliore le détail temporel, mais augmente très vite la taille de la blueprint ; 4 à 8 notes par seconde constituent un bon point de départ. Le mode **Auto** choisit la plage d’un instrument natif qui écrête le moins de notes détectées. Il reste possible d’imposer manuellement un instrument pour privilégier un timbre.
 
+L’application de bureau permet d’écouter le résultat converti avant l’export avec les échantillons exacts des programmable speakers de l’installation locale de Factorio. Elle détecte automatiquement les installations Steam et autonomes courantes sous Windows, Linux et macOS, avec un sélecteur manuel du dossier du jeu en solution de secours. Les échantillons sont lus sur place et programmés avec les mêmes instruments, identifiants de notes, timings à 60 ticks et canaux gauche/droit que la blueprint générée ; les sons de Factorio ne sont jamais copiés dans ce dépôt, le cache de l’application ou les exécutables publiés.
+
 ## Prérequis
 
 - Node.js 22.12 ou plus récent
@@ -140,7 +142,7 @@ npm ci
 npm run desktop:portable
 ```
 
-Le résultat Windows est `release/Factorio Lamp Editor-1.6.7-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
+Le résultat Windows est `release/Factorio Lamp Editor-1.6.8-win-x64-portable.exe`. Les dossiers `dist/`, `release/`, `release-build-*/` et `node_modules/` sont volontairement ignorés, car ils sont générés ou propres à une machine. Les médias de test, blueprints générées, applications Electron décompressées et exécutables portables ne doivent pas être commités ; publiez les exécutables dans les assets d’une GitHub Release.
 
 ## Compiler l’application Linux portable
 

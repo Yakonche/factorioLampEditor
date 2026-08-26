@@ -24,11 +24,9 @@ import {
     type MediaFrameTransition,
 } from './mediaAnimation';
 import {
-    AUDIO_INSTRUMENTS,
-    type AudioInstrumentName,
+    prepareAudioEvents,
+    resolveAudioInstruments,
     type AudioInstrumentSelections,
-    type AudioInstrumentSelection,
-    type AudioNoteEvent,
     type DecodedAudioTrack,
 } from './audio';
 
@@ -2406,98 +2404,6 @@ const mediaTimerSignals = (trackCount: number): FactorioSignalID[] => {
         throw new Error(`A media blueprint supports at most ${(PIXEL_SIGNALS.length + 1).toLocaleString()} independent animation tracks.`);
     }
     return signals;
-};
-
-type PreparedAudioEvent = Pick<AudioNoteEvent, 'tick'> & {
-    leftPitch?: number;
-    rightPitch?: number;
-};
-
-type ResolvedAudioInstrument = typeof AUDIO_INSTRUMENTS[AudioInstrumentName] & {
-    name: AudioInstrumentName;
-};
-
-type ResolvedAudioInstruments = {
-    left: ResolvedAudioInstrument;
-    right: ResolvedAudioInstrument;
-};
-
-const sourceEventMidi = (event: AudioNoteEvent, channel: 'left' | 'right') => {
-    const midi = channel === 'left' ? event.leftMidi : event.rightMidi;
-    if (midi !== undefined) return Math.round(midi);
-    const legacyPitch = channel === 'left' ? event.leftPitch : event.rightPitch;
-    return legacyPitch === undefined ? undefined : 53 + Math.round(legacyPitch) - 1;
-};
-
-const resolveAudioInstrument = (
-    selection: AudioInstrumentSelection,
-    audioTrack: DecodedAudioTrack | undefined,
-    channel: 'left' | 'right',
-): ResolvedAudioInstrument => {
-    const candidates = Object.entries(AUDIO_INSTRUMENTS) as [
-        AudioInstrumentName,
-        typeof AUDIO_INSTRUMENTS[AudioInstrumentName],
-    ][];
-    let name: AudioInstrumentName;
-    if (selection !== 'auto') {
-        name = selection;
-    } else {
-        const midiNotes = audioTrack?.events
-            .map(event => sourceEventMidi(event, channel))
-            .filter((midi): midi is number => midi !== undefined) ?? [];
-        name = candidates.reduce((bestName, [candidateName, candidate]) => {
-            const best = AUDIO_INSTRUMENTS[bestName];
-            const clippingCost = (instrument: typeof candidate) => midiNotes.reduce((total, midi) => {
-                const lastMidi = instrument.firstMidi + instrument.noteCount - 1;
-                return total + Math.max(instrument.firstMidi - midi, 0, midi - lastMidi);
-            }, 0);
-            const candidateCost = clippingCost(candidate);
-            const bestCost = clippingCost(best);
-            if (candidateCost !== bestCost) return candidateCost < bestCost ? candidateName : bestName;
-            // Prefer the wider piano tessitura when two instruments cover the
-            // detected notes equally well.
-            if (candidate.noteCount !== best.noteCount) {
-                return candidate.noteCount > best.noteCount ? candidateName : bestName;
-            }
-            return bestName;
-        }, 'piano' as AudioInstrumentName);
-    }
-    return { name, ...AUDIO_INSTRUMENTS[name] };
-};
-
-const resolveAudioInstruments = (
-    audioTrack: DecodedAudioTrack | undefined,
-    selections: AudioInstrumentSelections | undefined,
-): ResolvedAudioInstruments => ({
-    left: resolveAudioInstrument(selections?.left ?? 'auto', audioTrack, 'left'),
-    right: resolveAudioInstrument(selections?.right ?? 'auto', audioTrack, 'right'),
-});
-
-const prepareAudioEvents = (
-    audioTrack: DecodedAudioTrack | undefined,
-    cycleTicks: number,
-    instruments: ResolvedAudioInstruments,
-): PreparedAudioEvent[] => {
-    if (!audioTrack) return [];
-    const byTick = new Map<number, PreparedAudioEvent>();
-    for (const sourceEvent of audioTrack.events) {
-        const tick = Math.max(0, Math.round(sourceEvent.tick));
-        if (tick >= cycleTicks) continue;
-        const pitchFor = (channel: 'left' | 'right') => {
-            const midi = sourceEventMidi(sourceEvent, channel);
-            if (midi === undefined) return undefined;
-            const instrument = instruments[channel];
-            return Math.max(1, Math.min(
-                instrument.noteCount,
-                midi - instrument.firstMidi + 1,
-            ));
-        };
-        const leftPitch = pitchFor('left');
-        const rightPitch = pitchFor('right');
-        if (leftPitch === undefined && rightPitch === undefined) continue;
-        byTick.set(tick, { tick, leftPitch, rightPitch });
-    }
-    return [...byTick.values()].sort((first, second) => first.tick - second.tick);
 };
 
 const packedRgbOrZero = (packedColor: number) => packedColor ? packedRgb(packedColor) : 0;

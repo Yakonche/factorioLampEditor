@@ -1,7 +1,7 @@
 {
   "name": "factorio-lamp-editor",
   "private": true,
-  "version": "1.6.7",
+  "version": "1.6.8",
   "description": "Create Factorio lamp blueprints from images, slideshows, GIFs, and videos.",
   "license": "UNLICENSED",
   "author": "Factorio Lamp Editor contributors",
@@ -25,7 +25,7 @@
     "test:blueprint": "esbuild scripts/validate-blueprint-preview.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-preview-test.mjs && node node_modules/.cache/factorio-lamp-preview-test.mjs",
     "test:media": "esbuild scripts/validate-media-animation.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-media-test.mjs && node node_modules/.cache/factorio-lamp-media-test.mjs",
     "test:media-decoder": "node scripts/validate-media-decoder.cjs",
-    "test:audio": "node scripts/validate-audio-decoder.cjs",
+    "test:audio": "node scripts/validate-audio-decoder.cjs && node scripts/validate-factorio-sounds.cjs",
     "test:fonts": "esbuild scripts/validate-font-assets.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-font-test.mjs && node node_modules/.cache/factorio-lamp-font-test.mjs",
     "test:i18n": "esbuild scripts/validate-i18n.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-i18n-test.mjs && node node_modules/.cache/factorio-lamp-i18n-test.mjs",
     "test:morning": "esbuild scripts/validate-morning-blueprint.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/factorio-lamp-morning-test.mjs && node --max-old-space-size=6144 node_modules/.cache/factorio-lamp-morning-test.mjs",

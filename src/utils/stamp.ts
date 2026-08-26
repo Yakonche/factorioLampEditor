@@ -218,6 +218,79 @@ export function splitTextGraphemes(text: string): string[] {
     return Array.from(normalized);
 }
 
+export interface TextGraphemeAttachment {
+    emoji: string;
+}
+
+export interface TextSelectionInsertion {
+    text: string;
+    graphemeIndex: number;
+    caret: number;
+}
+
+/**
+ * Replace the current textarea selection while returning both the UTF-16 caret
+ * offset expected by the DOM and the grapheme index used by text stamps.
+ */
+export function insertAtTextSelection(
+    text: string,
+    selectionStart: number,
+    selectionEnd: number,
+    insertion: string,
+): TextSelectionInsertion {
+    const start = Math.max(0, Math.min(text.length, Math.min(selectionStart, selectionEnd)));
+    const end = Math.max(start, Math.min(text.length, Math.max(selectionStart, selectionEnd)));
+    const before = text.slice(0, start);
+    return {
+        text: `${before}${insertion}${text.slice(end)}`,
+        graphemeIndex: splitTextGraphemes(before).length,
+        caret: before.length + insertion.length,
+    };
+}
+
+/**
+ * Keep raster animations attached to the same logical emoji when ordinary
+ * text is inserted or removed before them. Attachments inside the edited span
+ * are discarded because a plain textarea cannot preserve their identity.
+ */
+export function reconcileTextGraphemeAttachments<T extends TextGraphemeAttachment>(
+    previousText: string,
+    nextText: string,
+    attachments: Record<number, T>,
+): Record<number, T> {
+    const previous = splitTextGraphemes(previousText);
+    const next = splitTextGraphemes(nextText);
+    let commonPrefix = 0;
+    while (
+        commonPrefix < previous.length
+        && commonPrefix < next.length
+        && previous[commonPrefix] === next[commonPrefix]
+    ) commonPrefix++;
+
+    let commonSuffix = 0;
+    while (
+        commonSuffix < previous.length - commonPrefix
+        && commonSuffix < next.length - commonPrefix
+        && previous[previous.length - 1 - commonSuffix] === next[next.length - 1 - commonSuffix]
+    ) commonSuffix++;
+
+    const previousSuffixStart = previous.length - commonSuffix;
+    const indexDelta = next.length - previous.length;
+    const reconciled: Record<number, T> = {};
+    Object.entries(attachments).forEach(([rawIndex, attachment]) => {
+        const previousIndex = Number(rawIndex);
+        const nextIndex = previousIndex < commonPrefix
+            ? previousIndex
+            : previousIndex >= previousSuffixStart
+                ? previousIndex + indexDelta
+                : -1;
+        if (nextIndex >= 0 && next[nextIndex] === attachment.emoji) {
+            reconciled[nextIndex] = attachment;
+        }
+    });
+    return reconciled;
+}
+
 const resolveStyle = (
     options: TextStampOptions,
     graphemeIndex: number,

@@ -12,7 +12,9 @@ import {
     EMOJI_ANIMATION_FRAME_TICKS,
     animationFrameIndexForTimelineStep,
     createSparseViewportAnimation,
+    insertAtTextSelection,
     placeSparseStampAnimation,
+    reconcileTextGraphemeAttachments,
     renderStampAnimationAtTick,
     stampAnimationDurationTicks,
     stampAnimationSampleCount,
@@ -22,6 +24,23 @@ import {
 
 assert.equal(DEFAULT_TEXT_VIEWPORT_WIDTH, 256);
 assert.equal(EMOJI_ANIMATION_FRAME_TICKS, 12);
+
+const animatedAttachment = { emoji: '🔥', id: 'fire-animation' };
+assert.deepEqual(
+    insertAtTextSelection('AB', 1, 1, '🔥'),
+    { text: 'A🔥B', graphemeIndex: 1, caret: 3 },
+    'animated emoji should be inserted at the textarea cursor',
+);
+assert.deepEqual(
+    reconcileTextGraphemeAttachments('A🔥B', 'prefix A🔥B', { 1: animatedAttachment }),
+    { 8: animatedAttachment },
+    'typing before an animated emoji should keep its raster animation attached',
+);
+assert.deepEqual(
+    reconcileTextGraphemeAttachments('A🔥B', 'AB', { 1: animatedAttachment }),
+    {},
+    'deleting an animated emoji should remove its raster animation attachment',
+);
 assert.equal(keyboardPanDirection('KeyW', 'w'), 'up');
 assert.equal(keyboardPanDirection('KeyW', 'z'), 'up');
 assert.equal(keyboardPanDirection('KeyA', 'q'), 'left');

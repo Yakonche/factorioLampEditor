@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld('factorioLampEditor', {
   decodeMedia: (request) => ipcRenderer.invoke('media:decode', request),
   inspectMedia: (request) => ipcRenderer.invoke('media:inspect', request),
   decodeAudioNotes: (request) => ipcRenderer.invoke('audio:decode-notes', request),
+  getFactorioSpeakerSoundStatus: () => ipcRenderer.invoke('factorio-sounds:status'),
+  selectFactorioSpeakerSounds: () => ipcRenderer.invoke('factorio-sounds:select'),
+  readFactorioSpeakerSound: (instrument, pitch) => ipcRenderer.invoke('factorio-sounds:read', { instrument, pitch }),
   listSystemFonts: () => ipcRenderer.invoke('fonts:list-system'),
   getEmojiAsset: (provider, codepoint) => ipcRenderer.invoke('emoji-assets:get', { provider, codepoint }),
 });

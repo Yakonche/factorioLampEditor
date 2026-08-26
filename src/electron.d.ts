@@ -32,6 +32,19 @@ interface Window {
       bytes: ArrayBuffer;
       notesPerSecond: number;
     }) => Promise<import('./utils/audio').DecodedAudioTrack>;
+    getFactorioSpeakerSoundStatus: () => Promise<{
+      available: boolean;
+      soundDirectory?: string;
+    }>;
+    selectFactorioSpeakerSounds: () => Promise<{
+      canceled: boolean;
+      available?: boolean;
+      soundDirectory?: string;
+    }>;
+    readFactorioSpeakerSound: (
+      instrument: import('./utils/audio').AudioInstrumentName,
+      pitch: number,
+    ) => Promise<Uint8Array>;
     listSystemFonts: () => Promise<string[]>;
     getEmojiAsset: (
       provider: import('./utils/emojiAssets').EmojiAssetProvider,
