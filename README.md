@@ -142,7 +142,7 @@ npm ci
 npm run desktop:portable
 ```
 
-The Windows output is `release/Factorio Lamp Editor-1.6.8-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
+The Windows output is `release/Factorio Lamp Editor-1.6.9-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
 
 ## Building the Linux portable application
 
