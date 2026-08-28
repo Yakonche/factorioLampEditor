@@ -19,6 +19,15 @@ const PIANO_NOTE_COUNT = 48; // F3 through E7.
 const DETECTION_FIRST_MIDI_NOTE = 41; // F2, lowest native melodic note.
 const DETECTION_LAST_MIDI_NOTE = 112; // E8, highest native melodic note.
 const SILENCE_RMS = 0.012;
+// Quiet recordings need a threshold relative to their own peak level. The
+// absolute floor still rejects digital silence and very low-level codec noise.
+const MIN_ADAPTIVE_SILENCE_RMS = 0.00035;
+const PEAK_RELATIVE_SILENCE_RATIO = 10 ** (-54 / 20);
+const MIN_ANALYSIS_WINDOWS_PER_SECOND = 16;
+const ANALYSIS_OVERSAMPLE = 4;
+const ONSET_RMS_RATIO = 1.28;
+const MIN_SPECTRAL_FLUX = 0.035;
+const SPECTRAL_FLUX_HISTORY_SECONDS = 0.75;
 
 function fftRealMagnitudes(samples) {
   const size = samples.length;
@@ -73,23 +82,50 @@ function fftRealMagnitudes(samples) {
   return magnitudes;
 }
 
+function spectralPeakProminence(magnitudes, centerBin) {
+  if (centerBin < 2 || centerBin >= magnitudes.length - 2) return 0;
+  let peakEnergy = 0;
+  for (let bin = centerBin - 1; bin <= centerBin + 1; bin++) {
+    peakEnergy += magnitudes[bin];
+  }
+  let surroundingEnergy = 0;
+  let surroundingBins = 0;
+  for (let offset = -7; offset <= 7; offset++) {
+    if (Math.abs(offset) <= 2) continue;
+    const bin = centerBin + offset;
+    if (bin < 1 || bin >= magnitudes.length) continue;
+    surroundingEnergy += magnitudes[bin];
+    surroundingBins++;
+  }
+  const localFloor = surroundingBins ? surroundingEnergy / surroundingBins : 0;
+  return Math.max(0, peakEnergy - localFloor * 3);
+}
+
 function midiBinEnergy(magnitudes, midi, sampleCount, sampleRate) {
   const frequency = 440 * (2 ** ((midi - 69) / 12));
   const centerBin = Math.round(frequency * sampleCount / sampleRate);
-  let energy = 0;
-  for (let bin = Math.max(1, centerBin - 1); bin <= Math.min(magnitudes.length - 1, centerBin + 1); bin++) {
-    energy += magnitudes[bin];
+  const fundamental = spectralPeakProminence(magnitudes, centerBin);
+  if (fundamental <= 0) return 0;
+  // A small harmonic-consistency bonus helps recover orchestral fundamentals
+  // without letting broadband low-frequency noise win every window.
+  let harmonicSupport = 0;
+  for (let harmonic = 2; harmonic <= 4; harmonic++) {
+    const harmonicBin = Math.round(frequency * harmonic * sampleCount / sampleRate);
+    if (harmonicBin >= magnitudes.length - 1) break;
+    const prominence = spectralPeakProminence(magnitudes, harmonicBin);
+    harmonicSupport += Math.min(prominence / fundamental, 1) / harmonic;
   }
-  return energy;
+  return fundamental * (1 + harmonicSupport * 0.18);
 }
 
-function detectDominantMidis(samples, sampleRate, maximumVoices = 1) {
+function windowRms(samples) {
   let sumSquares = 0;
   for (const sample of samples) sumSquares += sample * sample;
-  const rms = Math.sqrt(sumSquares / samples.length);
-  if (rms < SILENCE_RMS) return [];
+  return Math.sqrt(sumSquares / samples.length);
+}
 
-  const residual = fftRealMagnitudes(samples);
+function detectMidisFromMagnitudes(magnitudes, samples, sampleRate, maximumVoices) {
+  const residual = Float64Array.from(magnitudes);
   const voiceLimit = Math.max(MIN_VOICES_PER_CHANNEL, Math.min(
     MAX_VOICES_PER_CHANNEL,
     Math.round(maximumVoices) || 1,
@@ -125,6 +161,21 @@ function detectDominantMidis(samples, sampleRate, maximumVoices = 1) {
     }
   }
   return detected.sort((first, second) => first - second);
+}
+
+function analyzeDominantMidis(samples, sampleRate, maximumVoices = 1, silenceRms = SILENCE_RMS) {
+  const rms = windowRms(samples);
+  if (rms < silenceRms) return { midis: [], magnitudes: undefined, rms };
+  const magnitudes = fftRealMagnitudes(samples);
+  return {
+    midis: detectMidisFromMagnitudes(magnitudes, samples, sampleRate, maximumVoices),
+    magnitudes,
+    rms,
+  };
+}
+
+function detectDominantMidis(samples, sampleRate, maximumVoices = 1, silenceRms = SILENCE_RMS) {
+  return analyzeDominantMidis(samples, sampleRate, maximumVoices, silenceRms).midis;
 }
 
 function detectDominantMidi(samples, sampleRate) {
@@ -201,9 +252,60 @@ function decodeStereoPcm(inputPath, ffmpegPath) {
   });
 }
 
+function channelPeakLevels(pcm, frameCount) {
+  let leftPeak = 0;
+  let rightPeak = 0;
+  for (let frame = 0; frame < frameCount; frame++) {
+    const byteOffset = frame * 4;
+    leftPeak = Math.max(leftPeak, Math.abs(pcm.readInt16LE(byteOffset) / 32768));
+    rightPeak = Math.max(rightPeak, Math.abs(pcm.readInt16LE(byteOffset + 2) / 32768));
+  }
+  return { leftPeak, rightPeak };
+}
+
+function adaptiveSilenceThreshold(peak) {
+  return Math.max(
+    MIN_ADAPTIVE_SILENCE_RMS,
+    Math.min(SILENCE_RMS, peak * PEAK_RELATIVE_SILENCE_RATIO),
+  );
+}
+
+function normalizedSpectralFlux(current, previous) {
+  if (!current || !previous) return 0;
+  let positiveChange = 0;
+  let currentEnergy = 0;
+  const length = Math.min(current.length, previous.length);
+  for (let bin = 1; bin < length; bin++) {
+    const currentMagnitude = Math.sqrt(current[bin]);
+    const previousMagnitude = Math.sqrt(previous[bin]);
+    currentEnergy += currentMagnitude;
+    positiveChange += Math.max(0, currentMagnitude - previousMagnitude);
+  }
+  return currentEnergy > 0 ? positiveChange / currentEnergy : 0;
+}
+
+function median(values) {
+  if (!values.length) return 0;
+  const ordered = [...values].sort((first, second) => first - second);
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2
+    ? ordered[middle]
+    : (ordered[middle - 1] + ordered[middle]) / 2;
+}
+
 function extractNoteEvents(pcm, notesPerSecond, voicesPerChannel = 1) {
   const frameCount = Math.floor(pcm.length / 4);
-  const hopFrames = Math.max(1, Math.round(AUDIO_SAMPLE_RATE / notesPerSecond));
+  const durationTicks = Math.max(2, Math.round(frameCount * 60 / AUDIO_SAMPLE_RATE));
+  const maximumNotesPerSecond = Math.max(
+    MIN_NOTES_PER_SECOND,
+    Math.min(MAX_NOTES_PER_SECOND, Number(notesPerSecond) || 4),
+  );
+  const analysisWindowsPerSecond = Math.min(
+    MAX_NOTES_PER_SECOND,
+    Math.max(MIN_ANALYSIS_WINDOWS_PER_SECOND, maximumNotesPerSecond * ANALYSIS_OVERSAMPLE),
+  );
+  const hopFrames = Math.max(1, Math.round(AUDIO_SAMPLE_RATE / analysisWindowsPerSecond));
+  const minimumEventGapTicks = Math.max(1, Math.ceil(60 / maximumNotesPerSecond));
   const leftWindow = new Float64Array(FFT_SIZE);
   const rightWindow = new Float64Array(FFT_SIZE);
   const events = [];
@@ -213,41 +315,133 @@ function extractNoteEvents(pcm, notesPerSecond, voicesPerChannel = 1) {
   ));
   const leftVoiceNoteCounts = Array.from({ length: normalizedVoicesPerChannel }, () => 0);
   const rightVoiceNoteCounts = Array.from({ length: normalizedVoicesPerChannel }, () => 0);
+  const { leftPeak, rightPeak } = channelPeakLevels(pcm, frameCount);
+  const leftSilenceRms = adaptiveSilenceThreshold(leftPeak);
+  const rightSilenceRms = adaptiveSilenceThreshold(rightPeak);
+  const fluxHistoryLimit = Math.max(4, Math.round(
+    analysisWindowsPerSecond * SPECTRAL_FLUX_HISTORY_SECONDS,
+  ));
+  const leftFluxHistory = [];
+  const rightFluxHistory = [];
+  let previousLeftMagnitudes;
+  let previousRightMagnitudes;
+  let previousLeftActive = false;
+  let previousRightActive = false;
+  let previousLeftRms = 0;
+  let previousRightRms = 0;
+  let lastEventTick = -minimumEventGapTicks;
 
   for (let startFrame = 0; startFrame < frameCount; startFrame += hopFrames) {
     leftWindow.fill(0);
     rightWindow.fill(0);
     const availableFrames = Math.min(FFT_SIZE, frameCount - startFrame);
+    const completeAnalysisWindow = availableFrames === FFT_SIZE;
     for (let offset = 0; offset < availableFrames; offset++) {
       const byteOffset = (startFrame + offset) * 4;
       leftWindow[offset] = pcm.readInt16LE(byteOffset) / 32768;
       rightWindow[offset] = pcm.readInt16LE(byteOffset + 2) / 32768;
     }
-    const leftMidis = detectDominantMidis(leftWindow, AUDIO_SAMPLE_RATE, normalizedVoicesPerChannel);
-    const rightMidis = detectDominantMidis(rightWindow, AUDIO_SAMPLE_RATE, normalizedVoicesPerChannel);
-    const leftMidi = leftMidis[0];
-    const rightMidi = rightMidis[0];
+    const leftAnalysis = analyzeDominantMidis(
+      leftWindow,
+      AUDIO_SAMPLE_RATE,
+      normalizedVoicesPerChannel,
+      leftSilenceRms,
+    );
+    const rightAnalysis = analyzeDominantMidis(
+      rightWindow,
+      AUDIO_SAMPLE_RATE,
+      normalizedVoicesPerChannel,
+      rightSilenceRms,
+    );
+    const leftMidis = leftAnalysis.midis;
+    const rightMidis = rightAnalysis.midis;
+    const leftRms = leftAnalysis.rms;
+    const rightRms = rightAnalysis.rms;
+    const leftFlux = normalizedSpectralFlux(leftAnalysis.magnitudes, previousLeftMagnitudes);
+    const rightFlux = normalizedSpectralFlux(rightAnalysis.magnitudes, previousRightMagnitudes);
+    const leftFluxThreshold = Math.max(MIN_SPECTRAL_FLUX, median(leftFluxHistory) * 1.65);
+    const rightFluxThreshold = Math.max(MIN_SPECTRAL_FLUX, median(rightFluxHistory) * 1.65);
+    const leftSpectralAttack = completeAnalysisWindow && leftMidis.length > 0 && leftFlux > leftFluxThreshold;
+    const rightSpectralAttack = completeAnalysisWindow && rightMidis.length > 0 && rightFlux > rightFluxThreshold;
+    // The FFT describes the centre of its Hann window, not its first sample.
+    // Timestamping the centre avoids scheduling every detected attack early by
+    // roughly half a window (128 ms at the current analysis settings).
+    const leadingFrames = Math.min(hopFrames, availableFrames);
+    const sourceBeginsActive = startFrame === 0 && (
+      windowRms(leftWindow.subarray(0, leadingFrames)) >= leftSilenceRms
+      || windowRms(rightWindow.subarray(0, leadingFrames)) >= rightSilenceRms
+    );
+    const analysisFrame = sourceBeginsActive ? 0 : startFrame + FFT_SIZE / 2;
+    const tick = Math.min(
+      durationTicks - 1,
+      Math.round(analysisFrame * 60 / AUDIO_SAMPLE_RATE),
+    );
+    const enoughTimeElapsed = tick - lastEventTick >= minimumEventGapTicks;
+    const leftBecameActive = leftMidis.length > 0 && !previousLeftActive;
+    const rightBecameActive = rightMidis.length > 0 && !previousRightActive;
+    const leftAttack = completeAnalysisWindow && leftMidis.length > 0
+      && leftRms >= leftSilenceRms * 1.5
+      && leftRms > Math.max(previousLeftRms, leftSilenceRms) * ONSET_RMS_RATIO;
+    const rightAttack = completeAnalysisWindow && rightMidis.length > 0
+      && rightRms >= rightSilenceRms * 1.5
+      && rightRms > Math.max(previousRightRms, rightSilenceRms) * ONSET_RMS_RATIO;
+    previousLeftMagnitudes = leftAnalysis.magnitudes;
+    previousRightMagnitudes = rightAnalysis.magnitudes;
+    previousLeftActive = leftMidis.length > 0;
+    previousRightActive = rightMidis.length > 0;
+    previousLeftRms = leftRms;
+    previousRightRms = rightRms;
+    if (leftAnalysis.magnitudes) {
+      leftFluxHistory.push(leftFlux);
+      if (leftFluxHistory.length > fluxHistoryLimit) leftFluxHistory.shift();
+    } else {
+      leftFluxHistory.length = 0;
+    }
+    if (rightAnalysis.magnitudes) {
+      rightFluxHistory.push(rightFlux);
+      if (rightFluxHistory.length > fluxHistoryLimit) rightFluxHistory.shift();
+    } else {
+      rightFluxHistory.length = 0;
+    }
+
+    if (!enoughTimeElapsed || !(
+      leftBecameActive
+      || rightBecameActive
+      || leftAttack
+      || rightAttack
+      || leftSpectralAttack
+      || rightSpectralAttack
+    )) continue;
+    const eventLeftMidis = leftMidis;
+    const eventRightMidis = rightMidis;
+    const leftMidi = eventLeftMidis[0];
+    const rightMidi = eventRightMidis[0];
     if (leftMidi === undefined && rightMidi === undefined) continue;
-    leftMidis.forEach((_, voiceIndex) => leftVoiceNoteCounts[voiceIndex]++);
-    rightMidis.forEach((_, voiceIndex) => rightVoiceNoteCounts[voiceIndex]++);
+    eventLeftMidis.forEach((_, voiceIndex) => leftVoiceNoteCounts[voiceIndex]++);
+    eventRightMidis.forEach((_, voiceIndex) => rightVoiceNoteCounts[voiceIndex]++);
     events.push({
-      tick: Math.round(startFrame * 60 / AUDIO_SAMPLE_RATE),
+      tick,
       ...(leftMidi !== undefined ? {
         leftMidi,
-        leftMidis,
+        leftMidis: eventLeftMidis,
         leftPitch: Math.max(1, Math.min(PIANO_NOTE_COUNT, leftMidi - PIANO_FIRST_MIDI_NOTE + 1)),
       } : {}),
       ...(rightMidi !== undefined ? {
         rightMidi,
-        rightMidis,
+        rightMidis: eventRightMidis,
         rightPitch: Math.max(1, Math.min(PIANO_NOTE_COUNT, rightMidi - PIANO_FIRST_MIDI_NOTE + 1)),
       } : {}),
     });
+    lastEventTick = tick;
   }
 
   return {
-    durationTicks: Math.max(2, Math.round(frameCount * 60 / AUDIO_SAMPLE_RATE)),
+    durationTicks,
     durationSeconds: frameCount / AUDIO_SAMPLE_RATE,
+    analysisWindowsPerSecond,
+    minimumEventGapTicks,
+    leftSilenceRms,
+    rightSilenceRms,
     voicesPerChannel: normalizedVoicesPerChannel,
     leftNoteCount: leftVoiceNoteCounts.reduce((total, count) => total + count, 0),
     rightNoteCount: rightVoiceNoteCounts.reduce((total, count) => total + count, 0),
@@ -291,6 +485,7 @@ async function decodeAudioNotes(request, binaries = {}) {
       sourceChannels: probe.sourceChannels,
       sampleRate: AUDIO_SAMPLE_RATE,
       notesPerSecond,
+      timingMode: 'adaptive',
       ...extractNoteEvents(pcm, notesPerSecond, voicesPerChannel),
     };
   } finally {

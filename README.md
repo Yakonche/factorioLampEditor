@@ -50,7 +50,7 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 - Duplicate frames are merged.
 - Animation data stores sparse pixel changes instead of complete frames.
 - Empty transitions do not receive useless decider combinators.
-- Note events for both speakers are packed into the same sampled instant where possible.
+- Voices detected on the same musical attack are packed into one tick event where possible.
 
 Long, full-definition, full-FPS animation blueprints can still be enormous. Generation runs outside the UI thread, so the interface remains responsive and reports real progress through entity creation, JSON serialization, compression, and Base64 encoding.
 
@@ -87,9 +87,9 @@ Downloaded Twemoji, OpenMoji, Blobmoji, Microsoft Fluent artwork and selected Go
 
 ### Audio limitations
 
-Vanilla Factorio blueprints cannot contain an MP3, a stereo waveform, or arbitrary sampled audio. The desktop editor instead analyzes each channel and approximates its dominant pitch with Factorio's native programmable-speaker instruments. Stereo input can produce two speakers with two different note sequences, but not the two original waveforms.
+Vanilla Factorio blueprints cannot contain an MP3, a stereo waveform, or arbitrary sampled audio. The desktop editor instead analyzes each channel and approximates up to four simultaneous pitches with Factorio's native programmable-speaker instruments. Its silence threshold adapts to the recording's own peak level, so quiet introductions are retained instead of being discarded by a fixed volume gate. Stereo input can produce separate left/right speaker voices, but not the two original waveforms.
 
-Sampling accepts 1 to 60 notes per second because Factorio updates at 60 ticks per second. Higher rates improve temporal detail but increase blueprint size sharply; 4 to 8 notes per second is a practical starting range. **Auto** chooses a native instrument range that clips as few detected notes as possible, while manual instrument selection is available when a particular timbre is preferred.
+Timing is onset-driven: spectral changes, amplitude attacks, rests, and pitch transitions place events on their actual Factorio ticks instead of forcing a periodic note grid. The **Max events/s** setting accepts 1 to 60 because Factorio updates at 60 ticks per second, but it is only a density ceiling; slower passages naturally generate fewer events. Higher ceilings retain very fast attacks but increase blueprint size sharply, so 4 to 8 events per second is a practical starting range. **Auto** chooses a native instrument range that clips as few detected notes as possible, while manual instrument selection is available when a particular timbre is preferred.
 
 The desktop app can play a converted preview before export using the exact programmable-speaker samples from the user's local Factorio installation. It automatically detects common Steam and standalone installations on Windows, Linux, and macOS, with a manual game-folder selector as a fallback. Samples are read in place and scheduled with the same instruments, note IDs, 60-tick timing, and left/right channels as the generated blueprint; Factorio sound assets are never copied into this repository, the application cache, or release binaries.
 
@@ -142,7 +142,7 @@ npm ci
 npm run desktop:portable
 ```
 
-The Windows output is `release/Factorio Lamp Editor-1.7.0-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
+The Windows output is `release/Factorio Lamp Editor-1.7.1-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
 
 ## Building the Linux portable application
 

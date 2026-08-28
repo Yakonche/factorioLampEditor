@@ -736,7 +736,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         />
                     </label>
                     <label className="rounded border border-gray-600 bg-gray-900 px-2 py-1">
-                        <span className="block text-[8px] font-bold uppercase tracking-wider text-gray-500">Notes / sec</span>
+                        <span className="block text-[8px] font-bold uppercase tracking-wider text-gray-500">Max events / s</span>
                         <input
                             type="number"
                             min="1"
@@ -749,7 +749,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                                 if (Number.isFinite(value)) setAudioNotesPerSecond(Math.max(1, Math.min(60, Math.round(value))));
                             }}
                             className="w-full bg-transparent font-mono text-xs font-bold text-cyan-300 outline-none"
-                            aria-label="Audio notes per second"
+                            aria-label="Maximum audio events per second"
                         />
                     </label>
                     <label className="rounded border border-gray-600 bg-gray-900 px-2 py-1">
@@ -771,7 +771,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     </label>
                 </div>
                 <p className="mt-2 text-[10px] leading-4 text-gray-500">
-                    FFmpeg extracts up to four simultaneous pitches per left/right channel. Each voice gets its own native Factorio instrument and speaker; every speaker shares one tick clock. Factorio allows at most one new sample per tick: 1–60 notes/s; 4–8 is recommended.
+                    FFmpeg detects musical attacks and pitch transitions at adaptive tick positions, with up to four simultaneous pitches per left/right channel. The selected 1–60 events/s value is a density ceiling, not a forced rhythm; 4–8 is recommended.
                 </p>
 
                 {audioTrackInfo && (
@@ -780,7 +780,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             <div className="min-w-0">
                                 <p className="truncate font-bold text-cyan-200" title={audioTrackInfo.sourceName}>{audioTrackInfo.sourceName}</p>
                                 <p className="mt-1 font-mono text-gray-500">
-                                    {formatNumber(audioTrackInfo.durationSeconds)} s · {audioTrackInfo.sourceChannels === 1 ? 'mono duplicated' : 'stereo'} · {formatNumber(audioTrackInfo.notesPerSecond)} notes/s
+                                    {formatNumber(audioTrackInfo.durationSeconds)} s · {audioTrackInfo.sourceChannels === 1 ? t('mono duplicated') : t('stereo')} · {t('adaptive')} · {t('max')} {formatNumber(audioTrackInfo.notesPerSecond)} {t('events/s')}
                                 </p>
                             </div>
                             <button

@@ -44,9 +44,35 @@ for (let frame = 0; frame < pcmFrames; frame++) {
 }
 const extracted = extractNoteEvents(pcm, 4);
 assert.equal(extracted.durationTicks, 60);
-assert.ok(extracted.events.length >= 4);
+assert.equal(extracted.events.length, 1, 'A steady tone should be emitted once instead of being forced onto a periodic grid.');
 assert.ok(extracted.events.every(event => event.leftPitch === 17 && event.rightPitch === 20));
 assert.ok(extracted.events.every(event => event.leftMidi === 69 && event.rightMidi === 72));
+
+const adaptiveFrames = AUDIO_SAMPLE_RATE * 4;
+const adaptivePcm = Buffer.alloc(adaptiveFrames * 4);
+for (let frame = 0; frame < adaptiveFrames; frame++) {
+  const seconds = frame / AUDIO_SAMPLE_RATE;
+  const burst = seconds >= 0.5 && seconds < 0.78
+    ? { frequency: 440, amplitude: 900 }
+    : seconds >= 1.3 && seconds < 1.62
+      ? { frequency: 523.251, amplitude: 20_000 }
+      : seconds >= 2.6 && seconds < 3.05
+        ? { frequency: 659.255, amplitude: 18_000 }
+        : undefined;
+  const sample = burst
+    ? Math.round(Math.sin(2 * Math.PI * burst.frequency * frame / AUDIO_SAMPLE_RATE) * burst.amplitude)
+    : 0;
+  adaptivePcm.writeInt16LE(sample, frame * 4);
+  adaptivePcm.writeInt16LE(sample, frame * 4 + 2);
+}
+const adaptive = extractNoteEvents(adaptivePcm, 8, 1);
+assert.equal(adaptive.minimumEventGapTicks, 8);
+assert.ok(adaptive.events[0].tick < 60, 'The quiet introduction should survive the adaptive volume gate.');
+assert.ok(adaptive.events.some(event => event.tick >= 65 && event.tick <= 110 && event.leftMidi === 72));
+assert.ok(adaptive.events.some(event => event.tick >= 140 && event.tick <= 200 && event.leftMidi === 76));
+const adaptiveGaps = adaptive.events.slice(1).map((event, index) => event.tick - adaptive.events[index].tick);
+assert.ok(adaptiveGaps.every(gap => gap >= adaptive.minimumEventGapTicks));
+assert.ok(new Set(adaptiveGaps).size > 1, 'Adaptive note events should preserve irregular timing.');
 
 (async () => {
   const ffmpegPath = require('ffmpeg-static');
@@ -69,7 +95,7 @@ assert.ok(extracted.events.every(event => event.leftMidi === 69 && event.rightMi
     assert.equal(decoded.sourceChannels, 2);
     assert.equal(decoded.notesPerSecond, 4);
     assert.equal(decoded.voicesPerChannel, 2);
-    assert.ok(decoded.events.length >= 4);
+    assert.equal(decoded.events.length, 1);
     assert.ok(decoded.events.every(event => event.leftPitch === 17 && event.rightPitch === 20));
     assert.ok(decoded.events.every(event => event.leftMidi === 69 && event.rightMidi === 72));
     console.log(JSON.stringify({

@@ -474,7 +474,7 @@ function App() {
     }
     const requestId = ++audioDecodeRequestRef.current;
     setAudioImporting(true);
-    setStatusMsg('Extracting synchronized polyphonic notes with FFmpeg...');
+    setStatusMsg('Detecting adaptive polyphonic note events with FFmpeg...');
     try {
       const decoded = await window.factorioLampEditor.decodeAudioNotes({
         sourceName: file.name,

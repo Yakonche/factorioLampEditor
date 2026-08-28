@@ -46,7 +46,11 @@ export interface DecodedAudioTrack {
     sourceName: string;
     sourceChannels: number;
     sampleRate: number;
+    /** Maximum emitted note events per second; actual event timing is adaptive. */
     notesPerSecond: number;
+    analysisWindowsPerSecond?: number;
+    minimumEventGapTicks?: number;
+    timingMode?: 'adaptive';
     durationTicks: number;
     durationSeconds: number;
     voicesPerChannel?: number;
