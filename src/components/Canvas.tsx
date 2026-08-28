@@ -45,7 +45,8 @@ const PREVIEW_ENTITY_TEXTURE: Record<BlueprintPreviewKind, FactorioTextureId> = 
 };
 
 const GAME_LAMP_TEXTURE_TILE_SIZE = 64;
-const MAX_TEXTURED_LAMPS_PER_VIEW = 14_000;
+const GAME_LAMP_TEXTURE_DENSITY = 2;
+const MAX_INDIVIDUAL_GAME_LAMPS_PER_VIEW = 40_000;
 const FACTORIO_SOURCE_TILE_SIZE = 32;
 
 const drawPlacedTexture = (
@@ -62,6 +63,9 @@ const drawPlacedTexture = (
     const shiftedY = anchorY + texture.shiftY * worldPixelsPerSourcePixel;
     const framesPerRow = Math.max(1, Math.floor(texture.bitmap.width / texture.frameWidth));
     const normalizedFrame = Math.max(0, frame % framesPerRow);
+    context.save();
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
     context.drawImage(
         texture.bitmap,
         normalizedFrame * texture.frameWidth,
@@ -73,6 +77,7 @@ const drawPlacedTexture = (
         renderedWidth,
         renderedHeight,
     );
+    context.restore();
 };
 
 const quantizedLampColor = (color: number) => {
@@ -84,10 +89,11 @@ const quantizedLampColor = (color: number) => {
 
 const createGameLampTile = (textures: FactorioTextureSet, color: number) => {
     const tile = document.createElement('canvas');
-    tile.width = GAME_LAMP_TEXTURE_TILE_SIZE;
-    tile.height = GAME_LAMP_TEXTURE_TILE_SIZE;
+    tile.width = GAME_LAMP_TEXTURE_TILE_SIZE * GAME_LAMP_TEXTURE_DENSITY;
+    tile.height = GAME_LAMP_TEXTURE_TILE_SIZE * GAME_LAMP_TEXTURE_DENSITY;
     const context = tile.getContext('2d');
     if (!context) return tile;
+    context.scale(GAME_LAMP_TEXTURE_DENSITY, GAME_LAMP_TEXTURE_DENSITY);
     const normalizedColor = quantizedLampColor(color);
     const lit = normalizedColor !== 0;
     const r = (normalizedColor >>> 16) & 0xff;
@@ -101,7 +107,7 @@ const createGameLampTile = (textures: FactorioTextureSet, color: number) => {
         glow.addColorStop(0.45, `rgba(${r}, ${g}, ${b}, 0.35)`);
         glow.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
         context.fillStyle = glow;
-        context.fillRect(0, 0, tile.width, tile.height);
+        context.fillRect(0, 0, GAME_LAMP_TEXTURE_TILE_SIZE, GAME_LAMP_TEXTURE_TILE_SIZE);
     }
 
     const base = textures['small-lamp'];
@@ -113,12 +119,23 @@ const createGameLampTile = (textures: FactorioTextureSet, color: number) => {
         coloredLight.height = tile.height;
         const lightContext = coloredLight.getContext('2d');
         if (lightContext) {
+            lightContext.scale(GAME_LAMP_TEXTURE_DENSITY, GAME_LAMP_TEXTURE_DENSITY);
             drawPlacedTexture(lightContext, light, anchor, anchor);
             lightContext.globalCompositeOperation = 'source-in';
             lightContext.fillStyle = `rgb(${r} ${g} ${b})`;
-            lightContext.fillRect(0, 0, coloredLight.width, coloredLight.height);
+            lightContext.fillRect(0, 0, GAME_LAMP_TEXTURE_TILE_SIZE, GAME_LAMP_TEXTURE_TILE_SIZE);
             context.globalCompositeOperation = 'screen';
-            context.drawImage(coloredLight, 0, 0);
+            context.drawImage(
+                coloredLight,
+                0,
+                0,
+                coloredLight.width,
+                coloredLight.height,
+                0,
+                0,
+                GAME_LAMP_TEXTURE_TILE_SIZE,
+                GAME_LAMP_TEXTURE_TILE_SIZE,
+            );
             context.globalCompositeOperation = 'source-over';
         }
     }
@@ -191,7 +208,6 @@ export const Canvas: React.FC<CanvasProps> = ({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
-    const gameLampPresenceCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const lampPresenceCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const gameLampTileCacheRef = useRef<Map<number, HTMLCanvasElement>>(new Map());
     const frameRef = useRef<number | null>(null);
@@ -223,30 +239,6 @@ export const Canvas: React.FC<CanvasProps> = ({
         );
         context.putImageData(new ImageData(bytes, gridData.width, gridData.height), 0, 0);
 
-        let presenceCache = gameLampPresenceCanvasRef.current;
-        if (!presenceCache) {
-            presenceCache = document.createElement('canvas');
-            gameLampPresenceCanvasRef.current = presenceCache;
-        }
-        if (presenceCache.width !== gridData.width || presenceCache.height !== gridData.height) {
-            presenceCache.width = gridData.width;
-            presenceCache.height = gridData.height;
-        }
-        const presenceContext = presenceCache.getContext('2d');
-        if (!presenceContext) return;
-        const presenceBytes = new Uint8ClampedArray(gridData.cells.length * 4);
-        for (let index = 0; index < gridData.cells.length; index++) {
-            if (!gridData.cells[index]) continue;
-            presenceBytes[index * 4] = 0x9c;
-            presenceBytes[index * 4 + 1] = 0xa3;
-            presenceBytes[index * 4 + 2] = 0xaf;
-            presenceBytes[index * 4 + 3] = 0xb0;
-        }
-        presenceContext.putImageData(
-            new ImageData(presenceBytes, gridData.width, gridData.height),
-            0,
-            0,
-        );
     }, [gridData]);
 
     const rebuildLampPresenceCache = useCallback(() => {
@@ -386,16 +378,24 @@ export const Canvas: React.FC<CanvasProps> = ({
             );
         }
 
-        // Official lamp artwork is useful only while individual cells remain
-        // visible. Very wide/zoomed-out views keep the fast pixel preview; once
-        // zoomed in, every visible lamp uses Factorio's local sprite and a
-        // quantized real-time glow based on the current animation color.
-        const visibleTileCount = Math.max(0, maxTileX - minTileX + 1)
-            * Math.max(0, maxTileY - minTileY + 1);
+        // Count actual lamps rather than the rectangular viewport. Sparse
+        // blueprints can therefore keep their real sprites much farther out.
+        let visibleLampCount = 0;
+        if (gameTextureMode) {
+            countVisibleLamps: for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+                const rowOffset = tileY * gridData.width;
+                for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+                    const index = rowOffset + tileX;
+                    if (gridData.cells[index] || lampPresenceGrid?.cells[index]) visibleLampCount++;
+                    if (visibleLampCount > MAX_INDIVIDUAL_GAME_LAMPS_PER_VIEW) break countVisibleLamps;
+                }
+            }
+        }
         const canRenderTexturedLamps = gameTextureMode
-            && camera.zoom >= 0.55
-            && visibleTileCount <= MAX_TEXTURED_LAMPS_PER_VIEW;
+            && visibleLampCount <= MAX_INDIVIDUAL_GAME_LAMPS_PER_VIEW;
         if (canRenderTexturedLamps) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
                 const rowOffset = tileY * gridData.width;
                 for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
@@ -415,12 +415,11 @@ export const Canvas: React.FC<CanvasProps> = ({
                 }
             }
         } else if (gameTextureMode && maxTileX >= minTileX && maxTileY >= minTileY) {
-            // At extreme zoom-outs, individual building sprites are smaller
-            // than a screen pixel. Keep a neutral occupancy preview rather
-            // than restoring the old per-cell RGB backgrounds.
+            // Drawing tens of thousands of individual sprites per animation
+            // frame is too costly. Preserve the actual image/colors as a
+            // compact aggregate preview instead of replacing it with grey.
             const sourceWidth = maxTileX - minTileX + 1;
             const sourceHeight = maxTileY - minTileY + 1;
-            const staticPresence = gameLampPresenceCanvasRef.current;
             ctx.imageSmoothingEnabled = false;
             if (cachedLampPresence) {
                 ctx.drawImage(
@@ -435,9 +434,9 @@ export const Canvas: React.FC<CanvasProps> = ({
                     sourceHeight * PIXEL_SIZE,
                 );
             }
-            if (staticPresence) {
+            if (cachedGrid) {
                 ctx.drawImage(
-                    staticPresence,
+                    cachedGrid,
                     minTileX,
                     minTileY,
                     sourceWidth,
