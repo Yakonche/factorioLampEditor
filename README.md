@@ -17,6 +17,7 @@ The editor represents every visible pixel with a Factorio lamp, then builds the 
 
 - Draw on the grid, erase cells, import a static image, or reset the complete canvas.
 - Click a visible lamp to open a live RGB/hex inspector. Animated values follow the current Factorio-speed preview frame; pause playback from the inspector to edit that frame with RGB fields, a hexadecimal value, or the native color picker.
+- Enable **Game Textures** in the header to render visible lamps, combinators, poles, roboports, speakers, and display panels with official artwork read directly from the detected local Factorio installation. Lit lamps receive a real-time color glow; very wide zoomed-out views retain the fast pixel renderer until individual sprites are useful. Steam and standalone installations are detected automatically, and the checkbox opens a game-folder selector when detection fails. Missing assets fall back individually to the vector preview.
 - Create text stamps with global size, color, font, imported TTF/OTF fonts, and static or genuinely animated emoji. Noto animations can be inserted at the text cursor or placed directly on the grid; their real frames stay attached to the correct character while the text is edited. Selected text can be bold, italic, or underlined, and the text field includes a complete context menu. Every emoji style displays a conservative minimum lamp-grid size for retaining its fine details.
 - Choose consistently rendered bundled fonts, the complete system-font inventory exposed by the desktop OS, or imported TTF/OTF files. Imported fonts use their internal OpenType full name instead of their file name. Every source remains split into monospaced and proportional groups, every menu entry previews its own typeface, and a conservative full-fidelity raster estimate is shown as `(X px)`.
 - Search and filter the complete static Unicode RGI emoji catalog, including supported skin-tone variants. Choose OS-native Apple or Segoe, bundled Noto Color Emoji or Toss Face, or downloadable Twemoji 17, OpenMoji 17, Blobmoji, and Microsoft Fluent Flat, Color, or 3D artwork.
@@ -91,7 +92,7 @@ Vanilla Factorio blueprints cannot contain an MP3, a stereo waveform, or arbitra
 
 Timing is onset-driven: spectral changes, amplitude attacks, rests, and pitch transitions place events on their actual Factorio ticks instead of forcing a periodic note grid. The **Max events/s** setting accepts 1 to 60 because Factorio updates at 60 ticks per second, but it is only a density ceiling; slower passages naturally generate fewer events. Higher ceilings retain very fast attacks but increase blueprint size sharply, so 4 to 8 events per second is a practical starting range. **Auto** chooses a native instrument range that clips as few detected notes as possible, while manual instrument selection is available when a particular timbre is preferred.
 
-The desktop app can play a converted preview before export using the exact programmable-speaker samples from the user's local Factorio installation. It automatically detects common Steam and standalone installations on Windows, Linux, and macOS, with a manual game-folder selector as a fallback. Samples are read in place and scheduled with the same instruments, note IDs, 60-tick timing, and left/right channels as the generated blueprint; Factorio sound assets are never copied into this repository, the application cache, or release binaries.
+The desktop app can play a converted preview before export using the exact programmable-speaker samples from the user's local Factorio installation. It automatically detects common Steam and standalone installations on Windows, Linux, and macOS, with a manual game-folder selector as a fallback. Samples are read in place and scheduled with the same instruments, note IDs, 60-tick timing, and left/right channels as the generated blueprint. Optional game textures use that same detected installation and are likewise read in place. Factorio sound and graphics assets are never copied into this repository, the application cache, or release binaries.
 
 ## Requirements
 
@@ -142,7 +143,7 @@ npm ci
 npm run desktop:portable
 ```
 
-The Windows output is `release/Factorio Lamp Editor-1.7.1-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
+The Windows output is `release/Factorio Lamp Editor-1.8.0-win-x64-portable.exe`. The `dist/`, `release/`, `release-build-*/`, and `node_modules/` directories are intentionally ignored because they are generated or machine-local. Do not commit test media, generated blueprints, unpacked Electron applications, or portable binaries to the source repository; publish binaries as GitHub Release assets instead.
 
 ## Building the Linux portable application
 

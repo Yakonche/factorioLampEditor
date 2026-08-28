@@ -97,6 +97,13 @@ import {
   keyboardPanDirection,
   keyboardPanToken,
 } from './utils/keyboardNavigation';
+import {
+  closeFactorioTextures,
+  loadFactorioTextures,
+  type FactorioTextureAvailability,
+  type FactorioTextureSet,
+  type FactorioTextureStatus,
+} from './utils/factorioTextures';
 
 type CalculationWorkerResponse = {
   id: number;
@@ -204,6 +211,7 @@ const formatBlueprintLabel = (filename: string, width: number, height: number) =
 
 const POLE_TYPE_STORAGE_KEY = 'factorio-lamp-editor.pole-type';
 const POLE_QUALITY_STORAGE_KEY = 'factorio-lamp-editor.pole-quality';
+const GAME_TEXTURES_STORAGE_KEY = 'factorio-lamp-editor.game-textures';
 const DEFAULT_POLE_TYPE = 'medium-electric-pole';
 
 const storedPoleType = () => {
@@ -219,6 +227,11 @@ const storedPoleQuality = () => {
   const stored = Number(window.localStorage.getItem(POLE_QUALITY_STORAGE_KEY));
   return Number.isInteger(stored) && stored >= 0 && stored < QUALITY_NAMES.length ? stored : 0;
 };
+
+const storedGameTexturesEnabled = () => (
+  typeof window !== 'undefined'
+  && window.localStorage.getItem(GAME_TEXTURES_STORAGE_KEY) === 'true'
+);
 
 function App() {
   const { t } = useI18n();
@@ -265,6 +278,11 @@ function App() {
   const [tool, setTool] = useState<ToolType>('pan');
   const [color, setColor] = useState('#ffffff');
   const [statusMsg, setStatusMsg] = useState("");
+  const [gameTexturesEnabled, setGameTexturesEnabled] = useState(storedGameTexturesEnabled);
+  const [gameTexturesStatus, setGameTexturesStatus] = useState<FactorioTextureAvailability>('loading');
+  const [gameTextures, setGameTextures] = useState<FactorioTextureSet | null>(null);
+  const gameTexturesRef = useRef<FactorioTextureSet | null>(null);
+  const initiallyRequestedGameTexturesRef = useRef(gameTexturesEnabled);
   const lastGeneratedBlueprintRef = useRef<string | null>(null);
   const lastGeneratedBlueprintLabelRef = useRef('Factorio Art');
   const [hasGeneratedBlueprint, setHasGeneratedBlueprint] = useState(false);
@@ -273,6 +291,113 @@ function App() {
   const historyRef = useRef<GridPatch[]>([]);
   const committedGridRef = useRef<GridData>(cloneGrid(gridRef.current));
   const [historyIndex, setHistoryIndex] = useState(-1);
+
+  const replaceGameTextures = useCallback((nextTextures: FactorioTextureSet | null) => {
+    if (gameTexturesRef.current !== nextTextures) closeFactorioTextures(gameTexturesRef.current);
+    gameTexturesRef.current = nextTextures;
+    setGameTextures(nextTextures);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const detectTextures = async () => {
+      const api = window.factorioLampEditor;
+      if (!api?.getFactorioTextureStatus) {
+        if (!cancelled) {
+          setGameTexturesStatus('unavailable');
+          setGameTexturesEnabled(false);
+        }
+        return;
+      }
+      try {
+        const status = await api.getFactorioTextureStatus();
+        if (cancelled) return;
+        if (!status.available) {
+          setGameTexturesStatus('unavailable');
+          setGameTexturesEnabled(false);
+          window.localStorage.setItem(GAME_TEXTURES_STORAGE_KEY, 'false');
+          return;
+        }
+        setGameTexturesStatus('available');
+        if (!initiallyRequestedGameTexturesRef.current) return;
+        const textures = await loadFactorioTextures(status);
+        if (cancelled) {
+          closeFactorioTextures(textures);
+          return;
+        }
+        if (!textures['small-lamp']) throw new Error('The Factorio small-lamp texture is unavailable.');
+        replaceGameTextures(textures);
+        setGameTexturesEnabled(true);
+      } catch {
+        if (!cancelled) {
+          setGameTexturesStatus('error');
+          setGameTexturesEnabled(false);
+          window.localStorage.setItem(GAME_TEXTURES_STORAGE_KEY, 'false');
+        }
+      }
+    };
+    void detectTextures();
+    return () => {
+      cancelled = true;
+    };
+  }, [replaceGameTextures]);
+
+  useEffect(() => () => {
+    closeFactorioTextures(gameTexturesRef.current);
+    gameTexturesRef.current = null;
+  }, []);
+
+  const handleGameTexturesChange = useCallback(async (enabled: boolean) => {
+    if (!enabled) {
+      replaceGameTextures(null);
+      setGameTexturesEnabled(false);
+      window.localStorage.setItem(GAME_TEXTURES_STORAGE_KEY, 'false');
+      setStatusMsg(t('Factorio game textures disabled.'));
+      return;
+    }
+
+    const api = window.factorioLampEditor;
+    if (!api?.getFactorioTextureStatus || !api.readFactorioTexture) {
+      setGameTexturesStatus('unavailable');
+      setStatusMsg(t('Unable to load Factorio game textures.'));
+      return;
+    }
+
+    setGameTexturesStatus('loading');
+    try {
+      let status: FactorioTextureStatus = await api.getFactorioTextureStatus();
+      if (!status.available) {
+        const selected = await api.selectFactorioTextures();
+        if (selected.canceled) {
+          setGameTexturesEnabled(false);
+          setGameTexturesStatus('unavailable');
+          return;
+        }
+        status = {
+          available: Boolean(selected.available),
+          factorioDirectory: selected.factorioDirectory,
+          textureIds: selected.textureIds ?? [],
+        };
+      }
+      if (!status.available) throw new Error('Factorio was not detected.');
+      const textures = await loadFactorioTextures(status);
+      if (!textures['small-lamp']) {
+        closeFactorioTextures(textures);
+        throw new Error('The Factorio small-lamp texture is unavailable.');
+      }
+      replaceGameTextures(textures);
+      setGameTexturesEnabled(true);
+      setGameTexturesStatus('available');
+      window.localStorage.setItem(GAME_TEXTURES_STORAGE_KEY, 'true');
+      setStatusMsg(t('Factorio game textures enabled.'));
+    } catch {
+      replaceGameTextures(null);
+      setGameTexturesEnabled(false);
+      setGameTexturesStatus('error');
+      window.localStorage.setItem(GAME_TEXTURES_STORAGE_KEY, 'false');
+      setStatusMsg(t('Unable to load Factorio game textures.'));
+    }
+  }, [replaceGameTextures, t]);
 
   const saveHistory = useCallback(() => {
     const patch = createGridPatch(committedGridRef.current, gridRef.current);
@@ -2439,7 +2564,12 @@ function App() {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <Header onReset={resetCanvas} />
+      <Header
+        onReset={resetCanvas}
+        gameTexturesEnabled={gameTexturesEnabled}
+        gameTexturesStatus={gameTexturesStatus}
+        onGameTexturesChange={enabled => void handleGameTexturesChange(enabled)}
+      />
 
       <main className="flex-1 overflow-hidden relative w-full flex flex-col md:flex-row">
         <div id="view-draw" className="absolute inset-0 flex flex-col md:flex-row w-full h-full">
@@ -2545,6 +2675,7 @@ function App() {
                 : viewingSequenceFrame
                   ? manualUnionGrid
                   : undefined}
+              gameTextures={gameTexturesEnabled ? gameTextures : null}
               onHover={(x, y) => setCoords({ x, y })}
               tool={viewingSequenceFrame || viewingMediaFrame ? 'pan' : tool}
             />

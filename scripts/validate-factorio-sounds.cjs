@@ -28,10 +28,12 @@ const {
     assert.deepEqual(await library.select(factorioRoot), {
       available: true,
       soundDirectory,
+      factorioDirectory: factorioRoot,
     });
     assert.deepEqual(await library.status(), {
       available: true,
       soundDirectory,
+      factorioDirectory: factorioRoot,
     });
     assert.deepEqual(Buffer.from(await library.read('bass', 2)), sampleBytes);
     await assert.rejects(() => library.read('unknown', 1), /Unknown Factorio speaker instrument/);
@@ -41,6 +43,7 @@ const {
     assert.deepEqual(await restoredLibrary.status(), {
       available: true,
       soundDirectory,
+      factorioDirectory: factorioRoot,
     });
 
     console.log(JSON.stringify({ soundDirectory, persisted: true, exactSampleRead: true }));

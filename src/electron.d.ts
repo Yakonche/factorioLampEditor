@@ -46,6 +46,18 @@ interface Window {
       instrument: import('./utils/audio').AudioInstrumentName,
       pitch: number,
     ) => Promise<Uint8Array>;
+    getFactorioTextureStatus: () => Promise<{
+      available: boolean;
+      factorioDirectory?: string;
+      textureIds: string[];
+    }>;
+    selectFactorioTextures: () => Promise<{
+      canceled: boolean;
+      available?: boolean;
+      factorioDirectory?: string;
+      textureIds?: string[];
+    }>;
+    readFactorioTexture: (textureId: string) => Promise<Uint8Array>;
     listSystemFonts: () => Promise<string[]>;
     getEmojiAsset: (
       provider: import('./utils/emojiAssets').EmojiAssetProvider,

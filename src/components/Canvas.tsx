@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import type { CameraState } from '../utils/geometry';
 import { getWorldCoords } from '../utils/geometry';
-import { uint32ToCss, type GridData } from '../utils/grid';
+import { uint32ToCss, uint32ToRgb, type GridData } from '../utils/grid';
 import {
     PIXEL_SIZE,
     GRID_W,
@@ -15,6 +15,7 @@ import {
 import type { StampBuffer } from '../utils/stamp';
 import type { ActivePole, ActiveRoboport, BlueprintPreviewEntity, BlueprintPreviewKind } from '../utils/blueprint';
 import { buildPreviewSpatialIndex, previewEntitiesInBounds } from '../utils/previewSpatialIndex';
+import type { FactorioTextureId, FactorioTextureSet } from '../utils/factorioTextures';
 
 const PREVIEW_ENTITY_STYLE: Record<BlueprintPreviewKind, { fill: string; stroke: string; text: string }> = {
     'decider-combinator': { fill: 'rgba(6, 182, 212, 0.48)', stroke: '#67e8f9', text: 'D' },
@@ -25,6 +26,83 @@ const PREVIEW_ENTITY_STYLE: Record<BlueprintPreviewKind, { fill: string; stroke:
     'controller-roboport': { fill: 'rgba(16, 185, 129, 0.3)', stroke: '#6ee7b7', text: 'R' },
     'relay-pole': { fill: 'rgba(20, 184, 166, 0.44)', stroke: '#5eead4', text: 'P' },
     'programmable-speaker': { fill: 'rgba(34, 211, 238, 0.42)', stroke: '#a5f3fc', text: '♪' },
+};
+
+const PREVIEW_ENTITY_TEXTURE: Record<BlueprintPreviewKind, FactorioTextureId> = {
+    'decider-combinator': 'decider-combinator',
+    'arithmetic-combinator': 'arithmetic-combinator',
+    'constant-combinator': 'constant-combinator',
+    'display-panel': 'display-panel',
+    'controller-substation': 'substation',
+    'controller-roboport': 'roboport',
+    'relay-pole': 'medium-electric-pole',
+    'programmable-speaker': 'programmable-speaker',
+};
+
+const GAME_LAMP_TEXTURE_TILE_SIZE = 48;
+const MAX_TEXTURED_LAMPS_PER_VIEW = 14_000;
+
+const drawContainedTexture = (
+    context: CanvasRenderingContext2D,
+    texture: CanvasImageSource,
+    left: number,
+    top: number,
+    width: number,
+    height: number,
+    padding = 2,
+) => {
+    const availableWidth = Math.max(1, width - padding * 2);
+    const availableHeight = Math.max(1, height - padding * 2);
+    const size = Math.min(availableWidth, availableHeight);
+    context.drawImage(
+        texture,
+        left + (width - size) / 2,
+        top + (height - size) / 2,
+        size,
+        size,
+    );
+};
+
+const quantizedLampColor = (color: number) => {
+    if (!color) return 0;
+    const { r, g, b } = uint32ToRgb(color);
+    const quantize = (channel: number) => Math.round(channel / 17) * 17;
+    return (quantize(r) << 16) | (quantize(g) << 8) | quantize(b);
+};
+
+const createGameLampTile = (texture: CanvasImageSource, color: number) => {
+    const tile = document.createElement('canvas');
+    tile.width = GAME_LAMP_TEXTURE_TILE_SIZE;
+    tile.height = GAME_LAMP_TEXTURE_TILE_SIZE;
+    const context = tile.getContext('2d');
+    if (!context) return tile;
+    const normalizedColor = quantizedLampColor(color);
+    const r = (normalizedColor >>> 16) & 0xff;
+    const g = (normalizedColor >>> 8) & 0xff;
+    const b = normalizedColor & 0xff;
+
+    if (normalizedColor) {
+        const glow = context.createRadialGradient(24, 24, 2, 24, 24, 23);
+        glow.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.7)`);
+        glow.addColorStop(0.45, `rgba(${r}, ${g}, ${b}, 0.35)`);
+        glow.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+        context.fillStyle = glow;
+        context.fillRect(0, 0, tile.width, tile.height);
+    }
+
+    context.globalAlpha = normalizedColor ? 0.95 : 0.68;
+    context.drawImage(texture, 4, 4, 40, 40);
+    if (normalizedColor) {
+        context.globalCompositeOperation = 'source-atop';
+        context.globalAlpha = 0.5;
+        context.fillStyle = `rgb(${r} ${g} ${b})`;
+        context.fillRect(0, 0, tile.width, tile.height);
+        context.globalCompositeOperation = 'source-over';
+        context.globalAlpha = 0.62;
+        context.drawImage(texture, 4, 4, 40, 40);
+    }
+    context.globalAlpha = 1;
+    return tile;
 };
 
 type HoverTooltip = {
@@ -72,6 +150,8 @@ interface CanvasProps {
     hasAlternateFrameLamp?: (x: number, y: number) => boolean;
     /** Union of every animation frame, used to draw currently transparent lamps as black. */
     lampPresenceGrid?: GridData;
+    /** Official artwork read in place from the user's local Factorio installation. */
+    gameTextures?: FactorioTextureSet | null;
 
     // Coordinates display
     onHover: (x: number, y: number) => void;
@@ -84,13 +164,14 @@ export const Canvas: React.FC<CanvasProps> = ({
     onInteractStart, onInteractMove, onInteractEnd, onLampClick,
     stampMode, stampBuffer, stampScale, fitView,
     autoPole, activePoles, poleType, qualityIdx, autoRoboport, activeRoboports,
-    previewEntities = [], hasAlternateFrameLamp, lampPresenceGrid,
+    previewEntities = [], hasAlternateFrameLamp, lampPresenceGrid, gameTextures,
     onHover, tool
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const lampPresenceCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const gameLampTileCacheRef = useRef<Map<number, HTMLCanvasElement>>(new Map());
     const frameRef = useRef<number | null>(null);
     const renderCallbackRef = useRef<() => void>(() => undefined);
     const lastMousePos = useRef<{ x: number, y: number } | null>(null);
@@ -147,6 +228,21 @@ export const Canvas: React.FC<CanvasProps> = ({
             0,
         );
     }, [lampPresenceGrid]);
+
+    useEffect(() => {
+        gameLampTileCacheRef.current.clear();
+    }, [gameTextures]);
+
+    const gameLampTileForColor = useCallback((color: number) => {
+        const texture = gameTextures?.['small-lamp'];
+        if (!texture) return null;
+        const cacheKey = quantizedLampColor(color);
+        const cached = gameLampTileCacheRef.current.get(cacheKey);
+        if (cached) return cached;
+        const tile = createGameLampTile(texture, color);
+        gameLampTileCacheRef.current.set(cacheKey, tile);
+        return tile;
+    }, [gameTextures]);
 
     // Render Logic
     const render = useCallback(() => {
@@ -228,6 +324,37 @@ export const Canvas: React.FC<CanvasProps> = ({
             );
         }
 
+        // Official lamp artwork is useful only while individual cells remain
+        // visible. Very wide/zoomed-out views keep the fast pixel preview; once
+        // zoomed in, every visible lamp uses Factorio's local sprite and a
+        // quantized real-time glow based on the current animation color.
+        const visibleTileCount = Math.max(0, maxTileX - minTileX + 1)
+            * Math.max(0, maxTileY - minTileY + 1);
+        if (
+            gameTextures?.['small-lamp']
+            && camera.zoom >= 0.55
+            && visibleTileCount <= MAX_TEXTURED_LAMPS_PER_VIEW
+        ) {
+            for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+                const rowOffset = tileY * gridData.width;
+                for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+                    const index = rowOffset + tileX;
+                    const color = gridData.cells[index] ?? 0;
+                    const isPresent = Boolean(color || lampPresenceGrid?.cells[index]);
+                    if (!isPresent) continue;
+                    const lampTile = gameLampTileForColor(color);
+                    if (!lampTile) continue;
+                    ctx.drawImage(
+                        lampTile,
+                        tileX * PIXEL_SIZE,
+                        tileY * PIXEL_SIZE,
+                        PIXEL_SIZE,
+                        PIXEL_SIZE,
+                    );
+                }
+            }
+        }
+
         // 6. Grid Lines
         ctx.lineWidth = 1;
 
@@ -301,9 +428,14 @@ export const Canvas: React.FC<CanvasProps> = ({
                             // Culling check for render perf
                             if (gx > maxTileX || gx < minTileX || gy > maxTileY || gy < minTileY) continue;
 
-                            ctx.fillStyle = uint32ToCss(col);
-                            // Draw 1x1 grid cell
-                            ctx.fillRect(gx * PIXEL_SIZE, gy * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+                            const gameLampTile = gameLampTileForColor(col);
+                            if (gameLampTile) {
+                                ctx.drawImage(gameLampTile, gx * PIXEL_SIZE, gy * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+                            } else {
+                                ctx.fillStyle = uint32ToCss(col);
+                                // Draw 1x1 grid cell
+                                ctx.fillRect(gx * PIXEL_SIZE, gy * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+                            }
                         }
                     }
                 }
@@ -335,6 +467,18 @@ export const Canvas: React.FC<CanvasProps> = ({
                 ctx.strokeStyle = "#3b82f6";
                 ctx.lineWidth = 2 / camera.zoom;
                 ctx.strokeRect(x * PIXEL_SIZE + 1, y * PIXEL_SIZE + 1, size * PIXEL_SIZE - 2, size * PIXEL_SIZE - 2);
+
+                const poleTexture = gameTextures?.[poleType as FactorioTextureId];
+                if (poleTexture) {
+                    drawContainedTexture(
+                        ctx,
+                        poleTexture,
+                        x * PIXEL_SIZE,
+                        y * PIXEL_SIZE,
+                        size * PIXEL_SIZE,
+                        size * PIXEL_SIZE,
+                    );
+                }
 
                 ctx.lineWidth = 1 / camera.zoom;
                 ctx.setLineDash([4 / camera.zoom, 4 / camera.zoom]);
@@ -388,6 +532,18 @@ export const Canvas: React.FC<CanvasProps> = ({
                     ROBOPORT_SIZE * PIXEL_SIZE - 2,
                     ROBOPORT_SIZE * PIXEL_SIZE - 2,
                 );
+                const roboportTexture = gameTextures?.roboport;
+                if (roboportTexture) {
+                    drawContainedTexture(
+                        ctx,
+                        roboportTexture,
+                        roboport.x * PIXEL_SIZE,
+                        roboport.y * PIXEL_SIZE,
+                        ROBOPORT_SIZE * PIXEL_SIZE,
+                        ROBOPORT_SIZE * PIXEL_SIZE,
+                        4,
+                    );
+                }
             });
         }
 
@@ -414,7 +570,12 @@ export const Canvas: React.FC<CanvasProps> = ({
             ctx.lineWidth = 2 / camera.zoom;
             ctx.strokeRect(left + 1, top + 1, width - 2, height - 2);
 
-            if (camera.zoom >= 0.45) {
+            const entityTexture = gameTextures?.[PREVIEW_ENTITY_TEXTURE[entity.kind]];
+            if (entityTexture) {
+                drawContainedTexture(ctx, entityTexture, left, top, width, height);
+            }
+
+            if (camera.zoom >= 0.45 && !entityTexture) {
                 ctx.fillStyle = style.stroke;
                 ctx.font = `bold ${Math.max(9, Math.min(15, 11 / camera.zoom)) / camera.zoom}px sans-serif`;
                 ctx.textAlign = 'center';
@@ -425,7 +586,7 @@ export const Canvas: React.FC<CanvasProps> = ({
 
         ctx.restore();
 
-    }, [camera, stampMode, stampBuffer, stampScale, autoPole, activePoles, poleType, qualityIdx, autoRoboport, activeRoboports, previewSpatialIndex]);
+    }, [camera, stampMode, stampBuffer, stampScale, autoPole, activePoles, poleType, qualityIdx, autoRoboport, activeRoboports, previewSpatialIndex, gameTextures, gameLampTileForColor, gridData, lampPresenceGrid]);
     useEffect(() => {
         renderCallbackRef.current = render;
     }, [render]);

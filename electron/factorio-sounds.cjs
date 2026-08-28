@@ -17,6 +17,11 @@ const INSTRUMENT_FILES = Object.freeze({
 const SPEAKER_RELATIVE_PATH = path.join('data', 'base', 'sound', 'programmable-speaker');
 const MARKER_FILE = 'piano1-01.ogg';
 
+function factorioDirectoryFromSoundDirectory(soundDirectory) {
+  if (!soundDirectory) return null;
+  return path.resolve(soundDirectory, '..', '..', '..', '..');
+}
+
 async function isFile(filePath) {
   try {
     return (await fs.stat(filePath)).isFile();
@@ -125,6 +130,7 @@ function createFactorioSoundLibrary({ configPath }) {
       return {
         available: Boolean(directory),
         soundDirectory: directory ?? undefined,
+        factorioDirectory: factorioDirectoryFromSoundDirectory(directory) ?? undefined,
       };
     },
 
@@ -135,7 +141,11 @@ function createFactorioSoundLibrary({ configPath }) {
       }
       soundDirectory = directory;
       await saveSelectedDirectory(directory);
-      return { available: true, soundDirectory: directory };
+      return {
+        available: true,
+        soundDirectory: directory,
+        factorioDirectory: factorioDirectoryFromSoundDirectory(directory),
+      };
     },
 
     async read(instrumentName, pitch) {
@@ -156,5 +166,6 @@ function createFactorioSoundLibrary({ configPath }) {
 module.exports = {
   INSTRUMENT_FILES,
   createFactorioSoundLibrary,
+  factorioDirectoryFromSoundDirectory,
   normalizeSoundDirectory,
 };
