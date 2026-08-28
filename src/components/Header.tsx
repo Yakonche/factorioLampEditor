@@ -1,12 +1,14 @@
 import React from 'react';
 import { useI18n, type InterfaceLanguage } from '../i18n';
-import type { FactorioTextureAvailability } from '../utils/factorioTextures';
+import type { FactorioTextureAvailability, GameTerrainTexture } from '../utils/factorioTextures';
 
 interface HeaderProps {
     onReset: () => void;
     gameTexturesEnabled: boolean;
     gameTexturesStatus: FactorioTextureAvailability;
     onGameTexturesChange: (enabled: boolean) => void;
+    terrainTexture: GameTerrainTexture;
+    onTerrainTextureChange: (terrain: GameTerrainTexture) => void;
 }
 
 const LanguageFlag: React.FC<{ language: InterfaceLanguage }> = ({ language }) => (
@@ -34,6 +36,8 @@ export const Header: React.FC<HeaderProps> = ({
     gameTexturesEnabled,
     gameTexturesStatus,
     onGameTexturesChange,
+    terrainTexture,
+    onTerrainTextureChange,
 }) => {
     const { language, setLanguage, t } = useI18n();
     const languageButtons: Array<{ language: InterfaceLanguage; label: string; title: string }> = [
@@ -99,6 +103,20 @@ export const Header: React.FC<HeaderProps> = ({
                             }`}
                             aria-hidden="true"
                         />
+                    </label>
+                    <label className="flex h-9 items-center gap-2 rounded-lg border border-gray-700 bg-gray-950/70 px-2 text-[10px] font-bold text-gray-300">
+                        <span className="hidden lg:inline">{t('Terrain')}</span>
+                        <select
+                            value={terrainTexture}
+                            disabled={!gameTexturesEnabled}
+                            onChange={event => onTerrainTextureChange(event.target.value as GameTerrainTexture)}
+                            title={t('Terrain texture')}
+                            className="h-7 rounded border border-gray-600 bg-gray-800 px-2 text-[10px] text-gray-100 outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="default">{t('Default')}</option>
+                            <option value="nauvis">Nauvis</option>
+                            <option value="laboratory">{t('Laboratory')}</option>
+                        </select>
                     </label>
                     <div className="flex items-center gap-1 rounded-lg border border-gray-700 bg-gray-950/70 p-1" role="group" aria-label={t('Interface language')}>
                         {languageButtons.map(button => (

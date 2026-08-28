@@ -103,6 +103,7 @@ import {
   type FactorioTextureAvailability,
   type FactorioTextureSet,
   type FactorioTextureStatus,
+  type GameTerrainTexture,
 } from './utils/factorioTextures';
 
 type CalculationWorkerResponse = {
@@ -212,6 +213,7 @@ const formatBlueprintLabel = (filename: string, width: number, height: number) =
 const POLE_TYPE_STORAGE_KEY = 'factorio-lamp-editor.pole-type';
 const POLE_QUALITY_STORAGE_KEY = 'factorio-lamp-editor.pole-quality';
 const GAME_TEXTURES_STORAGE_KEY = 'factorio-lamp-editor.game-textures';
+const TERRAIN_TEXTURE_STORAGE_KEY = 'factorio-lamp-editor.terrain-texture';
 const DEFAULT_POLE_TYPE = 'medium-electric-pole';
 
 const storedPoleType = () => {
@@ -232,6 +234,12 @@ const storedGameTexturesEnabled = () => (
   typeof window !== 'undefined'
   && window.localStorage.getItem(GAME_TEXTURES_STORAGE_KEY) === 'true'
 );
+
+const storedTerrainTexture = (): GameTerrainTexture => {
+  if (typeof window === 'undefined') return 'default';
+  const stored = window.localStorage.getItem(TERRAIN_TEXTURE_STORAGE_KEY);
+  return stored === 'nauvis' || stored === 'laboratory' ? stored : 'default';
+};
 
 function App() {
   const { t } = useI18n();
@@ -281,6 +289,7 @@ function App() {
   const [gameTexturesEnabled, setGameTexturesEnabled] = useState(storedGameTexturesEnabled);
   const [gameTexturesStatus, setGameTexturesStatus] = useState<FactorioTextureAvailability>('loading');
   const [gameTextures, setGameTextures] = useState<FactorioTextureSet | null>(null);
+  const [terrainTexture, setTerrainTexture] = useState<GameTerrainTexture>(storedTerrainTexture);
   const gameTexturesRef = useRef<FactorioTextureSet | null>(null);
   const initiallyRequestedGameTexturesRef = useRef(gameTexturesEnabled);
   const lastGeneratedBlueprintRef = useRef<string | null>(null);
@@ -398,6 +407,11 @@ function App() {
       setStatusMsg(t('Unable to load Factorio game textures.'));
     }
   }, [replaceGameTextures, t]);
+
+  const handleTerrainTextureChange = useCallback((terrain: GameTerrainTexture) => {
+    setTerrainTexture(terrain);
+    window.localStorage.setItem(TERRAIN_TEXTURE_STORAGE_KEY, terrain);
+  }, []);
 
   const saveHistory = useCallback(() => {
     const patch = createGridPatch(committedGridRef.current, gridRef.current);
@@ -2569,6 +2583,8 @@ function App() {
         gameTexturesEnabled={gameTexturesEnabled}
         gameTexturesStatus={gameTexturesStatus}
         onGameTexturesChange={enabled => void handleGameTexturesChange(enabled)}
+        terrainTexture={terrainTexture}
+        onTerrainTextureChange={handleTerrainTextureChange}
       />
 
       <main className="flex-1 overflow-hidden relative w-full flex flex-col md:flex-row">
@@ -2676,6 +2692,7 @@ function App() {
                   ? manualUnionGrid
                   : undefined}
               gameTextures={gameTexturesEnabled ? gameTextures : null}
+              terrainTexture={terrainTexture}
               onHover={(x, y) => setCoords({ x, y })}
               tool={viewingSequenceFrame || viewingMediaFrame ? 'pan' : tool}
             />
